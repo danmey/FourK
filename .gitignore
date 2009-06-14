@@ -10,3 +10,4 @@ image
 *.a
 *.res\n
 *\#\n
+4k a.out t.S t.o fourk2 stripper

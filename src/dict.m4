@@ -13,15 +13,20 @@ define([_K4_FORLOOP],
  	[$3[]ifelse(indir([$1]),[$2],[],
    		[define([$1],incr(indir([$1])))$0($@)])])dnl
 dnl
-define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$1])])])dnl
+define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$2])])])dnl
 dnl
-define([BEGIN_DICT],[DEF_TAB(NAME_TAB)])
-define([DEF_CODE],[PUSH_EL(NAME_TAB, $1)])
+define([BEGIN_DICT],[DEF_TAB(NAME_TAB)[]DEF_TAB(DISPATCH_TAB)])
+define([DEF_CODE],[PUSH_EL(NAME_TAB, $1) code_$1:])
+define([END_CODE],[ret])
 define([BUILD_NAME_TABLE],[var_ntab: .LONG ntab_end
 ntab: 
-FOR_EACH(NAME_TAB, arg,[.STRING "arg"
+FOR_EACH(NAME_TAB, arg,[.ASCII "arg"
 .FILL eval(NTAB_ENTRY_SIZE-len(arg))
 ])
 ntab_end:
+dsptch:
+FOR_EACH(NAME_TAB, arg, [.LONG code_[]arg
+])
+dsptch_end:
 ])
  

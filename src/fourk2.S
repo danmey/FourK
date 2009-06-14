@@ -3,7 +3,6 @@ include(macros.m4)
 include(dict.m4)
 
 
-msg:	.ASCIZ "%s\n"
 	.GLOBL main
 	.GLOBL _start
 #ifndef DEBUG
@@ -12,10 +11,17 @@ _start:
 main:
 #endif
 1:	
-	K4_SAFE_CALL(_gettoken)	
+	K4_SAFE_CALL(_gettoken)
 	cmpb	$'!',token
 	jz _exit
-	K4_SAFE_CALL(printf, $msg, $token)
+	movl	$token,	%edi
+	call	_find_word
+	jc	2f
+	call	*dsptch(,%eax,4)
+#	K4_SAFE_CALL(printf, $msg, $token)
+	jmp	1b
+2:
+	K4_SAFE_CALL(printf, $msg_not_defined, $token)
 	jmp	1b
 _exit:
 	K4_SAFE_CALL(exit,$ 0)	
@@ -149,7 +155,7 @@ _get_key:
 	.ALIGN 4
 	.STRING "ENDX"
 
-	################################################################################	
+################################################################################	
 # Find the word in dictionary by comparing strings.
 # The dictionary is searched in reverse order, and idden words are skipped.
 #
@@ -197,10 +203,20 @@ _find_word:
 	stc
 	ret
 
+
+
+
+
 BEGIN_DICT
 DEF_CODE(dup)
+	K4_SAFE_CALL(printf,$msg_test1)
+END_CODE
 DEF_CODE(drop)
-DEF_CODE(+)
+	K4_SAFE_CALL(printf,$msg_test2)
+END_CODE
+DEF_CODE(plus)
+	K4_SAFE_CALL(printf,$msg_test3)
+END_CODE
 BUILD_NAME_TABLE
 
 .data		
@@ -210,3 +226,8 @@ fmt_float: 	.ASCIZ  "%f"
 fmt_hex:	.ASCIZ 	"%x"
 fmt_dec:	.ASCIZ 	"%d"
 var_base:	.LONG 	10
+msg:	.ASCIZ "%s\n"
+msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
+msg_test1:	.ASCIZ "Test1\n"
+msg_test2:	.ASCIZ "Test2\n"
+msg_test3:	.ASCIZ "Test3\n"

@@ -1,0 +1,7 @@
+changequote(`[',`]')dnl
+dnl
+define([NAME_COUNT],[0])dnl
+define([DEF_NAME],[define([NAME_[]NAME_COUNT],$1)][incr(NAME_COUNT)])
+
+
+define([K4_CODE],[ $NTAB_ENTRY_SIZE

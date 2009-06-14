@@ -1,0 +1,6 @@
+include(macros.m4)
+
+msg:	.ASCIZ "msg%d\n"
+main:	
+	K4_SAFE_CALL(printf, $msg, $123)
+	ret

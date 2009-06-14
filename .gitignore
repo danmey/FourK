@@ -1,0 +1,12 @@
+*.o
+*~
+junk
+fource
+\#*
+.\#*
+*.so
+image
+*.fi
+*.a
+*.res\n
+*\#\n

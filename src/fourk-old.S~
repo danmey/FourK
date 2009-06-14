@@ -1,0 +1,398 @@
+# Return stack size
+#define RET_STACK_SIZE 		4096
+# Heap size alloted in BSS
+#define HEAP_SIZE 		(32*1024*1024)
+# Maximun number of words
+#define MAX_NWORD 		256
+# Dictionary size (16kb)
+#define DICT_SIZE		(16*1024)
+# Name table entry size
+#define NTAB_ENTRY_SIZE		32
+# Word ptr table entry size
+#define VTAB_ENTRY_SIZE		2
+
+	include(`macros.m4')
+#include "const.S"
+
+
+.section .bss
+	.lcomm _heap_start,32*1024
+
+define([K4_PTR_CHECKS])
+K4_BEGIN_IMAGE
+.globl main	
+# Needed at runt ime unless we dont want to have input output
+
+_fmt_string:		.asciz 	"%s"
+_msg_not_defined:	.asciz "Word '%s' not defined.\n"
+_msg_OK:		.asciz "OK.\n"
+_msg_welcome:		.asciz "FourK 0.1. Started interaction. \nType 'bye' to leave.\n"
+_msg_exception_prolog:	.asciz "**Fatal exception.. Stacks are reset.\n"
+_msg_exception_call_stack:	.asciz "\tcall stack:\n"
+_msg_exception_stack_dump:	.asciz "\stack dump:\n"
+_msg_call_stack_entry_undefined:	.asciz "\tundefined token, the return stack might be corrupted!:\n"
+_fmt_referenced_address:	.asciz "\treferenced address: %x\n"
+_fmt_call_stack_entry:		.asciz "\t%x:\t%d\t->\t %s\n"
+_fmt_call_stack_dump_entry:	.asciz "\tX:%x\tI:%d\tF:%f\n"
+_fmt_hex_val:		.asciz 	"%x\n"
+_fmt_hex_val_3:		.asciz 	"%.3x "		
+_fmt_dec_val:		.asciz 	"%d\n"
+_fmt_str:		.asciz  "%s "
+_fmt_float: 		.asciz  "%f "
+_tmp_dec_val:		.long	0
+_pad_ptr:		.long _pad
+_pad_last_size:		.long 0
+
+_fmt_dump_word_delimiter:	.asciz "\n----%.8x\n"
+_vm_param_stack_start:	.long 0
+_vm_return_stack_start:	.long 0
+_vm_context_reg:	.fill 32
+_vm_context_ESP:	.fill  4
+_vm_context_EBP:	.fill  4
+
+.lcomm _token,NTAB_ENTRY_SIZE
+.lcomm _token2,NTAB_ENTRY_SIZE
+	
+.lcomm _pad,NTAB_ENTRY_SIZE
+_pad_end:	
+
+# Interpreting byte code, last byte code is abort, that
+# goes back to interpret loop
+#_interpret_bcode:	.byte 2, 1
+
+
+	
+
+
+
+
+
+# Fourk entry point
+main:
+# Reserve some space for Return stack
+	mov	%esp,_vm_param_stack_start
+	mov 	%esp,%ebp		
+	sub	$RET_STACK_SIZE,%ebp
+	mov	%ebp,_vm_return_stack_start
+
+	call	_show_welcome
+# Main loop
+_interpet_loop:
+	call 	_get_token	# token
+	mov 	$_token,%edi
+	call 	_find_word
+	jnc 	1f		# found word
+	
+	call 	_parse_literal	# else parse literal
+	jz	3f		# not valid literal. must be an undefined word
+	
+	cmpb	$0,_var_state	# are we in compilation mode?
+	jne	4f		# Yes, then compile the lit8s and value
+	
+	push 	%eax		# push it on the stack
+	jmp 	_interpet_loop	# get back to loop
+
+4:
+	push 	%eax		# push literal value
+	cmp	$127,%eax	# if the literal fits in one byte
+	jg	6f
+	cmp	$-128,%eax	# if the literal fits in one byte
+	jl	6f
+	xor	%eax,%eax	# HACK: lit8s has 0 token
+	movl	_var_here,%edi	# acutal here to edi
+	stosb			# store lit8s
+	pop	%eax		# store value
+	stosb			
+	movl	%edi,_var_here	# save new here
+	jmp _interpet_loop
+6:
+	mov 	$[]3,%eax
+	movl	_var_here,%edi	# acutal here to edi
+	stosb			# store lit8s
+	
+	inc	%eax
+	imul	$NTAB_ENTRY_SIZE,%eax
+	add	$_ntab,%eax
+	movb	$0xff,-2(%eax)
+	
+	pop	%eax		# store value
+	stosl			
+	movl	%edi,_var_here	# save new here
+	jmp _interpet_loop
+	
+1:
+	call	_is_immediate	# is word immediate
+	jz	2f		# yes: interpret word
+	cmpb	$0,_var_state	# are we in compilation mode?
+	je	2f		# no: interpret word
+
+	movl	_var_here,%edi	# again store value in here
+
+	stosb
+
+	push 	%eax
+	inc	%eax
+	shl	$5,%eax
+	movb	$0xff, (_ntab-2)(%eax)	
+	pop	%eax
+
+	movl	%edi,_var_here
+
+	jmp 	_interpet_loop
+
+# Inject byte code into interpret sequence
+2:	
+	movl 	$_interpret_bcode,%esi
+	movb 	%al,(%esi)		# do it
+	
+	jmp 	_next_word		# run interpreter
+3:
+# The word is not define
+	K4_SAFE_CALL(printf,$_msg_not_defined,$_token)
+	jmp	_interpet_loop
+# Eof handler, exit routine
+_exit:
+	pushl $0
+	call exit
+	ret
+
+msg:	.asciz "ala ma kota\n"
+testimport:
+	K4_SAFE_CALL(printf,$msg)
+	ret
+
+	
+	
+################################################################################
+# Is token word an immediate word.
+#
+# In:
+# eax - token of word to reason about
+# Out:
+# Z - set: word is immediate
+_is_immediate:
+	push 	%eax
+	inc	%eax
+	shl	$5,%eax
+	dec 	%eax
+	mov	_ntab(%eax),%al
+	and	$1,%al
+	dec	%al
+	pop	%eax
+	ret
+	
+	
+	
+	
+################################################################################	
+# Find the word in dictionary by comparing strings.
+# The dictionary is searched in reverse order, and idden words are skipped.
+#
+# TODO: Where to put case sensitivity skip?
+# TODO: Make it more optimal without and edx
+#
+# In:
+# edi - word to find
+# Out:	
+# eax - rets word index, C - set if no word found
+_find_word:
+	mov 	_var_ntab,%edx		# set up a pointer past the end
+	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
+1:	
+
+# If it's end of list then go and report fail
+	cmpb 	$0,(%edx)		# end of dictionary?
+	jz 	3f			# yes? Not found then.
+	testb	$2,(NTAB_ENTRY_SIZE-1)(%edx)	# Test for immediate
+	jnz	4f			# idden? yes then skip it
+
+# Prepare for string comparition
+	mov 	%edx,%esi		
+	mov 	$(NTAB_ENTRY_SIZE-2),%ecx # Last byte is reserved for flags
+					  	
+# Compare it
+	push	%edi			# save edi, because it contains
+	repe 	cmpsb			# the pointer to our value
+	pop	%edi			# restore
+	jz 	2f			# Found word!
+4:	
+	sub 	$NTAB_ENTRY_SIZE,%edx 	# Nope.. go back one entry
+	jmp 	1b
+2:
+	
+# We have found a word go and calculate index
+	sub 	$_ntab,%edx
+	shr 	$5,%edx			# divide it by 32
+	mov	%edx,%eax
+	clc				# clear fail flag
+	ret
+# Not found
+3:
+	xor 	%eax,%eax
+	stc
+	ret
+	
+
+
+	
+################################################################################	
+# Parse literal, string is in _token
+# TODO: Make it work with floats
+# In:
+# Out:	
+# eax - integer value
+_parse_literal:
+# Check for dot if dot is present then we have floating point number
+	push 	%edi
+	mov	$_token,%edi
+# string length
+	xor 	%ecx,%ecx
+	not	%ecx
+	xor 	%eax,%eax
+	cld
+	repnz 	scasb
+	not 	%ecx
+	dec 	%ecx
+
+	mov	$'.',%al
+	mov	$_token,%edi
+	repnz 	scasb
+	jnz	1f	# real
+
+	K4_SAFE_CALL(sscanf,$_token,$_fmt_float,$_tmp_dec_val)
+	cmp	$0,%eax
+	mov 	_tmp_dec_val,%eax
+	pop	%edi
+	ret
+1:
+	cmpb	$10,_var_base
+	jz	2f
+	K4_SAFE_CALL(sscanf,$_token,$_fmt_hex_val,$_tmp_dec_val)
+	cmp	$0,%eax
+	mov 	_tmp_dec_val,%eax
+	pop	%edi
+	ret
+2:	
+# Use cheap sscanf
+	K4_SAFE_CALL(sscanf,$_token,$_fmt_dec_val,$_tmp_dec_val)
+3:	
+	cmp	$0,%eax
+	mov 	_tmp_dec_val,%eax
+	pop	%edi
+	ret
+	
+	
+	
+	
+################################################################################	
+# Get token, separated by whites, and put it in _token
+# TODO: Make it case insesitive (lowercase everything)
+# In:
+# Out:	
+# eax - integer value
+# _token - a token
+_get_token:
+	
+# Skip whites
+	call	_get_key_white_skip
+	mov 	$_token,%edi
+	mov 	$NTAB_ENTRY_SIZE,%ecx
+1:	
+	dec %ecx			# keep the counter becasue we need to clear out _token
+	stosb				# in al we had out character
+	call _get_key			# get next key
+	call _is_white			# is white?
+	jnz 1b				# NO?
+	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
+	xor 	%eax,%eax		# clear status (not needed?)
+	rep 	stosb			# Fill rest of _token
+	ret
+	
+	
+	
+	
+################################################################################	
+# Get key, skipping whites
+# In:
+# Out:	
+# al - an ASCII code of character
+# _token - a token
+_get_key_white_skip:
+	call _get_key
+	call _is_white
+	jz _get_key_white_skip	# loop until we will find something
+	ret
+	
+	
+	
+	
+################################################################################	
+# Is white?
+# In:
+# al - an ASCII code of character
+# Out:
+# Z - if its white
+# _token - a token
+_is_white:
+	cmpb	$10,%al		# CR ?
+	jz	1f
+	cmpb	$13,%al       	# LF ?
+	jz	1f
+	cmpb	$9,%al		# TAB ?
+	jz	1f
+	cmpb	$' ',%al	# SPACE ?
+	jz	1f
+1:	ret
+	
+	
+	
+	
+################################################################################	
+# Get char from STDIN, jumps out in case of EOF
+# In:
+# Out:
+# al - an ASCII code of character
+# _token - a token
+_get_key:
+	K4_SAFE_CALL(getchar)
+	cmp 	$-1,%eax
+	jz 	_exit
+	cmpb	$10,%al
+	jnz 1f
+1:	ret
+	
+	
+	
+################################################################################
+# `Docolon' - an byte code interpreter entry point
+# Save current VM ip(%esi) onto return stack, and start intepreting a word
+#
+# In:
+# %esi - VM IP
+# %esp - VM paramater stack
+# %ebp - VM return stack
+# %eax - interpreted pointer to word in dictionary
+#
+_docol:
+	
+# Put a return IP on return stack
+	subl	$4,%ebp
+	movl	%esi,(%ebp)
+	
+# Load %esi with a pointer to begining of word byte code skipping docolon pointer
+	mov	%eax,%esi
+	add	$4,%esi
+	
+# Next word called at the end of each core word
+
+_next_word:
+ 	xorl 	%eax,%eax		# Clear up %eax
+ 	lodsb				# load a byte
+ 	movzxw 	_vtab(,%eax,2),%eax	# look into vtab and find dictionary offset
+	add 	$_dict, %eax		# convert dict offset to memory addres
+ 	jmpl 	*(%eax)			# run the first word
+
+_show_welcome:
+	K4_SAFE_CALL(printf,$_msg_welcome)
+	ret
+

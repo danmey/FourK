@@ -1,0 +1,48 @@
+one section
+reuse fource framework!
+separate immediate dictionary
+separate names table
+separate compiler/interpreter block
+little bit of M4
+non portable gcc C compiler/interpreter code
+two byte tokens threaed code
+local variables
+no immediate words in the core dictionary
+marked words discarded
+image based binaries
+special markers to replace executable image in the file
+special markers to fill executable image with zeros
+separate data block
+everything erased before image save
+integration with Emacs
+one .text segment
+special words for symbol load
+no libc in the image
+symbols by hashes
+image layout
+
+-------------------------------------
+* start marker
+  run module
+  dynamics symbols load
+  core dictionary       	  
+  user dictionary
+  word ptr table
+  word symbol name table
+
+* erase marker begin
+      word name table
+      interpret/compile module
+      imm ptr table
+ imm dictionary
+      data space
+* erase marker end
+
+1. Do interpret compile module
+2. Bootstrap
+3. Saving image
+4. Symbol load
+5. Stripped image
+
+
+

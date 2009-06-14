@@ -1,4 +1,0 @@
-#!/bin/sh
-m4 -s fourk2.S > t.S 
-gcc t.S
-rm t.S

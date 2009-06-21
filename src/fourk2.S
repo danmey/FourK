@@ -10,7 +10,9 @@ _start:
 #else
 main:
 #endif
-1:	
+	mov	%esp,%ebp
+	sub	$4096,%ebp
+1:
 	K4_SAFE_CALL(_gettoken)
 	cmpb	$'!',token
 	jz _exit
@@ -23,7 +25,10 @@ main:
 #	K4_SAFE_CALL(printf, $msg, $token)
 	jmp	1b
 2:
-	K4_SAFE_CALL(printf, $msg_not_defined, $token)
+	call	_parse_literal
+	xchg 	%esp,%ebp
+	push	%eax
+	xchg 	%esp,%ebp
 	jmp	1b
 _exit:
 	K4_SAFE_CALL(exit,$ 0)	
@@ -212,14 +217,33 @@ _find_word:
 
 BEGIN_DICT
 DEF_CODE(dup)
-	K4_SAFE_CALL(printf,$msg_test1)
+	xchg	%esp,%ebp
+	pushl	(%esp)
+	xchg	%esp,%ebp
+	ret
 END_CODE
 DEF_CODE(drop)
-	K4_SAFE_CALL(printf,$msg_test2)
+	xchg	%esp,%ebp
+	pop	%eax
+	xchg	%esp,%ebp
+	ret
 END_CODE
 DEF_CODE(plus)
-	K4_SAFE_CALL(printf,$msg_test3)
+	xchg	%esp,%ebp
+	pop	%eax
+	add	%eax,(%esp)
+	xchg	%esp,%ebp
+	ret
 END_CODE
+DEF_CODE(dot)
+	xchg	%esp,%ebp
+	pushl 	$fmt_dec	
+	call 	printf
+	add	$8,%esp
+	xchg	%esp,%ebp
+	ret
+END_CODE
+	
 BUILD_NAME_TABLE
 
 .data		

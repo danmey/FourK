@@ -24,6 +24,9 @@ main:
 	call	*dsptch(,%eax,4)
 #	K4_SAFE_CALL(printf, $msg, $token)
 	jmp	1b
+	lea	distch(,%eax,4),%eax
+	call	docol
+	jmp	1b
 2:
 	call	_parse_literal
 	xchg 	%esp,%ebp
@@ -34,6 +37,7 @@ _exit:
 	K4_SAFE_CALL(exit,$ 0)	
 	ret
 
+docol:	
 
 	.ALIGN	4
 	.STRING	"BEGX"
@@ -243,7 +247,9 @@ DEF_CODE(dot)
 	xchg	%esp,%ebp
 	ret
 END_CODE
+DEF_CODE(create)
 	
+END_CODE	
 BUILD_NAME_TABLE
 
 .data		

@@ -17,6 +17,8 @@ main:
 	movl	$token,	%edi
 	call	_find_word
 	jc	2f
+	cmpl	$ NCORE_WORDS,%eax
+	ja	2f
 	call	*dsptch(,%eax,4)
 #	K4_SAFE_CALL(printf, $msg, $token)
 	jmp	1b
@@ -26,6 +28,7 @@ main:
 _exit:
 	K4_SAFE_CALL(exit,$ 0)	
 	ret
+
 
 	.ALIGN	4
 	.STRING	"BEGX"

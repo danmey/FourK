@@ -19,6 +19,7 @@ define([BEGIN_DICT],[DEF_TAB(NAME_TAB)[]DEF_TAB(DISPATCH_TAB)])
 define([DEF_CODE],[PUSH_EL(NAME_TAB, $1) code_$1:])
 define([END_CODE],[ret])
 define([BUILD_NAME_TABLE],[var_ntab: .LONG ntab_end
+.equ NCORE_WORDS,EL_COUNT(NAME_TAB)
 ntab: 
 FOR_EACH(NAME_TAB, arg,[.ASCII "arg"
 .FILL eval(NTAB_ENTRY_SIZE-len(arg))

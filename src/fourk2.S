@@ -16,19 +16,24 @@ main:
 	K4_SAFE_CALL(_gettoken)
 	cmpb	$'!',token
 	jz _exit
+
 	movl	$token,	%edi
 	call	_find_word
 	jc	2f
+
 	cmpl	$ NCORE_WORDS,%eax
 	ja	2f
-	call	*dsptch(,%eax,4)
-#	K4_SAFE_CALL(printf, $msg, $token)
+	mov	dsptch(,%eax,4),%eax
+	mov	(%eax), %ebx
+	call	*%ebx
 	jmp	1b
-	lea	distch(,%eax,4),%eax
-	call	docol
-	jmp	1b
+
 2:
 	call	_parse_literal
+	jnc 	3f
+	K4_SAFE_CALL(printf,$msg_not_defined)
+	jmp 	1b
+3:	
 	xchg 	%esp,%ebp
 	push	%eax
 	xchg 	%esp,%ebp
@@ -37,7 +42,13 @@ _exit:
 	K4_SAFE_CALL(exit,$ 0)	
 	ret
 
-docol:	
+docol:
+	addl	$4, %eax
+	lodsb
+	mov	dsptch(,%eax,4),%eax
+	mov	(%eax), %ebx
+	call	*%ebx
+	ret
 
 	.ALIGN	4
 	.STRING	"BEGX"
@@ -66,26 +77,36 @@ _parse_literal:
 
 	K4_SAFE_CALL(sscanf,$token,$fmt_float,$long_tmp)
 	cmp	$0,%eax
+	jz	1f
 	mov 	long_tmp,%eax
 	pop	%edi
+	clc
 	ret
 1:
 	cmpb	$10,var_base
 	jz	2f
 	K4_SAFE_CALL(sscanf,$token,$fmt_hex,$long_tmp)
 	cmp	$0,%eax
+	jz	2f
 	mov 	long_tmp,%eax
 	pop	%edi
+	clc
 	ret
 2:	
 # Use cheap sscanf
 	K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
 3:	
 	cmp	$0,%eax
+	jz 	4f
 	mov 	long_tmp,%eax
 	pop	%edi
+	clc
 	ret
-	
+
+4:
+	pop	%edi
+	stc
+	ret
 	
 	
 	
@@ -216,30 +237,27 @@ _find_word:
 	ret
 
 
-
-
-
 BEGIN_DICT
-DEF_CODE(dup)
+DEF_CODE(dup,"dup")
 	xchg	%esp,%ebp
 	pushl	(%esp)
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(drop)
+DEF_CODE(drop,"drop")
 	xchg	%esp,%ebp
 	pop	%eax
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(plus)
+DEF_CODE(plus,"+")
 	xchg	%esp,%ebp
 	pop	%eax
 	add	%eax,(%esp)
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(dot)
+DEF_CODE(dot, ".")
 	xchg	%esp,%ebp
 	pushl 	$fmt_dec	
 	call 	printf
@@ -247,7 +265,7 @@ DEF_CODE(dot)
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(create)
+DEF_CODE(create,"create")
 	
 END_CODE	
 BUILD_NAME_TABLE

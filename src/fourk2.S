@@ -296,9 +296,11 @@ DEF_CODE(create,"create")
 	lea	(%edi,%eax,8),%edi
 	mov	$32, %ecx
 	rep	movsb
+	movl	var_current,%eax
+	shl	$2, %eax
 	lea	dsptch(%eax),%edi
 	mov	word_dot, %eax
-	mov	%eax,(%edi)
+	movl	%eax,(%edi)
 	incl	var_current
 	xchg	%esp,%ebp
 	ret

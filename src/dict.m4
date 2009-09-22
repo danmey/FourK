@@ -1,4 +1,5 @@
 define([NTAB_ENTRY_SIZE], 32)
+define([MAX_WORDS],256)
 dnl
 define([DEF_TAB],[define($1_COUNT, 0)])dnl
 define([PUSH_EL],[define($1_AT[]$1_COUNT,$2)][define([$1_COUNT],incr($1_COUNT))])dnl
@@ -28,9 +29,12 @@ FOR_EACH(FORTH_NAME_TAB, arg,[.ASCII arg
 .FILL eval(NTAB_ENTRY_SIZE-len(arg)+2)
 ])
 ntab_end:
+.FILL NTAB_ENTRY_SIZE*MAX_WORDS
 dsptch:
 FOR_EACH(NAME_TAB, arg, [.LONG word_[]arg
 ])
 dsptch_end:
+.FILL 4*MAX_WORDS
+
 ])
  

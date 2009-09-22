@@ -209,7 +209,10 @@ _get_key:
 # Out:	
 # eax - rets word index, C - set if no word found
 _find_word:
-	mov 	var_ntab,%edx		# set up a pointer past the end
+	mov 	$ntab,%edx		# set up a pointer past the end
+	mov	var_current,%eax
+	shl	$5,%eax
+	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
 1:	
 
@@ -284,7 +287,22 @@ DEF_CODE(comma, ["ccomma"])
 	ret
 END_CODE
 DEF_CODE(create,"create")
+	xchg	%esp,%ebp
 	K4_SAFE_CALL(_gettoken)
+	mov	$token,	%esi
+	movl	var_current,%eax
+	shl	$2, %eax
+	movl	$ntab,%edi
+	lea	(%edi,%eax,8),%edi
+	mov	$32, %ecx
+	rep	movsb
+	lea	dsptch(%eax),%edi
+	mov	word_dot, %eax
+	mov	%eax,(%edi)
+	incl	var_current
+	xchg	%esp,%ebp
+	ret
+	
 END_CODE
 DEF_CODE(at, "@")
 	xchg	%esp,%ebp

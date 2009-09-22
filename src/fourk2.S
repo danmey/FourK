@@ -22,18 +22,14 @@ main:
 	movl	$token,	%edi
 	call	_find_word
 	jc	2f
-
-#	cmpl	$ NCORE_WORDS,%eax
-#	ja	2f
-	cmpl	$0, var_state
-	jnz	.interpret
 	
-	
-	jmp	1b
-	
-.interpret:	
-	mov	dsptch(,%eax,4),%eax
-	mov	(%eax), %ebx
+	mov	dsptch(,%eax,4),%ebx 		#now load the word
+	xchg	%esp,%ebp
+	pushl	%ebx
+	xchg	%esp,%ebp
+	mov 	var_state, %ebx			#if state = 1 then we compile so get the compile semantics
+	shl	$2, %ebx			# * 4 to ebx
+	mov	semantic(%ebx,%eax,8), %ebx 	# load the code address
 	call	*%ebx
 	jmp	1b
 
@@ -287,24 +283,26 @@ DEF_CODE(comma, ["ccomma"])
 	ret
 END_CODE
 DEF_CODE(create,"create")
-	xchg	%esp,%ebp
-	K4_SAFE_CALL(_gettoken)
-	mov	$token,	%esi
-	movl	var_current,%eax
-	shl	$2, %eax
-	movl	$ntab,%edi
-	lea	(%edi,%eax,8),%edi
-	mov	$32, %ecx
-	rep	movsb
-	movl	var_current,%eax
-	shl	$2, %eax
-	lea	dsptch(%eax),%edi
-	mov	$word_dot, %eax	
-	movl	%eax,(%edi)
-	incl	var_current
+	xchg	%esp,%ebp	
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	mov	$token,	%esi		#load token into esi
+	movl	var_current,%eax 	#current words index
+	shl	$2, %eax	 	#multiply by 4
+	movl	$ntab,%edi		#load ntab beg
+	lea	(%edi,%eax,8),%edi 	#ntab + index * 4*8
+	mov	$NTAB_ENTRY_SIZE, %ecx #length of the word
+	rep	movsb		       	#copy the token
+	movl	var_current,%eax       	#load index (unneeded?)
+	shl	$2, %eax	       	#multiply by 4
+	lea	dsptch(%eax),%edi      	#load address to edi
+	mov	$word_dot, %eax
+	movl	%eax,(%edi)		#store ptr to dot word (as an example)
+	incl	var_current		#increment current word
 	xchg	%esp,%ebp
 	ret
-	
+END_CODE
+DEF_CODE(lb, "lb")
+	movl	$1, var_state
 END_CODE
 DEF_CODE(at, "@")
 	xchg	%esp,%ebp
@@ -313,6 +311,15 @@ DEF_CODE(at, "@")
 	xchg	%esp,%ebp
 	ret
 END_CODE
+DEF_CODE(execute, "execute")
+	xchg	%esp,%ebp
+	popl	%eax
+	xchg	%esp,%ebp
+	call	*(%eax)
+END_CODE
+DEF_CODE(compile, "compile")
+END_CODE
+	
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])

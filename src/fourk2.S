@@ -299,7 +299,7 @@ DEF_CODE(create,"create")
 	movl	var_current,%eax
 	shl	$2, %eax
 	lea	dsptch(%eax),%edi
-	mov	word_dot, %eax
+	mov	$word_dot, %eax	
 	movl	%eax,(%edi)
 	incl	var_current
 	xchg	%esp,%ebp

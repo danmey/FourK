@@ -2,6 +2,8 @@
 include(macros.m4)
 include(dict.m4)
 
+	.data		
+
 
 	.GLOBL main
 	.GLOBL _start
@@ -21,8 +23,15 @@ main:
 	call	_find_word
 	jc	2f
 
-	cmpl	$ NCORE_WORDS,%eax
-	ja	2f
+#	cmpl	$ NCORE_WORDS,%eax
+#	ja	2f
+	cmpl	$0, var_state
+	jnz	.interpret
+	
+	
+	jmp	1b
+	
+.interpret:	
 	mov	dsptch(,%eax,4),%eax
 	mov	(%eax), %ebx
 	call	*%ebx
@@ -265,12 +274,32 @@ DEF_CODE(dot, ".")
 	xchg	%esp,%ebp
 	ret
 END_CODE
+DEF_CODE(comma, ["ccomma"])
+	xchg	%esp,%ebp
+	pop	%eax
+	mov	var_here,%ebx
+	movb	%al,	(%ebx)
+	incl	var_here
+	xchg	%esp,%ebp
+	ret
+END_CODE
 DEF_CODE(create,"create")
-	
-END_CODE	
+	K4_SAFE_CALL(_gettoken)
+END_CODE
+DEF_CODE(at, "@")
+	xchg	%esp,%ebp
+	popl	%eax
+	pushl	(%eax)
+	xchg	%esp,%ebp
+	ret
+END_CODE
+DEF_VAR(state, 1)
+DEF_VAR(here, here)
+DEF_VAR(current, [EL_COUNT(NAME_TAB)])
+END_DICT
+END_CODE
 BUILD_NAME_TABLE
 
-.data		
 long_tmp: 	.LONG 0
 token:		.FILL	64
 fmt_float: 	.ASCIZ  "%f"

@@ -1,5 +1,6 @@
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
+define([DICT_SIZE], 32*1024)
 dnl
 define([DEF_TAB],[define($1_COUNT, 0)])dnl
 define([PUSH_EL],[define($1_AT[]$1_COUNT,$2)][define([$1_COUNT],incr($1_COUNT))])dnl
@@ -17,11 +18,22 @@ dnl
 define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$2])])])dnl
 dnl
 define([BEGIN_DICT],[DEF_TAB(NAME_TAB)[]DEF_TAB(DISPATCH_TAB)[]DEF_TAB(FORTH_NAME_TAB)])
+define([END_DICT], here: .FILL DICT_SIZE)
+define([qar], [[$1]])
 define([DEF_CODE],[PUSH_EL(NAME_TAB, $1)[]PUSH_EL(FORTH_NAME_TAB, $2)
 word_$1: 
 .LONG code_$1
 code_$1:])
 define([END_CODE],[ret])
+define([DEF_VAR],[
+DEF_CODE($1,"$1")
+xchgl	%esp,%ebp
+pushl 	$var_$1
+xchgl	%esp,%ebp
+ret
+var_$1:	.long $2
+END_CODE
+])
 define([BUILD_NAME_TABLE],[var_ntab: .LONG ntab_end
 .equ NCORE_WORDS,EL_COUNT(NAME_TAB)
 ntab: 
@@ -35,6 +47,5 @@ FOR_EACH(NAME_TAB, arg, [.LONG word_[]arg
 ])
 dsptch_end:
 .FILL 4*MAX_WORDS
-
 ])
- 
+

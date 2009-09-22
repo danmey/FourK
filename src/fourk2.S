@@ -23,9 +23,8 @@ main:
 	call	_find_word
 	jc	2f
 	
-	mov	dsptch(,%eax,4),%ebx 		#now load the word
 	xchg	%esp,%ebp
-	pushl	%ebx
+	pushl	%eax
 	xchg	%esp,%ebp
 	mov 	var_state, %ebx			#if state = 1 then we compile so get the compile semantics
 	shl	$2, %ebx			# * 4 to ebx
@@ -314,17 +313,22 @@ END_CODE
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebp
 	popl	%eax
+	mov	dsptch(,%eax,4),%eax 		#now load the word
 	xchg	%esp,%ebp
 	call	*(%eax)
 END_CODE
 DEF_CODE(compile, "compile")
+	xchg	%esp,%ebp
+	popl	%eax
+	mov	dsptch(,%eax,4),%eax 		#now load the word
+	xchg	%esp,%ebp
+	call	*(%eax)
 END_CODE
 	
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
 END_DICT
-END_CODE
 BUILD_NAME_TABLE
 
 long_tmp: 	.LONG 0

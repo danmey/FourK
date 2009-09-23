@@ -1,15 +1,51 @@
-* Handle this org mode file so we can use it! (as I am a org mode newbie) :-)
-* make M4 dict.m4 macro to work with divert() builtin http://www.mkssoftware.com/docs/man1/m4.1.asp
-  currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
-  (please see BUILD_NAME_TABLE). We need to use divertions instead.
-  
-* research how to define words with embeded comma inside ( i know it is stupid but who cares :-). 
-  So far I am trying to quote it, but it doesn't work for some reasons. The best example is "c," word which happen to fail, 
-  and also [ and ] (which are lb and rb respectively)
+* General Stuff  
+** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
+** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
+   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
+* M4 Specific 
+** TODO make M4 dict.m4 macro to work with divert() builtin 
+   http://www.mkssoftware.com/docs/man1/m4.1.asp
+   currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
+   (please see BUILD_NAME_TABLE). We need to use divertions instead.   
+* Forth Specific
+** TODO research how to define words with embeded comma inside 
+   ( i know it is stupid but who cares :-).
  
-* Make a small program to dump out the places where the executable needs to be backpatched. 
-  This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
+   So far I am trying to quote it, but it doesn't work for some reasons. 
+   The best example is "c," word which happen to fail, 
+   and also [ and ] (which are lb and rb respectively)
+* Size considerations
+** TODO Think how to make a smallest Linux executable ever,	     :design:
+   with proper loading of dynamic symbols, how to do this without ld?
+   
+   Inspirations: 
+   - http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html1
+** TODO Think about compressor					     :design:
+   Maybe ripit from http://en.wikipedia.org/wiki/PAQ =)
+** TODO Look at tiny.S
+* What we don't know yet
+  and what we do against that "not knowing"
+** phon								       :phon:
+*** M4
+    I never really looked at it and now I know why
+    -- phon
+**** TODO Reading m4 docs
+*** x86
+    The last time I played with it was more than a year
+    before 
+    -- phon
+**** TODO Reading my x86 reference book       
+** spec								       :spec:
+* "Planning" of 4k
+  DEADLINE: <2009-11-30 Mon>
+  - I chose "Planning" because I haven't a better word 
+    for it -- phon
+  - I set the deadline to there we said, that this would 
+    be our target -- phon
+  
 
-* Think how to make a smallest Linux executable ever, with proper loading of dynamic symbols, how to do this without ld?
-* Think about compressor, maybe ripit from http://en.wikipedia.org/wiki/PAQ =)
-* Look at tiny.S
+* Things which could slow down the project
+** phon 
+*** university
+*** perhaps a part time job
+* org mode specific stuff

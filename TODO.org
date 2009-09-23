@@ -1,7 +1,6 @@
 * General Stuff  
+
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
-** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
-   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
    http://www.mkssoftware.com/docs/man1/m4.1.asp
@@ -11,11 +10,32 @@
 ** TODO research how to define words with embeded comma inside	       :phon:
    SCHEDULED: <2009-09-23 Mit>
    ( i know it is stupid but who cares :-).
- 
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
+** DONE Bootstrap a basic Forth system				       :spec:
+   The basic funcionality only that allows us to extend. 
+   Including: compile/interpret state, immediate words, postpone, creation of words. 
+** DONE Build a first executable image				       :spec:
+   Only dumping to executable done, via save-image core word. No postprocessing or loading. 
+** DONE Very simple load/execution of a saved image		       :spec:
+   Done by ovewriting the actual image with a new one. 
+   Requirment of having some code not loaded dynamically, especially symbols from
+   dlls that are accessed directly (not through plt) (problem with the `stdin' variable).
 
+** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
+  This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
+  Please not that we need that for automated backpatching, during saving the image.
+
+** TODO Add more Forth words that cover basic stuff
+   We need some basic functionality in place, need some more core words, and more FourK
+   define words
+** TODO Split code into physical sections, polish loader
+** TODO Loading imports
+   Please see the design section. (What we don't know yet)
+** TODO Different flavours of literals
+   Byte signed, unsigned, dword. float?. Resolved at compile time.
+** TODO Floating point stack
 * Size considerations
 ** TODO Think how to make a smallest Linux executable ever,	     :design:
    with proper loading of dynamic symbols, how to do this without ld?
@@ -31,6 +51,11 @@
 *** M4
     I never really looked at it and now I know why
     -- phon
+    
+    yes, I do understand your point. Grab a useful link here
+    http://mbreen.com/m4.html
+    -- spec
+
 **** TODO Reading m4 docs
      SCHEDULED: <2009-09-23 Mit>
 *** x86
@@ -40,6 +65,15 @@
 **** TODO Reading my x86 reference book       
      SCHEDULED: <2009-09-23 Mit>
 ** spec								       :spec:
+*** x86
+    Need to know about various size optimisations tips.
+**** TODO Find a document about size optimisations
+
+*** Forth
+    How to handle imports?
+   
+**** TODO Setup a Gobby discussion
+**** TODO Make up a prototype
 * "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>
   - I chose "Planning" because I haven't a better word 
@@ -47,9 +81,13 @@
   - I set the deadline to there we said, that this would 
     be our target -- phon
   
-
+    
 * Things which could slow down the project
 ** phon 
 *** university
 *** perhaps a part time job
+** spec
+*** looking for job
+*** if I find a full time job I might have less time
+*** I might be not avaiable everyday from 16-18
 * org mode specific stuff

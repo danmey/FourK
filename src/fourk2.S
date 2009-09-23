@@ -1,11 +1,51 @@
 include(macros.m4)
 include(dict.m4)
 
-	.text
+#ifdef DEBUG
+	.TEXT
+#else
+	.DATA
+#endif
 
+################################################################################
+# Get token, separated by whites, and put it in token
+# TODO: Make it case insesitive (lowercase everything)
+# In:
+# Out:
+# eax - integer value
+# token - a token
+_gettoken:
+# Skip whites
+	call	_get_key_white_skip
+	mov 	$token,%edi
+	mov 	$NTAB_ENTRY_SIZE,%ecx
+1:
+	dec %ecx			# keep the counter becasue we need to clear out token
+	stosb				# in al we had out character
+	call _get_key			# get next key
+	call _is_white			# is white?
+	jnz 1b				# NO?
+	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
+	xor 	%eax,%eax		# clear status (not needed?)
+	rep 	stosb			# Fill rest of token
+	ret
 
+	.ALIGN 4096
 	.GLOBL main
 	.GLOBL _start
+_image_start:
+	.LONG	_code_start - _image_start
+	.LONG	_code_end   - _image_start
+	.LONG	_dict_start - _image_start
+	.LONG   0 	# to be filled, _dict_end
+	.LONG	ntab - _image_start
+	.LONG   0 	# to be filled, _ntab_end
+	.LONG 	dsptch - _image_start
+	.LONG 	0 	# to be filled, dispatch end
+	.LONG 	semantic - _image_start #do we need that
+	.LONG	0 	# to be filled semantic end
+	
+_code_start:	
 #ifndef DEBUG
 _start:
 #else
@@ -13,6 +53,8 @@ main:
 #endif
 	mov	%esp,%ebp
 	sub	$4096,%ebp
+interpret_loop:
+
 1:
 	K4_SAFE_CALL(_gettoken)
 
@@ -34,7 +76,18 @@ main:
 	jnc 	3f
 	K4_SAFE_CALL(printf,$msg_not_defined)
 	jmp 	1b
-3:	
+3:
+	cmp	$0, var_state
+	jnz	4f
+	mov	var_here,%ebx
+	movb	$0,(%ebx)	# token for literal
+	incl	%ebx
+	movb	%al,(%ebx)
+	incl	%ebx
+	mov	%ebx,var_here
+	jmp 	1b
+
+4:	
 	xchg 	%esp,%ebp
 	push	%eax
 	xchg 	%esp,%ebp
@@ -44,19 +97,20 @@ _exit:
 	ret
 
 docol:
+	push	%esi
 	lea	4(%eax),%esi
+2:	
 	xor	%eax,%eax
-1:	
 	lodsb
 	cmpb	$-1,%al
-	je	_exit
-	push	%esi
+	jne	1f
+	pop	%esi
+	ret
+1:	
 	mov	dsptch(,%eax,4),%eax
 	mov	(%eax), %ebx
  	call	*%ebx
-	pop	%esi
-	jmp 	1b
-	ret
+	jmp 	2b
 
 	.ALIGN	4
 	.STRING	"BEGX"
@@ -118,28 +172,6 @@ _parse_literal:
 	
 	
 	
-################################################################################	
-# Get token, separated by whites, and put it in token
-# TODO: Make it case insesitive (lowercase everything)
-# In:
-# Out:	
-# eax - integer value
-# token - a token
-_gettoken:
-# Skip whites
-	call	_get_key_white_skip
-	mov 	$token,%edi
-	mov 	$NTAB_ENTRY_SIZE,%ecx
-1:	
-	dec %ecx			# keep the counter becasue we need to clear out token
-	stosb				# in al we had out character
-	call _get_key			# get next key
-	call _is_white			# is white?
-	jnz 1b				# NO?
-	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
-	xor 	%eax,%eax		# clear status (not needed?)
-	rep 	stosb			# Fill rest of token
-	ret
 	
 	
 	
@@ -246,9 +278,17 @@ _find_word:
 	xor 	%eax,%eax
 	stc
 	ret
-
+_code_end:	
 
 BEGIN_DICT
+DEF_CODE(lit, "lit")
+	xchg	%esp,%ebp
+	xor	%eax,%eax
+	lodsb
+	push	%eax
+	xchg	%esp,%ebp
+	ret
+END_CODE
 DEF_CODE(dup,"dup")
 	xchg	%esp,%ebp
 	pushl	(%esp)
@@ -285,16 +325,9 @@ DEF_CODE(comma, ["ccomma"])
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(lit, "lit")
-	xchg	%esp,%ebp
-	xor	%eax,%eax
-	lodsb
-	push	%eax
-	xchg	%esp,%ebp
-	ret
-END_CODE
 
 DEF_CODE(create,"create")
+	push	%esi
 	xchg	%esp,%ebp	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	$token,	%esi		#load token into esi
@@ -320,16 +353,17 @@ DEF_CODE(create,"create")
 
 	incl	var_current		#increment current word
 	xchg	%esp,%ebp
+	pop	%esi
 	ret
 END_CODE
 DEF_IMM(lb, "lb")		#alias for [
 	movl	$1, var_state
 END_CODE
-DEF_IMM(rb, "rb")
+DEF_CODE(rb, "rb")
 	movl	$0, var_state	#alias for ]
 END_CODE
 DEF_IMM(immediate,"immediate")
-	movl	var_current,%eax       	#load index (unneeded?)
+	movl	var_current,%eax
 	dec	%eax
 	lea	semantic(,%eax,8),%edi 	#store semantic actions (two dwords)
 	movl	$code_execute, (%edi)
@@ -340,13 +374,11 @@ DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebp	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
-	call	_find_word
+	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebp
 	call	code_compile
 	ret
-1:
-	xchg	%esp,%ebp	
 END_CODE
 	
 DEF_CODE(at, "@")
@@ -378,8 +410,31 @@ DEF_CODE(compile, "compile")
 	incl	var_here
 	xchg	%esp,%ebp
 END_CODE
-
-		.data
+DEF_CODE(save_image, "save-image")
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	K4_SAFE_CALL(fopen, $token,$str_wb)
+	push	%eax
+	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	pop	%eax
+	K4_SAFE_CALL(fclose, %eax)
+END_CODE
+DEF_CODE(load_image, "load-image")
+#define PROT_READ	0x1		/* Page can be read.  */
+#define PROT_WRITE	0x2		/* Page can be written.  */
+#define PROT_EXEC	0x4		/* Page can be executed.  */
+#define PROT_NONE	0x0		/* Page can not be accessed.  */
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+	K4_SAFE_CALL(fopen, $token,$str_rb)
+	push	%eax
+	K4_SAFE_CALL(fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	pop	%eax
+	K4_SAFE_CALL(fclose, %eax)
+	jmp interpret_loop
+END_CODE
+#ifdef DEBUG
+	.data
+#endif
 
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
@@ -392,9 +447,14 @@ token:		.FILL	64
 fmt_float: 	.ASCIZ  "%f"
 fmt_hex:	.ASCIZ 	"%x"
 fmt_dec:	.ASCIZ 	"%d"
+str_wb:		.ASCIZ 	"wb"
+str_rb:		.ASCIZ 	"rb"
 var_base:	.LONG 	10
 msg:	.ASCIZ "%s\n"
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:	.ASCIZ "Test1\n"
 msg_test2:	.ASCIZ "Test2\n"
 msg_test3:	.ASCIZ "Test3\n"
+	.ALIGN 4096
+_image_end:
+.asciz "dummy"

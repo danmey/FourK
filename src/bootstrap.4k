@@ -1,0 +1,4 @@
+create ; immediate  -1 ccomma -1 ccomma 
+create : postpone create postpone ;
+
+: a ;

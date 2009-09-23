@@ -286,6 +286,15 @@ DEF_CODE(comma, ["ccomma"])
 	xchg	%esp,%ebp
 	ret
 END_CODE
+DEF_CODE(lit, "lit")
+	xchg	%esp,%ebp
+	xor	%eax,%eax
+	lodsb
+	push	%eax
+	xchg	%esp,%ebp
+	ret
+END_CODE
+
 DEF_CODE(create,"create")
 	xchg	%esp,%ebp	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
@@ -305,18 +314,42 @@ DEF_CODE(create,"create")
 	mov	var_here, %eax		#load here address
 	movl	%eax,(%edi)
 	movl	$docol,	(%eax)
-	movb	$3,	4(%eax)		#compile the dot word (token 3)
-	movb	$3,	5(%eax)		#compile the dot word (token 3)
-	movb	$-1, 	6(%eax)		#compile the dot word (token 3)
-	addl	$7,var_here	
+#	movb	$3,	4(%eax)		#compile the dot word (token 3)
+#	movb	$3,	5(%eax)		#compile the dot word (token 3)
+#	movb	$-1, 	6(%eax)		#compile the dot word (token 3)
+	addl	$4,var_here	
 
 	incl	var_current		#increment current word
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_IMM(lb, "lb")
+DEF_IMM(lb, "lb")		#alias for [
 	movl	$1, var_state
 END_CODE
+DEF_IMM(rb, "rb")
+	movl	$0, var_state	#alias for ]
+END_CODE
+DEF_IMM(immediate,"immediate")
+	movl	var_current,%eax       	#load index (unneeded?)
+	dec	%eax
+	lea	semantic(,%eax,8),%edi 	#store semantic actions (two dwords)
+	movl	$code_execute, (%edi)
+	movl	$code_execute, 4(%edi)
+	ret
+END_CODE	
+DEF_IMM(postpone,"postpone")
+	xchg	%esp,%ebp	
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	movl	$token,	%edi
+	call	_find_word
+        push    %eax            # push TOS
+	xchg	%esp,%ebp
+	call	code_compile
+	ret
+1:
+	xchg	%esp,%ebp	
+END_CODE
+	
 DEF_CODE(at, "@")
 	xchg	%esp,%ebp
 	popl	%eax
@@ -349,7 +382,7 @@ END_CODE
 
 		.data
 
-DEF_VAR(state, 0)
+DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
 END_DICT

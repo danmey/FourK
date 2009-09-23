@@ -2,7 +2,7 @@
 include(macros.m4)
 include(dict.m4)
 
-	.data		
+	.text
 
 
 	.GLOBL main
@@ -47,11 +47,13 @@ _exit:
 	ret
 
 docol:
-	addl	$4, %eax
+	lea	4(%eax),%esi
+	xor	%eax,%eax
 	lodsb
 	mov	dsptch(,%eax,4),%eax
 	mov	(%eax), %ebx
-	call	*%ebx
+; 	call	*%ebx		
+	jmp 	_exit
 	ret
 
 	.ALIGN	4
@@ -293,9 +295,17 @@ DEF_CODE(create,"create")
 	rep	movsb		       	#copy the token
 	movl	var_current,%eax       	#load index (unneeded?)
 	shl	$2, %eax	       	#multiply by 4
+	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
+	movl	$code_compile, (%edi)
+	movl	$code_execute, 4(%edi)
 	lea	dsptch(%eax),%edi      	#load address to edi
-	mov	$word_dot, %eax
-	movl	%eax,(%edi)		#store ptr to dot word (as an example)
+	mov	var_here, %eax		#load here address
+	movl	%eax,(%edi)
+	movl	$docol,	(%eax)
+	movb	$3,	4(%eax)		#compile the dot word (token 3)
+	movb	$-1, 	5(%eax)		#compile the dot word (token 3)
+	addl	$6,var_here	
+
 	incl	var_current		#increment current word
 	xchg	%esp,%ebp
 	ret
@@ -320,11 +330,14 @@ END_CODE
 DEF_CODE(compile, "compile")
 	xchg	%esp,%ebp
 	popl	%eax
-	mov	dsptch(,%eax,4),%eax 		#now load the word
+	movl	var_here,%ebx
+	movb	%al,(%ebx)
+	incl	var_here
 	xchg	%esp,%ebp
-	call	*(%eax)
 END_CODE
-	
+
+		.data
+
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])

@@ -56,5 +56,6 @@ semantic:
 FOR_EACH(SEMANTIC_TAB, arg, [.LONG arg
 ])
 semantic_end:
+.FILL 8*MAX_WORDS
 ])
 

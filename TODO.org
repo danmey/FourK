@@ -1,19 +1,24 @@
 * General Stuff  
+
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
-** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
-   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
    http://www.mkssoftware.com/docs/man1/m4.1.asp
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
-* Forth Specific
 ** TODO research how to define words with embeded comma inside 
    ( i know it is stupid but who cares :-).
  
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
+* Forth Specific
+** TODO Bootstrap a basic Forth system
+** TODO Build a first executable image
+** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
+   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
+   Please not that we need that for automated backpatching, during saving the image.
+
 * Size considerations
 ** TODO Think how to make a smallest Linux executable ever,	     :design:
    with proper loading of dynamic symbols, how to do this without ld?
@@ -29,6 +34,11 @@
 *** M4
     I never really looked at it and now I know why
     -- phon
+    
+    yes, I do understand your point. Grab a useful link here
+    http://mbreen.com/m4.html
+    -- spec
+
 **** TODO Reading m4 docs
 *** x86
     The last time I played with it was more than a year
@@ -36,6 +46,15 @@
     -- phon
 **** TODO Reading my x86 reference book       
 ** spec								       :spec:
+*** x86
+    Need to know about various size optimisations tips.
+**** TODO Find a document about size optimisations
+
+*** Forth
+    How to handle imports?
+   
+**** TODO Setup a Gobby discussion
+**** TODO Make up a prototype
 * "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>
   - I chose "Planning" because I haven't a better word 
@@ -43,9 +62,13 @@
   - I set the deadline to there we said, that this would 
     be our target -- phon
   
-
+    
 * Things which could slow down the project
 ** phon 
 *** university
 *** perhaps a part time job
+** spec
+*** looking for job
+*** if I find a full time job I might have less time
+*** I might be not avaiable everyday from 16-18
 * org mode specific stuff

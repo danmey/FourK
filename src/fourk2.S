@@ -49,11 +49,16 @@ _exit:
 docol:
 	lea	4(%eax),%esi
 	xor	%eax,%eax
+1:	
 	lodsb
+	cmpb	$-1,%al
+	je	_exit
+	push	%esi
 	mov	dsptch(,%eax,4),%eax
 	mov	(%eax), %ebx
-; 	call	*%ebx		
-	jmp 	_exit
+ 	call	*%ebx
+	pop	%esi
+	jmp 	1b
 	ret
 
 	.ALIGN	4
@@ -303,15 +308,16 @@ DEF_CODE(create,"create")
 	movl	%eax,(%edi)
 	movl	$docol,	(%eax)
 	movb	$3,	4(%eax)		#compile the dot word (token 3)
-	movb	$-1, 	5(%eax)		#compile the dot word (token 3)
-	addl	$6,var_here	
+	movb	$3,	5(%eax)		#compile the dot word (token 3)
+	movb	$-1, 	6(%eax)		#compile the dot word (token 3)
+	addl	$7,var_here	
 
 	incl	var_current		#increment current word
 	xchg	%esp,%ebp
 	ret
 END_CODE
 DEF_CODE(lb, "lb")
-	movl	$1, var_state
+	movl	$0, var_state
 END_CODE
 DEF_CODE(at, "@")
 	xchg	%esp,%ebp

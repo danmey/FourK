@@ -17,12 +17,16 @@ define([_K4_FORLOOP],
 dnl
 define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$2])])])dnl
 dnl
-define([BEGIN_DICT],[_dict_start: 
+define([BEGIN_DICT],[
+.ALIGN 4096
+_dict_start: 
 DEF_TAB(NAME_TAB)[]
 DEF_TAB(DISPATCH_TAB)[]
 DEF_TAB(FORTH_NAME_TAB)[]
 DEF_TAB(SEMANTIC_TAB)])
-define([END_DICT], here: .FILL DICT_SIZE)
+define([END_DICT], 
+.ALIGN 4096
+here: .FILL DICT_SIZE)
 define([qar], [[$1]])
 define([NORMAL_SEMANTICS],
 [PUSH_EL(SEMANTIC_TAB, [[[code_compile, code_execute]]])])

@@ -4,6 +4,8 @@ gcc -gdb3 -DDEBUG t.S -o fourk-debug
 # Amazing if we got here... Compile our shit
 gcc -O1 -ffast-math -fomit-frame-pointer -c t.S -o t.o
 #gcc tiny.S -nostdlib -Wl,--oformat,binary -o tiny
+#gcc tiny2.S -nostdlib -o tiny2
+gcc tiny2.S /lib/ld-linux.so.2 /usr/lib/libdl.so -nostdlib -o tiny3
 
 #gcc striper.c -o striper
 # Link it..

@@ -7,6 +7,30 @@ include(dict.m4)
 	.DATA
 #endif
 
+################################################################################
+# Get token, separated by whites, and put it in token
+# TODO: Make it case insesitive (lowercase everything)
+# In:
+# Out:
+# eax - integer value
+# token - a token
+_gettoken:
+# Skip whites
+	call	_get_key_white_skip
+	mov 	$token,%edi
+	mov 	$NTAB_ENTRY_SIZE,%ecx
+1:
+	dec %ecx			# keep the counter becasue we need to clear out token
+	stosb				# in al we had out character
+	call _get_key			# get next key
+	call _is_white			# is white?
+	jnz 1b				# NO?
+	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
+	xor 	%eax,%eax		# clear status (not needed?)
+	rep 	stosb			# Fill rest of token
+	ret
+
+	.ALIGN 4096
 	.GLOBL main
 	.GLOBL _start
 _image_start:
@@ -29,6 +53,8 @@ main:
 #endif
 	mov	%esp,%ebp
 	sub	$4096,%ebp
+interpret_loop:
+
 1:
 	K4_SAFE_CALL(_gettoken)
 
@@ -146,28 +172,6 @@ _parse_literal:
 	
 	
 	
-################################################################################	
-# Get token, separated by whites, and put it in token
-# TODO: Make it case insesitive (lowercase everything)
-# In:
-# Out:	
-# eax - integer value
-# token - a token
-_gettoken:
-# Skip whites
-	call	_get_key_white_skip
-	mov 	$token,%edi
-	mov 	$NTAB_ENTRY_SIZE,%ecx
-1:	
-	dec %ecx			# keep the counter becasue we need to clear out token
-	stosb				# in al we had out character
-	call _get_key			# get next key
-	call _is_white			# is white?
-	jnz 1b				# NO?
-	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
-	xor 	%eax,%eax		# clear status (not needed?)
-	rep 	stosb			# Fill rest of token
-	ret
 	
 	
 	
@@ -408,16 +412,30 @@ DEF_CODE(compile, "compile")
 END_CODE
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	K4_SAFE_CALL(fopen, $token,$str_wt)
+	K4_SAFE_CALL(fopen, $token,$str_wb)
 	push	%eax
 	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
 	K4_SAFE_CALL(fclose, %eax)
 END_CODE
+DEF_CODE(load_image, "load-image")
+#define PROT_READ	0x1		/* Page can be read.  */
+#define PROT_WRITE	0x2		/* Page can be written.  */
+#define PROT_EXEC	0x4		/* Page can be executed.  */
+#define PROT_NONE	0x0		/* Page can not be accessed.  */
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+	K4_SAFE_CALL(fopen, $token,$str_rb)
+	push	%eax
+	K4_SAFE_CALL(fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	pop	%eax
+	K4_SAFE_CALL(fclose, %eax)
+	jmp interpret_loop
+END_CODE
 #ifdef DEBUG
 	.data
 #endif
-	
+
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
@@ -429,11 +447,14 @@ token:		.FILL	64
 fmt_float: 	.ASCIZ  "%f"
 fmt_hex:	.ASCIZ 	"%x"
 fmt_dec:	.ASCIZ 	"%d"
-str_wt:		.ASCIZ 	"wt"
+str_wb:		.ASCIZ 	"wb"
+str_rb:		.ASCIZ 	"rb"
 var_base:	.LONG 	10
 msg:	.ASCIZ "%s\n"
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:	.ASCIZ "Test1\n"
 msg_test2:	.ASCIZ "Test2\n"
 msg_test3:	.ASCIZ "Test3\n"
-_image_end:	
+	.ALIGN 4096
+_image_end:
+.asciz "dummy"

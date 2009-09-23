@@ -6,13 +6,13 @@
    http://www.mkssoftware.com/docs/man1/m4.1.asp
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
-** TODO research how to define words with embeded comma inside 
+* Forth Specific
+** TODO research how to define words with embeded comma inside	       :phon:
+   SCHEDULED: <2009-09-23 Mit>
    ( i know it is stupid but who cares :-).
- 
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
-* Forth Specific
 ** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
@@ -67,11 +67,13 @@
     -- spec
 
 **** TODO Reading m4 docs
+     SCHEDULED: <2009-09-23 Mit>
 *** x86
     The last time I played with it was more than a year
     before 
     -- phon
 **** TODO Reading my x86 reference book       
+     SCHEDULED: <2009-09-23 Mit>
 ** spec								       :spec:
 *** x86
     Need to know about various size optimisations tips.

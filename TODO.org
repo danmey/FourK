@@ -30,7 +30,17 @@
 ** TODO Add more Forth words that cover basic stuff
    We need some basic functionality in place, need some more core words, and more FourK
    define words
-** TODO Split code into physical sections, polish loader
+** TODO Split code into logical sections, polish loader
+   - Base interpreter code section - stripped off
+   - Base runtime section
+   - Core words section - preprocesor for the image should get rid of unused and immediate words 
+   - User words section - same as above
+   - Dispatch table section - same sa above
+   - Names table section - stripped off
+   - Semantic section - stripped off
+   
+   Not all the sections are needed maybe we will put a data into separate sections.
+** TODO Make preprocesor (linker) for images
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
 ** TODO Different flavours of literals

@@ -8,12 +8,14 @@
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
 * Forth Specific
-** TODO research how to define words with embeded comma inside 
+** TODO research how to define words with embeded comma inside	       :phon:
+   SCHEDULED: <2009-09-23 Mit>
    ( i know it is stupid but who cares :-).
  
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
+
 * Size considerations
 ** TODO Think how to make a smallest Linux executable ever,	     :design:
    with proper loading of dynamic symbols, how to do this without ld?
@@ -30,11 +32,13 @@
     I never really looked at it and now I know why
     -- phon
 **** TODO Reading m4 docs
+     SCHEDULED: <2009-09-23 Mit>
 *** x86
     The last time I played with it was more than a year
     before 
     -- phon
 **** TODO Reading my x86 reference book       
+     SCHEDULED: <2009-09-23 Mit>
 ** spec								       :spec:
 * "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>

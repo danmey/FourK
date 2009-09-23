@@ -13,21 +13,26 @@
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
 * Forth Specific
-** DONE Bootstrap a basic Forth system :spec:
+** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
-** DONE Build a first executable image :spec:
+** DONE Build a first executable image				       :spec:
    Only dumping to executable done, via save-image core word. No postprocessing or loading. 
-** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
-   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
-   Please not that we need that for automated backpatching, during saving the image.
+** DONE Very simple load/execution of a saved image		       :spec:
+   Done by ovewriting the actual image with a new one. 
+   Requirment of having some code not loaded dynamically, especially symbols from
+   dlls that are accessed directly (not through plt) (problem with the `stdin' variable).
 
-** TODO Very simple load/execution of a saved image.
-** TODO Loading imports
-   Please see the design section. (What we don't know yet)
+** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
+  This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
+  Please not that we need that for automated backpatching, during saving the image.
+
 ** TODO Add more Forth words that cover basic stuff
    We need some basic functionality in place, need some more core words, and more FourK
    define words
+** TODO Split code into physical sections, polish loader
+** TODO Loading imports
+   Please see the design section. (What we don't know yet)
 ** TODO Different flavours of literals
    Byte signed, unsigned, dword. float?. Resolved at compile time.
 ** TODO Floating point stack

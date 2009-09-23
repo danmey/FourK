@@ -3,7 +3,7 @@ m4 -s fourk2.S > t.S
 gcc -gdb3 -DDEBUG t.S -o fourk-debug
 # Amazing if we got here... Compile our shit
 gcc -O1 -ffast-math -fomit-frame-pointer -c t.S -o t.o
-gcc tiny.S -nostdlib -Wl,--oformat,binary -o tiny
+#gcc tiny.S -nostdlib -Wl,--oformat,binary -o tiny
 
 #gcc striper.c -o striper
 # Link it..

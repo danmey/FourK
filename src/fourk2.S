@@ -34,7 +34,18 @@ main:
 	jnc 	3f
 	K4_SAFE_CALL(printf,$msg_not_defined)
 	jmp 	1b
-3:	
+3:
+	cmp	$0, var_state
+	jnz	4f
+	mov	var_here,%ebx
+	movb	$0,(%ebx)	# token for literal
+	incl	%ebx
+	movb	%al,(%ebx)
+	incl	%ebx
+	mov	%ebx,var_here
+	jmp 	1b
+
+4:	
 	xchg 	%esp,%ebp
 	push	%eax
 	xchg 	%esp,%ebp
@@ -44,19 +55,20 @@ _exit:
 	ret
 
 docol:
+	push	%esi
 	lea	4(%eax),%esi
+2:	
 	xor	%eax,%eax
-1:	
 	lodsb
 	cmpb	$-1,%al
-	je	_exit
-	push	%esi
+	jne	1f
+	pop	%esi
+	ret
+1:	
 	mov	dsptch(,%eax,4),%eax
 	mov	(%eax), %ebx
  	call	*%ebx
-	pop	%esi
-	jmp 	1b
-	ret
+	jmp 	2b
 
 	.ALIGN	4
 	.STRING	"BEGX"
@@ -249,6 +261,14 @@ _find_word:
 
 
 BEGIN_DICT
+DEF_CODE(lit, "lit")
+	xchg	%esp,%ebp
+	xor	%eax,%eax
+	lodsb
+	push	%eax
+	xchg	%esp,%ebp
+	ret
+END_CODE
 DEF_CODE(dup,"dup")
 	xchg	%esp,%ebp
 	pushl	(%esp)
@@ -285,16 +305,9 @@ DEF_CODE(comma, ["ccomma"])
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(lit, "lit")
-	xchg	%esp,%ebp
-	xor	%eax,%eax
-	lodsb
-	push	%eax
-	xchg	%esp,%ebp
-	ret
-END_CODE
 
 DEF_CODE(create,"create")
+	push	%esi
 	xchg	%esp,%ebp	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	$token,	%esi		#load token into esi
@@ -320,16 +333,17 @@ DEF_CODE(create,"create")
 
 	incl	var_current		#increment current word
 	xchg	%esp,%ebp
+	pop	%esi
 	ret
 END_CODE
 DEF_IMM(lb, "lb")		#alias for [
 	movl	$1, var_state
 END_CODE
-DEF_IMM(rb, "rb")
+DEF_CODE(rb, "rb")
 	movl	$0, var_state	#alias for ]
 END_CODE
 DEF_IMM(immediate,"immediate")
-	movl	var_current,%eax       	#load index (unneeded?)
+	movl	var_current,%eax
 	dec	%eax
 	lea	semantic(,%eax,8),%edi 	#store semantic actions (two dwords)
 	movl	$code_execute, (%edi)
@@ -340,13 +354,11 @@ DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebp	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
-	call	_find_word
+	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebp
 	call	code_compile
 	ret
-1:
-	xchg	%esp,%ebp	
 END_CODE
 	
 DEF_CODE(at, "@")
@@ -379,7 +391,7 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebp
 END_CODE
 
-		.data
+	.data
 
 DEF_VAR(state, 1)
 DEF_VAR(here, here)

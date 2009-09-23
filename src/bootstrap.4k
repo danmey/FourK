@@ -1,4 +1,5 @@
-create ; immediate  -1 ccomma -1 ccomma 
-create : postpone create postpone ;
+create ; immediate postpone lb postpone lit -1 ccomma postpone ccomma -1 ccomma
+create : postpone create postpone rb ;
+: a 2 + . ;
+123 a
 
-: a ;

@@ -10,5 +10,13 @@ image
 *.a
 *.res\n
 *\#\n
-4k a.out t.S t.o fourk2 stripper
+4k
+a.out 
+t.S
+t.o 
+fourk2 
+stripper
+*.gz
+*.paq8l
+tiny
 fourk-debug

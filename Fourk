@@ -1,0 +1,197 @@
+:)
+ok let's start with the stuff...
+for sure, urgh.. my color is too strong
+better..
+
+1. Architecture
+that what was said before
+and...how do we tackle the immediate/compiling and normal words couple
+normally we would have two pointers for each mode, compile and the interpret mode
+for each word, but that seems to be an overkill
+
+ah, now I see. got it from the wrong point. 
+we need some kind of polymorphism for compilation and interpretation it is 
+a detail but important
+
+So the word layout we talk about looks normally like this:
+
+-------------
+    name
+-------------
+    type ptr
+-------------
+  "code" ptr
+-------------
+   (next ptr)   // which will be useless in our case
+-------------
+
+yes, but.. type ptr is really a couple: compilation semantics and interpretation 
+semantics 
+(which are pointers usually to compile and interpret words), so intepreter pushes the word on stack and executes one of them
+
+I saw different layouts. btw. that is the actual layout I use in my forth.
+
+The type of the word is saved in a flag.
+Yes that is another solution, that was the case in my first forth
+but apparently in case of an image you need only one field whatever it is !
+because you are not intepreting at this time
+you don't even need any field really...
+i am greedy to strip anything i can you see
+
+no wonder, we target 4k. so we need to.
+
+so is it reasoanble to encode this information somewher else?
+that would easier our lives
+
+I'm a bit unsure about which information we are talking about?
+About the behaviour of the word? if it's imediate or not?
+
+yes
+there is another thing
+which is actually just compiler sugar(imediate words)
+yes, but if we plan to strip any information from the image, we need to be able to partition the image into sections
+if we are not planning any relocation, otherwise we can backpatch the image at runtime
+
+"backpatch"? means what?
+
+yes fix the addresses at a runtime
+if i had such code in the core:
+
+movl	$ntab,%ebp
+...
+
+and then change the image such that real ntab address in the image will be different
+i need to alter this instruction and update the address
+(which will happen always when we change the layout)
+
+2. Image layout
+
+hmm..
+We need to think what would be the simpliest way
+my proposal is:
+(i need to resemble that)
+
+-------------------------------------
+* start marker 
+  run module              - allow to run the vm with an image
+  dynamic symbols load    - loads the symbols at the runtime (imports)
+  core dictionary         - all the assemly words not immediate	  
+  user dictionary         - our defined words not immediate
+  word ptr table          - dispatch table with word pointers
+  word symbol name table  - import table
+
+* erase marker begin           - beg here everything will be erased
+      word name table          - 
+      interpret/compile module 
+      imm ptr table
+ imm dictionary
+      data space
+      
+* erase marker end
+
+Q: That is the memory layout? looks like that
+A: yes
+
+Q: How we are going to fill the gaps in dispatch table, because it can contain 
+pointers to words which will be stripped off (immediate ones) and we are adressing
+with an index, so it must be continous region? (or we don't care about it? just zeroes? or RLE) 
+
+Q: If I see that correctly, we have two tables for wordnames. One for
+   words and the other for import symbols, do we need that?
+A: A good point, maybe special flag is enough? The importing will be done in 
+a brute force way, just harcoded lib name and will try to import a symbol from each one 
+until it finds it, so we will have e.g glutOpenWindow (or whathever) and look also in
+libgl and then in libGLUT. so we need only names. OK that is fine to have special flag to do it. Cool idea:).
+But... again we are stripping the name table for runtime... because we don't need any names in the image... :(
+
+Q: Ok, what is the actual problem? we need some compact format, without 
+   all that names. Is that what we need? I see it that way.
+A: Yes, generally speaking we need to be able to get rid of some parts of executable with minimal runtime costs.
+   (Including code to handle that, and space needed)
+
+The costs are what we are interested in. ok.
+I have thoughts about ifs and butts in the image. Maybe we can shift it to postprocess the image. 
+Relocate some of the sections and so on, that will be more clever. Because I originally thought to leave.. 
+zeores in the image and let the compressor do the job. 
+
+Q: How did you make the image loader for the BootForth and GameForth?
+A: Simple, that isn't done yet :-(
+Ah ok it is not that easy!
+Q: Any fresh thought what shall we do currently, how do we split a code? I can say that some of the parts 
+are done. Simple interpreter and three words. 
+QQ: Split the code? making it smaller? 
+AA: No just dividing the work :) So we both will be happy and busy:)
+At the moment I don't have an idea and I'm a bit tired. must be that 
+git-repo-battle
+
+OK. Yes I see, thanks for that once more. So what I will do tonight I will add some features.
+Playing a bit around with some possible ways could lead to the best solution or
+atleast the more realistic one.
+
+Maybe you can try to run it, on your machine.
+(should work flawlessly as it is small)
+the words suported, "+", "drop", "dup", "." :)
+ 
+The Image needs a place like a main or something like that, which gets executed
+at startup.
+
+From the primitve side, which are basically bytecodes in that threading system,
+we need followingd: 
+
+- something for getting a window (glut or SDL)
+- something for opengl/whatever (openGL)
+- sound (/dev/snd  ) (better interface) (SDL again?) perhaps? don't know (yes, I am sure)
+- something for closing the window (SDL again) (yes)
+
+
+
+In my previous version it used to be like that
+
+1.0 1.0 1.0 glVertex3f **
+what did the ** 
+just called the address on the stack
+oh and i had also the size to fix the stack frame... (maybe it was already in the glVertex3f)
+but i see big point of having uniform representation of words and imports
+"plug and play"?
+Yes, maybe to make an import table we will need to recompile Fourk!
+
+
+Yes, last defined word will do.
+Hmm? in what context will that do it?
+
+You asked about the entry point, before. So I think that the best is to have it as a last word in the table.
+Ah .. now I get it. entry point == last defined word
+sounds like a reasonable solution.
+Yes
+Just a question: when can you start to work on this project? Is it possible to do some coding together let's say tomorrow?:)
+Sounds like fun, but perhaps I need to skip sometime, because someone wants to 
+engrave something into acryl with the lasercutter of the metalab.
+Ah ok no probs, as long as we keep it alive, it is not a problem.
+Good. 
+Ok i will carry on using our repo on your space, and see how far i will get, today and tomorrow.
+Then let us look at that approach again. 
+Q: How long can we go with that current more unsure/experimenting design till 
+we need a design "set in stone"? After the primitives? After a working dictionary?
+
+
+A: Oh yes I do know what you meant. Well I think the best way is to make it 
+work first with images. So as soon as possible, produce executables. And then think more.
+Before we dive into adding layers of complexity and new words. 
+
+I'm with you in that approach. Let's do it that way.
+Thanks :D yes it will be more fun as well.
+With a lot of failing. As well.
+Here we come! FAIL AHEAD! :-D
+Yep, and we are ready to take it on our necks lol
+on our neck :-P
+yes :P
+
+
+*crack* 
+ok, enough childy fun
+Now the serousness begins?
+
+------------
+3. Imports
+------------
+

@@ -23,12 +23,21 @@ DEF_TAB(FORTH_NAME_TAB)[]
 DEF_TAB(SEMANTIC_TAB)])
 define([END_DICT], here: .FILL DICT_SIZE)
 define([qar], [[$1]])
-define([DEF_CODE],[PUSH_EL(NAME_TAB, $1)[]
+define([NORMAL_SEMANTICS],
+[PUSH_EL(SEMANTIC_TAB, [[[code_compile, code_execute]]])])
+
+define([IMMEDIATE_SEMANTICS],
+[PUSH_EL(SEMANTIC_TAB, [[[code_execute, code_execute]]])])
+
+define([_DEF_CODE],
+[PUSH_EL(NAME_TAB, $1)[]
 PUSH_EL(FORTH_NAME_TAB, $2)
-PUSH_EL(SEMANTIC_TAB, [[[code_compile, code_execute]]])[]
 word_$1: 
 .LONG code_$1
 code_$1:])
+define([DEF_CODE],[
+_DEF_CODE($1,$2)
+NORMAL_SEMANTICS])
 define([END_CODE],[ret])
 define([DEF_VAR],[
 DEF_CODE($1,"$1")
@@ -39,6 +48,10 @@ ret
 var_$1:	.long $2
 END_CODE
 ])
+define([DEF_IMM],[
+_DEF_CODE($1,$2)
+IMMEDIATE_SEMANTICS])
+
 define([BUILD_NAME_TABLE],[var_ntab: .LONG ntab_end
 .equ NCORE_WORDS,EL_COUNT(NAME_TAB)
 ntab: 

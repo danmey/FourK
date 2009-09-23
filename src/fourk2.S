@@ -16,8 +16,6 @@ main:
 	sub	$4096,%ebp
 1:
 	K4_SAFE_CALL(_gettoken)
-	cmpb	$'!',token
-	jz _exit
 
 	movl	$token,	%edi
 	call	_find_word
@@ -316,13 +314,20 @@ DEF_CODE(create,"create")
 	xchg	%esp,%ebp
 	ret
 END_CODE
-DEF_CODE(lb, "lb")
-	movl	$0, var_state
+DEF_IMM(lb, "lb")
+	movl	$1, var_state
 END_CODE
 DEF_CODE(at, "@")
 	xchg	%esp,%ebp
 	popl	%eax
 	pushl	(%eax)
+	xchg	%esp,%ebp
+	ret
+END_CODE
+DEF_CODE(shreek, "!")
+	xchg	%esp,%ebp
+	popl	%eax
+	popl	(%eax)
 	xchg	%esp,%ebp
 	ret
 END_CODE
@@ -344,7 +349,7 @@ END_CODE
 
 		.data
 
-DEF_VAR(state, 1)
+DEF_VAR(state, 0)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
 END_DICT

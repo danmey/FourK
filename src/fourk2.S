@@ -13,13 +13,13 @@ _image_start:
 	.LONG	_code_start - _image_start
 	.LONG	_code_end   - _image_start
 	.LONG	_dict_start - _image_start
-	.LONG   0 # to be filled, _dict_end
+	.LONG   0 	# to be filled, _dict_end
 	.LONG	ntab - _image_start
-	.LONG   0 # to be filled, _ntab_end
+	.LONG   0 	# to be filled, _ntab_end
 	.LONG 	dsptch - _image_start
-	.LONG 	0 # to be filled, dispatch end
+	.LONG 	0 	# to be filled, dispatch end
 	.LONG 	semantic - _image_start #do we need that
-	.LONG	0 # to be filled semantic end
+	.LONG	0 	# to be filled semantic end
 	
 _code_start:	
 #ifndef DEBUG
@@ -406,6 +406,14 @@ DEF_CODE(compile, "compile")
 	incl	var_here
 	xchg	%esp,%ebp
 END_CODE
+DEF_CODE(save_image, "save-image")
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	K4_SAFE_CALL(fopen, $token,$str_wt)
+	push	%eax
+	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	pop	%eax
+	K4_SAFE_CALL(fclose, %eax)
+END_CODE
 #ifdef DEBUG
 	.data
 #endif
@@ -421,9 +429,11 @@ token:		.FILL	64
 fmt_float: 	.ASCIZ  "%f"
 fmt_hex:	.ASCIZ 	"%x"
 fmt_dec:	.ASCIZ 	"%d"
+str_wt:		.ASCIZ 	"wt"
 var_base:	.LONG 	10
 msg:	.ASCIZ "%s\n"
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:	.ASCIZ "Test1\n"
 msg_test2:	.ASCIZ "Test2\n"
 msg_test3:	.ASCIZ "Test3\n"
+_image_end:	

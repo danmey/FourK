@@ -7,3 +7,5 @@ create : postpone create postpone rb ;
 : 2+ 2 + ;
 
 123 2+ .
+
+save-image test.4ki

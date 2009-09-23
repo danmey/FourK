@@ -1,11 +1,27 @@
 include(macros.m4)
 include(dict.m4)
 
-	.text
-
+#ifdef DEBUG
+	.TEXT
+#else
+	.DATA
+#endif
 
 	.GLOBL main
 	.GLOBL _start
+_image_start:
+	.LONG	_code_start - _image_start
+	.LONG	_code_end   - _image_start
+	.LONG	_dict_start - _image_start
+	.LONG   0 # to be filled, _dict_end
+	.LONG	ntab - _image_start
+	.LONG   0 # to be filled, _ntab_end
+	.LONG 	dsptch - _image_start
+	.LONG 	0 # to be filled, dispatch end
+	.LONG 	semantic - _image_start #do we need that
+	.LONG	0 # to be filled semantic end
+	
+_code_start:	
 #ifndef DEBUG
 _start:
 #else
@@ -258,7 +274,7 @@ _find_word:
 	xor 	%eax,%eax
 	stc
 	ret
-
+_code_end:	
 
 BEGIN_DICT
 DEF_CODE(lit, "lit")
@@ -390,9 +406,10 @@ DEF_CODE(compile, "compile")
 	incl	var_here
 	xchg	%esp,%ebp
 END_CODE
-
+#ifdef DEBUG
 	.data
-
+#endif
+	
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])

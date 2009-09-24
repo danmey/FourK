@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 int main(int argc, char **argv)
 {
@@ -10,7 +11,11 @@ int main(int argc, char **argv)
 	char *outfile=0; 
 	
 	unsigned int size=0, readsize = 69175;
-	unsigned int width=0, height=50;
+	double result = sqrt((double)readsize);
+	unsigned int width=(unsigned int)result, height=(unsigned int)result;
+
+	printf("width: %d heigth: %d square: %d\n", width,height,width*height);
+	printf("shortsize: %d\n",sizeof(short));
 
 	FILE *file=0;
 
@@ -44,7 +49,7 @@ int main(int argc, char **argv)
 	width = size/height;
 	fclose(file);
 	
-	tga_save(outfile, bytes, readsize, width, height);
+	tga_save(outfile, bytes, width*height, (short)width, (short)height);
 
 	free((void *)bytes);
 	free((void *)outfile);

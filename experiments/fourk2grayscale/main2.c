@@ -4,18 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
+
 int main(int argc, char **argv)
 {
 	char *bytes=0;
 	char buf=0;
 	char *outfile=0; 
 	
-	unsigned int size=0, readsize = 69175;
-	double result = sqrt((double)readsize);
-	unsigned int width=(unsigned int)result, height=(unsigned int)result;
 
-	printf("width: %d heigth: %d square: %d\n", width,height,width*height);
-	printf("shortsize: %d\n",sizeof(short));
+	struct stat buffer;
+	unsigned int readsize;
+	double result;
+	unsigned int width, height;
 
 	FILE *file=0;
 
@@ -32,20 +36,18 @@ int main(int argc, char **argv)
         /* I was too lazy to include a size check */	
 	file = fopen(argv[1], "r");
 	if(!file) return 1;
+	
+	fstat(fileno(file), &buffer);
+	readsize = buffer.st_size;
+	printf("size: %d\n", readsize);
+
+	result = sqrt((double)readsize);
+	width = result;
+	height = result;
+
 	bytes = (char *)malloc((size_t)readsize);
 
-	while((buf=fgetc(file))!=EOF)
-	{
-		if(size>=readsize) {
-		printf("buffer size exceeded\n");
-		free((void *)outfile);
-		free((void *)bytes);
-		fclose(file);
-		return 1;
-		}
-		bytes[size]=buf;
-		size++;
-	}
+	fread(bytes, 1, readsize, file);
 	fclose(file);
 	
 	tga_save(outfile, bytes, width*height, (short)width, (short)height);

@@ -29,91 +29,7 @@ _gettoken:
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
-
-	.ALIGN 4096
-	.GLOBL main
-	.GLOBL _start
-_image_start:
-	.LONG	_code_start - _image_start
-	.LONG	_code_end   - _image_start
-	.LONG	_dict_start - _image_start
-	.LONG   0 	# to be filled, _dict_end
-	.LONG	ntab - _image_start
-	.LONG   0 	# to be filled, _ntab_end
-	.LONG 	dsptch - _image_start
-	.LONG 	0 	# to be filled, dispatch end
-	.LONG 	semantic - _image_start #do we need that
-	.LONG	0 	# to be filled semantic end
-	
-_code_start:	
-#ifndef DEBUG
-_start:
-#else
-main:
-#endif
-	mov	%esp,%ebx
-	sub	$4096,%ebx
-interpret_loop:
-
-1:
-	K4_SAFE_CALL(_gettoken)
-
-	movl	$token,	%edi
-	call	_find_word
-	jc	2f
-	
-	xchg	%esp,%ebx
-	pushl	%eax
-	xchg	%esp,%ebx
-	mov 	var_state, %ecx			#if state = 1 then we compile so get the compile semantics
-	shl	$2, %ecx			# * 4 to ecx
-	mov	semantic(%ecx,%eax,8), %ecx 	# load the code address
-	call	*%ecx
-	jmp	1b
-
-2:
-	call	_parse_literal
-	jnc 	3f
-	K4_SAFE_CALL(printf,$msg_not_defined)
-	jmp 	1b
-3:
-	cmp	$0, var_state
-	jnz	4f
-	mov	var_here,%ecx
-	movb	$0,(%ecx)	# token for literal
-	incl	%ecx
-	movb	%al,(%ecx)
-	incl	%ecx
-	mov	%ecx,var_here
-	jmp 	1b
-
-4:	
-	xchg 	%esp,%ebx
-	push	%eax
-	xchg 	%esp,%ebx
-	jmp	1b
-_exit:
-	K4_SAFE_CALL(exit,$ 0)	
-	ret
-
-docol:
-	push	%esi
-	lea	4(%eax),%esi
-2:	
-	xor	%eax,%eax
-	lodsb
-	cmpb	$-1,%al
-	jne	1f
-	pop	%esi
-	ret
-1:	
-	mov	dsptch(,%eax,4),%eax
-	mov	(%eax), %ecx
- 	call	*%ecx
-	jmp 	2b
-
 	.ALIGN	4
-	.STRING	"BEGX"
 ################################################################################	
 # Parse literal, string is in token
 # In:
@@ -278,12 +194,99 @@ _find_word:
 	xor 	%eax,%eax
 	stc
 	ret
+
+main_loop:	
+	mov	%esp,%ebx
+	sub	$4096,%ebx
+interpret_loop:
+
+1:
+	K4_SAFE_CALL(_gettoken)
+
+	movl	$token,	%edi
+	call	_find_word
+	jc	2f
+	
+	xchg	%esp,%ebx
+	pushl	%eax
+	xchg	%esp,%ebx
+	mov 	var_state, %ecx			#if state = 1 then we compile so get the compile semantics
+	shl	$2, %ecx			# * 4 to ecx
+	mov	semantic(%ecx,%eax,8), %ecx 	# load the code address
+	call	*%ecx
+	jmp	1b
+
+2:
+	call	_parse_literal
+	jnc 	3f
+	K4_SAFE_CALL(printf,$msg_not_defined)
+	jmp 	1b
+3:
+	cmp	$0, var_state
+	jnz	4f
+	mov	var_here,%ecx
+	movb	$0,(%ecx)	# token for literal
+	incl	%ecx
+	movb	%al,(%ecx)
+	incl	%ecx
+	mov	%ecx,var_here
+	jmp 	1b
+
+4:	
+	xchg 	%esp,%ebx
+	push	%eax
+	xchg 	%esp,%ebx
+	jmp	1b
+_exit:
+	K4_SAFE_CALL(exit,$ 0)	
+	ret
+
+	.ALIGN 4096
+	.GLOBL main
+	.GLOBL _start
+_image_start:
+	.LONG	_code_start - _image_start
+	.LONG	_code_end   - _image_start
+	.LONG	_dict_start - _image_start
+	.LONG   0 	# to be filled, _dict_end
+	.LONG	ntab - _image_start
+	.LONG   0 	# to be filled, _ntab_end
+	.LONG 	dsptch - _image_start
+	.LONG 	0 	# to be filled, dispatch end
+	.LONG 	semantic - _image_start #do we need that
+	.LONG	0 	# to be filled semantic end
+	
+_code_start:	
+#ifndef DEBUG
+_start:
+#else
+main:
+#endif
+	jmp main_loop
+docol:
+	push	%esi
+	lea	4(%eax),%esi
+2:	
+	xor	%eax,%eax
+	lodsb
+	cmpb	$-1,%al
+	jne	1f
+	pop	%esi
+	ret
+1:	
+	mov	dsptch(,%eax,4),%eax
+	mov	(%eax), %ecx
+ 	call	*%ecx
+	jmp 	2b
+
+
 _code_end:	
 
 BEGIN_DICT
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
 	lodsb
+	movsbl	%al,%eax
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
@@ -299,6 +302,11 @@ DEF_CODE(plus,"+")
 	mov	(%ebx),%eax
 	add	$4,%ebx
 	add	%eax,(%ebx)
+END_CODE
+DEF_CODE(minus,"-")
+	mov	(%ebx),%eax
+	add	$4,%ebx
+	sub	%eax,(%ebx)
 END_CODE
 DEF_CODE(dot, ".")
 	xchg	%esp,%ebx
@@ -421,10 +429,36 @@ DEF_CODE(lower, "<")
 	mov	%edx,(%ebx)
 END_CODE
 
+DEF_CODE(greater, ">")
+	call 	log_op
+	cmovg 	%ecx,%edx
+	mov	%edx,(%ebx)
+END_CODE
+
 DEF_CODE(invert, "invert")
 	notl	(%ebx)
 END_CODE
 
+DEF_CODE(emit, "emit")
+	xchg	%esp,%ebx
+	pushl 	$fmt_char	
+	call 	printf
+	add	$8,%esp
+	xchg	%esp,%ebx
+END_CODE
+DEF_CODE(branch0, "branch")
+	lodsb
+	movsbl 	%al,%eax
+	add	%eax,%esi
+END_CODE
+DEF_CODE(tick, "'")
+	xchg	%esp,%ebx	
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	movl	$token,	%edi
+	K4_SAFE_CALL(_find_word)
+        push    %eax            # push TOS
+	xchg	%esp,%ebx
+END_CODE
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)
@@ -462,6 +496,7 @@ token:		.FILL	64
 fmt_float: 	.ASCIZ  "%f"
 fmt_hex:	.ASCIZ 	"%x"
 fmt_dec:	.ASCIZ 	"%d"
+fmt_char:	.ASCIZ 	"%c"
 str_wb:		.ASCIZ 	"wb"
 str_rb:		.ASCIZ 	"rb"
 var_base:	.LONG 	10

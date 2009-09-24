@@ -1,0 +1,54 @@
+FourK image linker and optimiser
+================================
+
+1. Image sections
+
+Image is a snapshot of whole binary loaded to memory.  It consists all
+of x86 code, byte-code, various tables and other data, it is divided
+by sections.  There is no explicit information about the layout,
+instead special string markers denote sections.  Each section is
+allocated statically and contains enough space to hold the data, for
+example the dictionary section will consist of a static dictionary
+core code padded to 64KB by zeroes initially. Padding by zeroes is
+important as the zeroes will be stripped of the section starting from
+the end of the section.
+
+2. Image linker; re-locations
+
+Obviously if we plan to strip and move sections, we need to be able to
+relocate symbols.  Information about referenced symbols will be taken
+from an image comparison. Two versions of image FourK run-time will be
+created, one slightly relocated by the `org' directive in GCC. Then
+Image linker will compare two binaries and tell us on which offset the
+images are different, thus will give as offsets to the addresses that
+should be relocated.
+
+3. Optimiser
+
+Optimiser will take an image and reloc offset table, and perform
+necessary optimisations such as:
+
+- removing zombie words
+
+- removing immediate words
+
+- moving sections to continuous block
+
+- cutting trailing zeroes at the end
+
+- creating words for the same constants
+
+- back-patching whole image to conform to the changes
+
+Then the image will be saved and will be ready to load by loader.
+
+4. Loader
+
+Loader will consists of a simple interpreting stub, executable bss
+section big enough to hold the loaded image. The start of the bss
+section will be marked with a marker. The linker will place the post
+processed image just after the marker.
+
+
+
+

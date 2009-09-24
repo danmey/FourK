@@ -46,9 +46,8 @@ NORMAL_SEMANTICS])
 define([END_CODE],[ret])
 define([DEF_VAR],[
 DEF_CODE($1,"$1")
-xchgl	%esp,%ebp
-pushl 	$var_$1
-xchgl	%esp,%ebp
+addl	$ 4,%ebx
+movl	$var_$1,(%ebx)
 ret
 var_$1:	.long $2
 END_CODE

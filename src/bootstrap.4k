@@ -3,11 +3,22 @@ create : postpone create postpone rb ;
 
 : c, ccomma ;
 : exit, -1 c, ;
+: [ lb ; immediate
+: ] rb ; 
 
-: 2+ 2 + ;
+: here here @ ;
+: <> = invert ;
+: 0= 0 = ;
+: 0<> 0 <> ;
+: <= > invert ;
+: >= < invert ;
+: cr 10 emit ;
 
-123 2+ .
+: literal 0 c, c, ;
+
+: (postpone) literal compile ; 
+: postpone ' (postpone) ; immediate
+
+: branch, postpone branch -3 c, ; immediate
 
 save-image test.4ki
-load-image test.4ki
-2 .

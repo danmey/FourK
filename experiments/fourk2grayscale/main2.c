@@ -46,7 +46,6 @@ int main(int argc, char **argv)
 		bytes[size]=buf;
 		size++;
 	}
-	width = size/height;
 	fclose(file);
 	
 	tga_save(outfile, bytes, width*height, (short)width, (short)height);

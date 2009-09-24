@@ -4,10 +4,6 @@ create : postpone create postpone rb ;
 : c, ccomma ;
 : exit, -1 c, ;
 
-: 2+ 2 + ;
+: a 1 + . ;
 
-123 2+ .
-
-save-image test.4ki
-load-image test.4ki
-2 .
+2 a

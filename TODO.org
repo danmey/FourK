@@ -1,5 +1,4 @@
 * General Stuff  
-
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
@@ -74,20 +73,35 @@
    
 **** TODO Setup a Gobby discussion
 **** TODO Make up a prototype
+
+* experiments
+  Programs or whatever which help us to get an 
+  understanding in something we are unsure if it 
+  is a good thing.
+** TODO fourk2 -> png, grayscale converter 			       :phon:
+   SCHEDULED: <2009-09-24 Don>
+   I'm just interested into how this kind of
+   code looks like as a PNG image, to get a feeling
+   if that looks like random data or something with
+   a structure. I think it will look like something
+   structured, which means we could atleast theoretically
+   some form-finding compression algorithmens do it's
+   magic.
+   
+
 * "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>
   - I chose "Planning" because I haven't a better word 
     for it -- phon
   - I set the deadline to there we said, that this would 
     be our target -- phon
-  
-    
+      
 * Things which could slow down the project
 ** phon 
 *** university
 *** perhaps a part time job
 ** spec
 *** looking for job
-*** if I find a full time job I might have less time
-*** I might be not avaiable everyday from 16-18
+    If I find a full time job I might have less time
+    I might be not avaiable everyday from 16-18
 * org mode specific stuff

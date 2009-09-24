@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 	char buf=0;
 	char *outfile=0; 
 	
-	unsigned int size=0;
+	unsigned int size=0, readsize = 69175;
 	unsigned int width=0, height=50;
 
 	FILE *file=0;
@@ -27,11 +27,11 @@ int main(int argc, char **argv)
         /* I was too lazy to include a size check */	
 	file = fopen(argv[1], "r");
 	if(!file) return 1;
-	bytes = (char *)malloc((size_t)4096);
+	bytes = (char *)malloc((size_t)readsize);
 
 	while((buf=fgetc(file))!=EOF)
 	{
-		if(size>=4096) {
+		if(size>=readsize) {
 		printf("buffer size exceeded\n");
 		free((void *)outfile);
 		free((void *)bytes);
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	width = size/height;
 	fclose(file);
 	
-	tga_save(outfile, bytes, 8, width, height);
+	tga_save(outfile, bytes, readsize, width, height);
 
 	free((void *)bytes);
 	free((void *)outfile);

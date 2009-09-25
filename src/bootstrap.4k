@@ -16,12 +16,9 @@ create : postpone create postpone rb ;
 
 : literal 0 c, c, ;
 
-: ['] ' ; immediate
-: postpone ' literal ['] compile compile ; immediate
 : (jmp-back) postpone branch here @ - 1 - c, ; 
 : (label) here @ ; 
 : begin (label) ; immediate
 : repeat (jmp-back) ; immediate
-
 : a 0 begin 1 + dup . cr repeat ;
-a
+

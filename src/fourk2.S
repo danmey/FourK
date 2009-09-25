@@ -401,6 +401,7 @@ DEF_IMM(postpone,"postpone")
 	call	code_compile		# compile
 
 END_CODE
+
 DEF_CODE(at, "@")
 	movl	(%ebx),%eax
 	movl	(%eax),%eax
@@ -467,10 +468,20 @@ DEF_CODE(emit, "emit")
 	add	$8,%esp
 	xchg	%esp,%ebx
 END_CODE
-DEF_CODE(branch0, "branch")
+DEF_CODE(branch, "branch")
 	lodsb
 	movsbl 	%al,%eax
 	add	%eax,%esi
+END_CODE
+DEF_CODE(branch0, "branch0")
+	mov	(%ebx),%eax
+	add	$4,%ebx
+	or	%eax,%eax
+	jz	1f
+	lodsb
+	movsbl 	%al,%eax
+	add	%eax,%esi
+1:	
 END_CODE
 DEF_CODE(tick, "'")
 	xchg	%esp,%ebx	

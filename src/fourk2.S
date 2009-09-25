@@ -380,6 +380,13 @@ DEF_IMM(postpone,"postpone")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
 	K4_SAFE_CALL(_find_word)
+	cmp	$1, var_state
+	jne	1f
+	push	%eax
+	xchg	%esp,%ebx
+	call	code_compile		# compile
+	jmp	9f
+1:	
 	mov	var_here,%edi
 	movb	$ 0, (%edi)
 	movb	%al, 1(%edi)
@@ -395,11 +402,10 @@ DEF_IMM(postpone,"postpone")
 	je	1f			# found
 	loop	1b
 1:
-	dec	%ecx
 	push	%ecx
 	xchg	%esp,%ebx
 	call	code_compile		# compile
-
+9:	
 END_CODE
 
 DEF_CODE(at, "@")

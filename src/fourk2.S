@@ -1,3 +1,4 @@
+
 include(macros.m4)
 include(dict.m4)
 
@@ -7,10 +8,19 @@ include(dict.m4)
 	.DATA
 #endif
 
-	.ALIGN 4
-#ifdef REFERENCE
-	.org . + 0x1234
-#endif
+_sscanf:	jmp sscanf
+_ungetc:	jmp ungetc
+_getchar:	jmp getchar
+_printf:	jmp printf
+_exit:		jmp exit
+_fopen:		jmp fopen
+_fwrite:	jmp fwrite
+_mprotect:	jmp mprotect
+_fread:		jmp fread
+_fclose:	jmp fclose
+	
+
+
 ################################################################################
 # Get token, separated by whites, and put it in token
 # TODO: Make it case insesitive (lowercase everything)
@@ -29,11 +39,10 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-	K4_SAFE_CALL(ungetc,%eax,stdin)	# unget char
+	K4_SAFE_CALL(_ungetc,%eax,stdin)	# unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
-	.ALIGN	4
 ################################################################################	
 # Parse literal, string is in token
 # In:
@@ -57,7 +66,7 @@ _parse_literal:
 	repnz 	scasb
 	jnz	1f	# real
 
-	K4_SAFE_CALL(sscanf,$token,$fmt_float,$long_tmp)
+	K4_SAFE_CALL(_sscanf,$token,$fmt_float,$long_tmp)
 	cmp	$0,%eax
 	jz	1f
 	mov 	long_tmp,%eax
@@ -67,7 +76,7 @@ _parse_literal:
 1:
 	cmpb	$10,var_base
 	jz	2f
-	K4_SAFE_CALL(sscanf,$token,$fmt_hex,$long_tmp)
+	K4_SAFE_CALL(_sscanf,$token,$fmt_hex,$long_tmp)
 	cmp	$0,%eax
 	jz	2f
 	mov 	long_tmp,%eax
@@ -76,7 +85,7 @@ _parse_literal:
 	ret
 2:	
 # Use cheap sscanf
-	K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
+	K4_SAFE_CALL(_sscanf,$token,$fmt_dec,$long_tmp)
 3:	
 	cmp	$0,%eax
 	jz 	4f
@@ -139,13 +148,12 @@ _is_white:
 # al - an ASCII code of character
 # token - a token
 _get_key:
-	K4_SAFE_CALL(getchar)
+	K4_SAFE_CALL(_getchar)
 	cmpl 	$-1,%eax
-	jz 	_exit
+	jz 	_exit2
 	cmpb	$10,%al
 	jnz 1f
 1:	ret
-	.ALIGN 4
 	.STRING "ENDX"
 
 ################################################################################	
@@ -223,7 +231,7 @@ interpret_loop:
 2:
 	call	_parse_literal
 	jnc 	3f
-	K4_SAFE_CALL(printf,$msg_not_defined)
+	K4_SAFE_CALL(_printf,$msg_not_defined)
 	jmp 	1b
 3:
 	cmp	$0, var_state
@@ -241,24 +249,19 @@ interpret_loop:
 	push	%eax
 	xchg 	%esp,%ebx
 	jmp	1b
-_exit:
-	K4_SAFE_CALL(exit,$ 0)	
+_exit2:
+	K4_SAFE_CALL(_exit,$ 0)	
 	ret
 
-	.ALIGN 4096
 	.GLOBL main
 	.GLOBL _start
+#ifndef REFERENCE
+	.org . + 0x151234
+	.ALIGN 4096
+#endif
 _image_start:
-	.LONG	_code_start - _image_start
-	.LONG	_code_end   - _image_start
-	.LONG	_dict_start - _image_start
-	.LONG   0 	# to be filled, _dict_end
-	.LONG	ntab - _image_start
-	.LONG   0 	# to be filled, _ntab_end
-	.LONG 	dsptch - _image_start
-	.LONG 	0 	# to be filled, dispatch end
-	.LONG 	semantic - _image_start #do we need that
-	.LONG	0 	# to be filled semantic end
+	.LONG  _image_start
+_the_image:
 	
 _code_start:	
 #ifndef DEBUG
@@ -504,11 +507,11 @@ DEF_CODE(tick, "'")
 END_CODE
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	K4_SAFE_CALL(fopen, $token,$str_wb)
+	K4_SAFE_CALL(_fopen, $token,$str_wb)
 	push	%eax
-	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	K4_SAFE_CALL(_fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
-	K4_SAFE_CALL(fclose, %eax)
+	K4_SAFE_CALL(_fclose, %eax)
 END_CODE
 DEF_CODE(load_image, "load-image")
 #define PROT_READ	0x1		/* Page can be read.  */
@@ -516,12 +519,12 @@ DEF_CODE(load_image, "load-image")
 #define PROT_EXEC	0x4		/* Page can be executed.  */
 #define PROT_NONE	0x0		/* Page can not be accessed.  */
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-	K4_SAFE_CALL(fopen, $token,$str_rb)
+	K4_SAFE_CALL(_mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+	K4_SAFE_CALL(_fopen, $token,$str_rb)
 	push	%eax
-	K4_SAFE_CALL(fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	K4_SAFE_CALL(_fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
-	K4_SAFE_CALL(fclose, %eax)
+	K4_SAFE_CALL(_fclose, %eax)
 	jmp interpret_loop
 END_CODE
 #ifdef DEBUG

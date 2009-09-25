@@ -12,6 +12,7 @@
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
+** TODO Make preprocesor (linker) for images
 ** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
@@ -39,7 +40,6 @@
    - Semantic section - stripped off
    
    Not all the sections are needed maybe we will put a data into separate sections.
-** TODO Make preprocesor (linker) for images
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
 ** TODO Different flavours of literals

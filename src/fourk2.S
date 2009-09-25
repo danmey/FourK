@@ -7,6 +7,10 @@ include(dict.m4)
 	.DATA
 #endif
 
+	.ALIGN 4
+#ifdef REFERENCE
+	.org . + 0x1234
+#endif
 ################################################################################
 # Get token, separated by whites, and put it in token
 # TODO: Make it case insesitive (lowercase everything)
@@ -258,7 +262,8 @@ _image_start:
 	
 _code_start:	
 #ifndef DEBUG
-_start:
+#_start:
+main:	
 #else
 main:
 #endif

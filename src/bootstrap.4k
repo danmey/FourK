@@ -3,7 +3,7 @@ create : postpone create postpone rb ;
 
 : c, ccomma ;
 : exit, -1 c, ;
-: [ lb ; immediate
+: [ postpone lb ; immediate
 : ] rb ; immediate
 
 

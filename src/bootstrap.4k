@@ -4,9 +4,9 @@ create : postpone create postpone rb ;
 : c, ccomma ;
 : exit, -1 c, ;
 : [ lb ; immediate
-: ] rb ; 
+: ] rb ; immediate
 
-: here here @ ;
+
 : <> = invert ;
 : 0= 0 = ;
 : 0<> 0 <> ;
@@ -16,9 +16,12 @@ create : postpone create postpone rb ;
 
 : literal 0 c, c, ;
 
-: (postpone) literal compile ; 
-: postpone ' (postpone) ; immediate
+: ['] ' ; immediate
+: postpone ' literal ['] compile compile ; immediate
+: (jmp-back) postpone branch here @ - 1 - c, ; 
+: (label) here @ ; 
+: begin (label) ; immediate
+: repeat (jmp-back) ; immediate
 
-: branch, postpone branch -3 c, ; immediate
-
-save-image test.4ki
+: a 0 begin 1 + dup . cr repeat ;
+a

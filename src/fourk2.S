@@ -295,6 +295,12 @@ DEF_CODE(dup,"dup")
 	pushl	(%esp)
 	xchg	%ebx,%esp
 END_CODE
+DEF_CODE(swap,"swap")
+	xchg %eax,4(%ebx)
+	xchg %eax,(%ebx)
+	mov  %eax,4(%ebx)
+END_CODE
+
 DEF_CODE(drop,"drop")
 	add	$4,%ebx
 END_CODE
@@ -355,7 +361,7 @@ DEF_CODE(create,"create")
 	pop	%esi
 	ret
 END_CODE
-DEF_IMM(lb, "lb")		#alias for [
+DEF_CODE(lb, "lb")		#alias for [
 	movl	$1, var_state
 END_CODE
 DEF_CODE(rb, "rb")
@@ -374,12 +380,27 @@ DEF_IMM(postpone,"postpone")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
 	K4_SAFE_CALL(_find_word)
-        push    %eax            # push TOS
-	xchg	%esp,%ebx
-	call	code_compile
-	ret
-END_CODE
+	mov	var_here,%edi
+	movb	$ 0, (%edi)
+	movb	%al, 1(%edi)
+	incl 	var_here
+	incl 	var_here
 	
+	mov	semantic(,%eax,8), %edi	#load the semantics
+	sub	$4, %edi		#convert it to the word token
+	mov	var_current,%ecx	#current word
+	dec	%ecx			
+1:					# find the word of semantics
+	cmp	dsptch(,%ecx,4),%edi 	
+	je	1f			# found
+	loop	1b
+1:
+	dec	%ecx
+	push	%ecx
+	xchg	%esp,%ebx
+	call	code_compile		# compile
+
+END_CODE
 DEF_CODE(at, "@")
 	movl	(%ebx),%eax
 	movl	(%eax),%eax

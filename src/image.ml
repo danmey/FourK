@@ -8,6 +8,7 @@ let reference_file = ref None
 let base_address = ref None
 let which_show = ref 1
 let relocate = ref false
+let list_sections = ref false
 module Ni = Int32
 
 let options = 
@@ -17,7 +18,8 @@ let options =
     "-b", String (fun hex -> (Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x)))), 
     "Base address of the image";
     "-R", String (fun nm -> reference_file := Some nm; relocate := true), "Perform relocation using reference file";
-    "-s", Int (fun i -> which_show := i), "Use base adresses from which file; 1 - reference file"
+    "-s", Int (fun i -> which_show := i), "Use base adresses from which file; 1 - reference file";
+    "-l", Unit (fun () -> list_sections := true), "List sections"
   ]
 
 let dword arr i = 
@@ -93,7 +95,33 @@ let load_file nm =
     done;
     close_in file;
     array
-  
+
+let next_section image o =
+  try
+    let rec skip_to_section f i = 
+      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
+	begin
+	  i+2
+	end
+      else begin	  
+	f image.(i);
+	skip_to_section f (i+1) 
+      end
+    in
+
+    let i = skip_to_section (fun _ -> ()) o in
+    let name = ref "" in
+    let i' = skip_to_section 
+      (fun c ->
+	 name := !name ^ Printf.sprintf "%c" (char_of_int c)) i
+    in
+      try 
+	let j = skip_to_section (fun _ -> ()) i' in
+	  (i,j - i - 2,!name)
+      with _ -> (i,Array.length image - i,!name)
+  with _ -> (0,0,"")
+
+
 let usage_text = "image4k <options> <file>"
 (* String of character *)
 let process_file str =        
@@ -127,9 +155,14 @@ let process_file str =
 			   Printf.printf "%.4lx: dword\t%.8lx -> %.8lx\n" (b ofs) v1 v2)
 		      diff;
 	   )
-       |  None -> print_endline "not implemented!")
-  
-  
+       |  None -> ());
+    if !list_sections then
+      let rec loop acc = function
+	| (0, _, _) -> List.rev acc
+	| (o, l, _) as section -> loop (section::acc) (next_section f2 (o+l))
+      in
+      let sections = loop [] (next_section f2 0) in 
+	List.iter (fun (s,l,n) -> Printf.printf "name: %s\toffset: %d\tlen: %d\n" n s l) sections
   
   
   let _ = 

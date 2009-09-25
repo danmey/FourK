@@ -1,3 +1,8 @@
+define([SECTION], 
+[.ASCII "@@"
+ .ASCII $1
+ .ASCII "@@"
+])
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
 define([DICT_SIZE], 32*1024)
@@ -18,6 +23,7 @@ dnl
 define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$2])])])dnl
 dnl
 define([BEGIN_DICT],[
+SECTION("dict")
 _dict_start: 
 DEF_TAB(NAME_TAB)[]
 DEF_TAB(DISPATCH_TAB)[]
@@ -54,7 +60,9 @@ define([DEF_IMM],[
 _DEF_CODE($1,$2)
 IMMEDIATE_SEMANTICS])
 
-define([BUILD_NAME_TABLE],[var_ntab: .LONG ntab_end
+define([BUILD_NAME_TABLE],[
+SECTION("name")
+var_ntab: .LONG ntab_end
 .equ NCORE_WORDS,EL_COUNT(NAME_TAB)
 ntab: 
 FOR_EACH(FORTH_NAME_TAB, arg,[.ASCII arg
@@ -62,15 +70,16 @@ FOR_EACH(FORTH_NAME_TAB, arg,[.ASCII arg
 ])
 ntab_end:
 .FILL NTAB_ENTRY_SIZE*MAX_WORDS
+SECTION("dsptch")
 dsptch:
 FOR_EACH(NAME_TAB, arg, [.LONG word_[]arg
 ])
 dsptch_end:
 .FILL 4*MAX_WORDS
+SECTION("semantic")
 semantic:
 FOR_EACH(SEMANTIC_TAB, arg, [.LONG arg
 ])
 semantic_end:
 .FILL 8*MAX_WORDS
 ])
-

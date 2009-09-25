@@ -1,4 +1,3 @@
-
 include(macros.m4)
 include(dict.m4)
 
@@ -8,6 +7,7 @@ include(dict.m4)
 	.DATA
 #endif
 
+# Following imports are used and needs to be dereferenced
 _sscanf:	jmp sscanf
 _ungetc:	jmp ungetc
 _getchar:	jmp getchar
@@ -259,17 +259,18 @@ _exit2:
 	.org . + 0x151234
 	.ALIGN 4096
 #endif
+
 _image_start:
 	.LONG  _image_start
-_the_image:
-	
-_code_start:	
+
 #ifndef DEBUG
-#_start:
+	# _start:
 main:	
 #else
-main:
+	main:
 #endif
+
+	
 	jmp main_loop
 docol:
 	push	%esi
@@ -287,8 +288,6 @@ docol:
  	call	*%ecx
 	jmp 	2b
 
-
-_code_end:	
 
 BEGIN_DICT
 DEF_CODE(lit, "lit")
@@ -359,11 +358,7 @@ DEF_CODE(create,"create")
 	mov	var_here, %eax		#load here address
 	movl	%eax,(%edi)
 	movl	$docol,	(%eax)
-#	movb	$3,	4(%eax)		#compile the dot word (token 3)
-#	movb	$3,	5(%eax)		#compile the dot word (token 3)
-#	movb	$-1, 	6(%eax)		#compile the dot word (token 3)
 	addl	$4,var_here	
-
 	incl	var_current		#increment current word
 	xchg	%esp,%ebx
 	pop	%esi

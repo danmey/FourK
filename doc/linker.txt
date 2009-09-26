@@ -11,7 +11,9 @@ allocated statically and contains enough space to hold the data, for
 example the dictionary section will consist of a static dictionary
 core code padded to 64KB by zeroes initially. Padding by zeroes is
 important as the zeroes will be stripped of the section starting from
-the end of the section.
+the end of the section. Each section starts with @@name@@ where name
+is identifier of the section, sections ends either at beginning of next
+section or at the end of the image.
 
 2. Image linker; re-locations
 
@@ -21,7 +23,7 @@ from an image comparison. Two versions of image FourK run-time will be
 created, one slightly relocated by the `org' directive in GCC. Then
 Image linker will compare two binaries and tell us on which offset the
 images are different, thus will give as offsets to the addresses that
-should be relocated.
+should be relocated. 
 
 3. Optimiser
 

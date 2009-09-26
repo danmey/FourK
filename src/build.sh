@@ -23,6 +23,7 @@ ld -dynamic-linker /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o 4k-uncompressed
 #./striper fourk2
 strip -s -R .comment -R .gnu.version 4k-uncompressed
 sstrip 4k-uncompressed
+
 # Compress it
 cp unpack.header 4k 
 gzip -cn9 4k-uncompressed >> 4k 

@@ -439,12 +439,12 @@ DEF_IMM(postpone,"postpone")
 9:	
 END_CODE
 
-DEF_CODE(at, "@")
+DEF_CODE(fetch, "@")
 	movl	(%ebx),%eax
 	movl	(%eax),%eax
 	movl	%eax,(%ebx)
 END_CODE
-DEF_CODE(shreek, "!")
+DEF_CODE(store, "!")
 	movl	(%ebx),%eax
 	mov	4(%ebx),%ecx
 	mov	%ecx,(%eax)

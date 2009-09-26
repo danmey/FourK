@@ -26,15 +26,15 @@ ld -dynamic-linker /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o 4k-uncompressed
 
 #ld -dynamic-linker /lib/ld-linux.so.2 /usr/lib/libc.so t.o -o fourk2
 #./striper fourk2
-#strip -s -R .comment -R .gnu.version 4k-uncompressed
-#sstrip 4k-uncompressed
+strip -s -R .comment -R .gnu.version 4k-uncompressed
+sstrip 4k-uncompressed
 
-#cat bootstrap.4k | ./4k-uncompressed
-#../image4k/image4k -link 4k-uncompressed image1.4ki
+cat bootstrap.4k | ./4k-uncompressed
+../image4k/image4k -link 4k-uncompressed image1.4ki
 
 # Compress it
-#cp unpack.header 4k 
-#gzip -cn9 4k-uncompressed >> 4k 
-#chmod +x 4k
+cp unpack.header 4k 
+gzip -cn9 4k-uncompressed >> 4k 
+chmod +x 4k
 
 #rm t.S t.o

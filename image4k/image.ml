@@ -108,7 +108,7 @@ module Section = struct
 	try 
 	  let j = skip_to_section (fun _ -> ()) i' in
 	    (i', j - i'-2,!name, image)
-	with _ -> (i',Array.length image - i'-2,!name, image)
+	with _ -> (i',Array.length image - i',!name, image)
     with _ -> (0,0,"", image)
 
   let fill_all (s,l,_,im) v = Array.fill im s l v
@@ -232,9 +232,12 @@ let process_file str =
 		  copy_same_section src_image target_image "dict"; 
 		  (* Fill with nops *)
 		  Section.fill (Section.find target_image "dict") 0x90 0 5;
-		  copy_same_section src_image target_image "name";
+		  Section.fill_all (Section.find target_image "name") 0; 
+(*		  Section.fill_all (Section.find target_image "semantic") 0; *)
+		  Section.fill_all (Section.find target_image "interpret") 0;
 		  copy_same_section src_image target_image "dsptch";
-		  copy_same_section src_image target_image "semantic";
+(*		  copy_same_section src_image target_image "semantic"; 
+		  copy_same_section src_image target_image "name"; *)
 		  BinaryFile.write target_image !Options.link_with (Array.length target_image);
 	      end
     )

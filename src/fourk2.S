@@ -18,6 +18,23 @@ _image_start:
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
 
+	# Our data, it will be stripped off so store it in intepret section
+long_tmp: 		.LONG 0
+token:			.FILL	64
+fmt_float: 		.ASCIZ  "%f"
+fmt_hex:		.ASCIZ 	"%x"
+fmt_dec:		.ASCIZ 	"%d"
+fmt_char:		.ASCIZ 	"%c"
+str_wb:			.ASCIZ 	"wb"
+str_rb:			.ASCIZ 	"rb"
+var_base:		.LONG 	10
+msg:			.ASCIZ "%s\n"
+msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
+msg_test1:		.ASCIZ "Test1\n"
+msg_test2:		.ASCIZ "Test2\n"
+msg_test3:		.ASCIZ "Test3\n"
+whites:                 .BYTE  4,9,10,12,13,0
+
 # Following imports are used and needs to be dereferenced
 # I am not sure if it is needed
 ## _sscanf:	jmp sscanf
@@ -567,20 +584,4 @@ BUILD_NAME_TABLE
 
 .ALIGN 4096
 _image_end:
-
-# Our data, it will be stripped off so store it in intepret section
-long_tmp: 		.LONG 0
-token:			.FILL	64
-fmt_float: 		.ASCIZ  "%f"
-fmt_hex:		.ASCIZ 	"%x"
-fmt_dec:		.ASCIZ 	"%d"
-fmt_char:		.ASCIZ 	"%c"
-str_wb:			.ASCIZ 	"wb"
-str_rb:			.ASCIZ 	"rb"
-var_base:		.LONG 	10
-msg:			.ASCIZ "%s\n"
-msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
-msg_test1:		.ASCIZ "Test1\n"
-msg_test2:		.ASCIZ "Test2\n"
-msg_test3:		.ASCIZ "Test3\n"
-whites:                 .BYTE  4,9,10,12,13,0
+SECTION("end")

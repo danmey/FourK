@@ -113,7 +113,6 @@ let next_section image o =
 	skip_to_section f (i+1) 
       end
     in
-
     let i = skip_to_section (fun _ -> ()) o in
     let name = ref "" in
     let i' = skip_to_section 
@@ -155,12 +154,13 @@ let nop_jump im =
     im.(s+12) <- 0x90;
     im.(s+13) <- 0x90;
     im.(s+14) <- 0x90
-    
+
+let zero_section (s,l) im = Array.fill im s l 0
 
 let take_sections image =
   let rec loop acc = function
     | (0, _, _) -> List.rev acc
-    | (o, l, _) as section -> loop (section::acc) (next_section image (o+l))
+    | (o, l, n) as section -> if n = "semantic" then section::acc else loop (section::acc) (next_section image (o+l))
   in loop [] (next_section image 0) 
 
 let usage_text = "image4k <options> <file>"
@@ -201,17 +201,24 @@ let process_file str =
 	      begin
 		print_endline !link_with;
 		let im = load_file !link_with in
-		  let (s,l,n) = next_section im 0 in
-		  Printf.printf "Blit: %d %d %d\n" s l (Array.length f2); 
-		    Array.blit f2 0 im (s+6) (Array.length f2-6); 
-		    let (s,l,n) = next_section im 0 in
-		      im.(s+10) <- 0x90;
-		      im.(s+11) <- 0x90;
-		      im.(s+12) <- 0x90;
-		      im.(s+13) <- 0x90;
-		      im.(s+14) <- 0x90; 
+		let sections = take_sections f2 in
+		  List.iter (fun sec ->
+			       let (s,l,n) = sec in
+				 match n with 
+				   | "interpret" -> zero_section (s,l) im;
+
+				   | "semantics" -> zero_section (s,l) im
+				   | "name" -> zero_section (s,l) im
+				   | "dict" -> (
+				       Array.blit f2 0 im (s+6) (Array.length f2-6); 
+				       let (s,l,n) = next_section im 0 in
+					 im.(s+10) <- 0x90;
+					 im.(s+11) <- 0x90;
+					 im.(s+12) <- 0x90;
+					 im.(s+13) <- 0x90;
+					 im.(s+14) <- 0x90)
+				   | _ -> ()) sections;
 		      write_file im !link_with (Array.length im);
-		    
 	      end
     )
       

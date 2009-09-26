@@ -5,7 +5,7 @@ define([SECTION],
 ])
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
-define([DICT_SIZE], 32*1024)
+define([DICT_SIZE], 4*1024)
 dnl
 define([DEF_TAB],[define($1_COUNT, 0)])dnl
 define([PUSH_EL],[define($1_AT[]$1_COUNT,$2)][define([$1_COUNT],incr($1_COUNT))])dnl

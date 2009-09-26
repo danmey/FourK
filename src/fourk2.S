@@ -6,7 +6,7 @@ include(dict.m4)
 #else
 	.DATA
 #endif
-
+SECTION("interpret")
 	
 
 
@@ -265,7 +265,6 @@ _exit2:
 	.GLOBL _start
 
 #ifndef REFERENCE
-	.org . + 0x151234
 	.ALIGN 4096
 #endif
 	

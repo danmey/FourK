@@ -9,6 +9,11 @@ include(dict.m4)
 #else
 	.DATA
 #endif
+#ifndef REFERENCE
+	.ALIGN 4096
+#endif
+_image_start:
+	.LONG  _image_start
 
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
@@ -277,18 +282,13 @@ _exit2:
 
 # If it is reference image then relocate it, I stripped it off
 # need to align to change the memory attributes via mprotect
-#ifndef REFERENCE
-	.ALIGN 4096
-#endif
 	
 BEGIN_DICT
 
-_image_start:
-	.LONG  _image_start
 
 #ifndef DEBUG
-	# _start:
-main:	
+	 _start:
+#main:				
 #else
 	main:
 #endif

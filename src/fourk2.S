@@ -580,4 +580,4 @@ msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
-whites:                 .BYTE  10
+whites:                 .BYTE  4,9,10,12,13,0

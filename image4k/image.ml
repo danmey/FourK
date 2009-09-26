@@ -231,7 +231,7 @@ let process_file str =
 		let copy_same_section im im' nm = Section.copy (Section.find im nm) (Section.find im' nm) in
 		  copy_same_section src_image target_image "dict"; 
 		  (* Fill with nops *)
-(*		  Section.fill (Section.find target_image "dict") 0 5 90; *)
+		  Section.fill (Section.find target_image "dict") 0x90 0 5;
 		  copy_same_section src_image target_image "name";
 		  copy_same_section src_image target_image "dsptch";
 		  copy_same_section src_image target_image "semantic";

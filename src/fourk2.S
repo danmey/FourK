@@ -146,13 +146,13 @@ _get_key_white_skip:
 # token - a token
 _is_white:
 	cmpb	$10,%al		# CR ?
-	jz	1f
+	je	1f
 	cmpb	$13,%al       	# LF ?
-	jz	1f
+	je	1f
 	cmpb	$9,%al		# TAB ?
-	jz	1f
+	je	1f
 	cmpb	$' ',%al	# SPACE ?
-	jz	1f
+	je	1f
 1:	ret
 	
 ################################################################################	
@@ -163,10 +163,10 @@ _is_white:
 # token - a token
 _get_key:
 	K4_SAFE_CALL(_getchar)
-	cmpl 	$-1,%eax
-	jz 	_exit2
-	cmpb	$10,%al
-	jnz 1f
+	cmpl 	$-1,%eax        # if EOF?
+	je 	_exit2          # exit the forth
+	cmpb	$10,%al         # if a newline 
+	jne 1f
 1:	ret
 	.STRING "ENDX"
 
@@ -580,3 +580,4 @@ msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
+whites:                 .BYTE  10

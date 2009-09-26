@@ -16,16 +16,24 @@ module Options = struct
   let link_with = ref ""
 let options = 
   [
-    "-o", String (fun nm -> output_file := nm), "Output image file name";
-    "-r", String (fun nm -> reference_file := Some nm), "Reference file for resolving relocations";
-    "-b", String (fun hex -> (Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x)))), 
+    "-o", String    (fun nm  -> output_file := nm), 
+    "Output image file name";
+    "-r", String    (fun nm  -> reference_file := Some nm), 
+    "Reference file for resolving relocations";
+    "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
     "Base address of the image";
-    "-R", String (fun nm -> reference_file := Some nm; relocate := true), "Perform relocation using reference file";
-    "-s", Int (fun i -> which_show := i), "Use base adresses from which file; 1 - reference file";
-    "-l", Unit (fun () -> list_sections := true), "List sections";
-    "-v", Unit (fun () -> verbose := true), "Be verbose, show relocs in teh section list.";
-    "--brute-force", Unit (fun () -> brute_force := true), "Be brutal, no relocations, fill garbage with zeroes";
-    "-link", String (fun nm -> link_with := nm), "Link with fourk engine"
+    "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
+    "Perform relocation using reference file";
+    "-s", Int       (fun i -> which_show := i), 
+    "Use base adresses from which file; 1 - reference file";
+    "-l", Unit      (fun () -> list_sections := true), 
+    "List sections";
+    "-v", Unit      (fun () -> verbose := true), 
+    "Be verbose, show relocs in teh section list.";
+    "--brute-force", Unit (fun () -> brute_force := true), 
+    "Be brutal, no relocations, fill garbage with zeroes";
+    "-link", String (fun nm -> link_with := nm), 
+    "Link with fourk engine"
   ]
 end
 
@@ -165,8 +173,8 @@ let zero_section (s,l) im = Array.fill im s l 0
 
 let take_sections image =
   let rec loop acc = function
-    | (0, _, _) -> List.rev acc
-    | (o, l, n) as section -> if n = "semantic" then section::acc else loop (section::acc) (next_section image (o+l))
+    | (0, 0, _) -> List.rev acc
+    | (o, l, n) as section -> loop (section::acc) (next_section image (o+l))
   in loop [] (next_section image 0) 
 
 let usage_text = "image4k <options> <file>"
@@ -207,16 +215,16 @@ let process_file str =
 	      begin
 		print_endline !Options.link_with;
 		let im = BinaryFile.read !Options.link_with in
-		let sections = take_sections f2 in
+		let sections = take_sections im in
 		  List.iter (fun sec ->
 			       let (s,l,n) = sec in
+				 print_endline n;
 				 match n with 
-				   | "interpret" -> zero_section (s,l) im;
-
-				   | "semantics" -> zero_section (s,l) im
-				   | "name" -> zero_section (s,l) im
+				   | "interpret" -> zero_section (s,l-2) im
+				   | "semantic" -> zero_section (s,l-2) im
+				   | "name" -> zero_section (s,l-2) im
 				   | "dict" -> (
-				       Array.blit f2 0 im (s+6) (Array.length f2-6); 
+(*				       Array.blit f2 0 im (s+6) (Array.length f2-6); *)
 				       let (s,l,n) = next_section im 0 in
 					 im.(s+10) <- 0x90;
 					 im.(s+11) <- 0x90;

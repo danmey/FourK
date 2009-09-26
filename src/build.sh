@@ -2,13 +2,16 @@
 m4 -s fourk2.S > t.S 
 #gcc -gdb3 -ldl -DDEBUG t.S -o fourk-debug && 
 #gcc -ldl -DREFERENCE t.S -o fourk-ref && 
-#gcc -ldl t.S -o fourk2 &&
+gcc -ldl t.S -o fourk2
 #&& cat bootstrap.4k | ./fourk-ref
+
+cat bootstrap.4k | ./fourk2
+../image4k/image4k -link fourk2 image1.4ki
 
 
 
 # Amazing if we got here... Compile our shit
-gcc -O1 -ffast-math -fomit-frame-pointer -c t.S -o t.o
+gcc -O1 -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 #gcc tiny.S -nostdlib -Wl,--oformat,binary -o tiny
 #gcc tiny2.S -nostdlib -o tiny2
 

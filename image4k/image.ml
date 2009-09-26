@@ -107,12 +107,13 @@ module Section = struct
       in
 	try 
 	  let j = skip_to_section (fun _ -> ()) i' in
-	    (i-2, j - i,!name, image)
-	with _ -> (i-2,Array.length image - (i+2),!name, image)
+	    (i', j - i'-2,!name, image)
+	with _ -> (i',Array.length image - i'-2,!name, image)
     with _ -> (0,0,"", image)
 
-  let fill (s,l,_,im) v = Array.fill im s l v
-    
+  let fill_all (s,l,_,im) v = Array.fill im s l v
+  let fill (s,l,_,im) v o n = Array.fill im (s+o) n v
+
   let take image =
     let rec loop acc = function
       | (0, 0, _,_) -> List.rev acc
@@ -228,9 +229,11 @@ let process_file str =
 		let target_image = BinaryFile.read !Options.link_with in
 		let src_image = f2 in
 		let copy_same_section im im' nm = Section.copy (Section.find im nm) (Section.find im' nm) in
-		  copy_same_section src_image target_image "dict";
-		  copy_same_section src_image target_image "dsptch";
+		  copy_same_section src_image target_image "dict"; 
+		  (* Fill with nops *)
+(*		  Section.fill (Section.find target_image "dict") 0 5 90; *)
 		  copy_same_section src_image target_image "name";
+		  copy_same_section src_image target_image "dsptch";
 		  copy_same_section src_image target_image "semantic";
 		  BinaryFile.write target_image !Options.link_with (Array.length target_image);
 	      end

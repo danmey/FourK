@@ -287,10 +287,13 @@ BEGIN_DICT
 
 
 #ifndef DEBUG
-	 _start:
+#ifdef PARTY
+	_start:
+#else
+main:
+#endif
 #main:				
 #else
-	main:
 #endif
 # The call is nopped in the final image
 	jmp 	entry_point

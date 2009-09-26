@@ -584,4 +584,3 @@ BUILD_NAME_TABLE
 
 .ALIGN 4096
 _image_end:
-SECTION("end")

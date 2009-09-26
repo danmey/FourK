@@ -2,15 +2,17 @@ type section = { offset:int; length:int }
 type symbol = {id:int; offset:int; backpatch: int list }
 type image = {sections:section list; symbols:symbol list}
 open Arg 
-
-let output_file = ref "a.4ki"
-let reference_file = ref None
-let base_address = ref None
-let which_show = ref 1
-let relocate = ref false
-let list_sections = ref false
 module Ni = Int32
 
+  let output_file = ref "a.4ki"
+  let reference_file = ref None
+  let base_address = ref None
+  let which_show = ref 1
+  let relocate = ref false
+  let list_sections = ref false
+  let verbose = ref false
+  let brute_force = ref false
+  let link_with = ref ""
 let options = 
   [
     "-o", String (fun nm -> output_file := nm), "Output image file name";
@@ -19,7 +21,10 @@ let options =
     "Base address of the image";
     "-R", String (fun nm -> reference_file := Some nm; relocate := true), "Perform relocation using reference file";
     "-s", Int (fun i -> which_show := i), "Use base adresses from which file; 1 - reference file";
-    "-l", Unit (fun () -> list_sections := true), "List sections"
+    "-l", Unit (fun () -> list_sections := true), "List sections";
+    "-v", Unit (fun () -> verbose := true), "Be verbose, show relocs in teh section list.";
+    "--brute-force", Unit (fun () -> brute_force := true), "Be brutal, no relocations, fill garbage with zeroes";
+    "-link", String (fun nm -> link_with := nm), "Link with fourk engine"
   ]
 
 let dword arr i = 
@@ -75,16 +80,16 @@ let binary_compare image1 image2 start base =
     done;
     List.rev !relocs
 
-let relocate_image image relocs base =
+let relocate_section image relocs base =
   List.iter 
     (fun (ofs,_,v,_) -> 
        let v' = Ni.add v base in
 	 set_dword image (Ni.to_int ofs) v') relocs
 
-let write_file image nm = 
+let write_file image nm len = 
   let file = open_out_bin nm in
-    Array.iter (fun x -> output_byte file x) image;
-      close_out file
+    Array.iteri (fun i x -> if i < len then output_byte file x) image;
+    close_out file
 
 let load_file nm =
   let file = open_in_bin nm in
@@ -121,6 +126,42 @@ let next_section image o =
       with _ -> (i,Array.length image - i,!name)
   with _ -> (0,0,"")
 
+let relocs_in_section (s,e) = 
+  List.fold_left (fun acc r -> let (i,_,_,_) = r in if Ni.to_int i >= s && Ni.to_int i < e then r::acc else acc) []
+  
+let cut_section image (s,l) =
+  let rec zeroes i = 
+    if i >= s then
+      if image.(i) = 0 then zeroes (i-1)
+      else i+1
+    else
+      i
+  in
+    zeroes (s+l-1)
+
+let print_reloc base1 base2 (ofs, v1, v2, n) =
+  let which = match !which_show with 1 -> base1 | _ -> base2 in
+  let addr = function Some x -> x | None -> Ni.of_int 0 in
+  let b ofs = Ni.add ofs (Ni.add which (addr !base_address)) in
+  if n = 1 then 
+    Printf.printf "\t%.4lx: byte\t%.8lx -> %.8lx\n" (b ofs) v1 v2
+  else 
+    Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx\n" (b ofs) v1 v2
+
+let nop_jump im = 
+  let (s,l,n) = next_section im 0 in
+    im.(s+10) <- 0x90;
+    im.(s+11) <- 0x90;
+    im.(s+12) <- 0x90;
+    im.(s+13) <- 0x90;
+    im.(s+14) <- 0x90
+    
+
+let take_sections image =
+  let rec loop acc = function
+    | (0, _, _) -> List.rev acc
+    | (o, l, _) as section -> loop (section::acc) (next_section image (o+l))
+  in loop [] (next_section image 0) 
 
 let usage_text = "image4k <options> <file>"
 (* String of character *)
@@ -133,40 +174,51 @@ let process_file str =
 	    let base2 = dword f2 0 in
 	    let ofs = Ni.sub base1 base2 in
 	    let diff = binary_compare f1 f2 0 ofs in
+
+	    let sections = take_sections f2 in
+	      List.iter 
+		(fun (s,l,n) -> 
+		   Printf.printf "name: %s\toffset: %d\tlen: %d\tzeros: %d\n" 
+		     n s l (s+l-(cut_section f2 (s,l)));
+		   let l = relocs_in_section (s,s+l) diff in
+		     List.iter (print_reloc base1 base2) l) sections;
+
 	      if !relocate then
 		begin
-		    Printf.printf "ofs: %lx\n" ofs;
-		    relocate_image f2 diff ofs; 
-		    write_file f2 str;
-		end;
-		let f2 = load_file str in
-		 let base1 = dword f1 0 in
-		 let base2 = dword f2 0 in
-		 let ofs = Ni.sub base1 base2 in
-		  let diff = binary_compare f1 f2 0 ofs  in
-		  let which = match !which_show with 1 -> base1 | _ -> base2 in
-		  let addr = function Some x -> x | None -> Ni.of_int 0 in
-		  let b ofs = Ni.add ofs (Ni.add which (addr !base_address)) in
-		    List.iter 
-		      (fun (ofs, v1, v2, n) -> 
-			 if n = 1 then 
-			   Printf.printf "%.4lx: byte\t%.8lx -> %.8lx\n" (b ofs) v1 v2
-			 else 
-			   Printf.printf "%.4lx: dword\t%.8lx -> %.8lx\n" (b ofs) v1 v2)
-		      diff;
-	   )
-       |  None -> ());
-    if !list_sections then
-      let rec loop acc = function
-	| (0, _, _) -> List.rev acc
-	| (o, l, _) as section -> loop (section::acc) (next_section f2 (o+l))
-      in
-      let sections = loop [] (next_section f2 0) in 
-	List.iter (fun (s,l,n) -> Printf.printf "name: %s\toffset: %d\tlen: %d\n" n s l) sections
-  
-  
-  let _ = 
-    if Array.length Sys.argv > 1 then
-      parse options process_file usage_text
-    else usage options usage_text
+		  let (s,l,n) = List.hd sections in
+		  let rest_sections = List.tl sections in
+		  let delta = s+l-cut_section f2 (s, l) in
+		    List.iter (fun (s,l,n) -> relocate_section f2 (relocs_in_section (s,s+l) diff) (Ni.of_int (-delta))) rest_sections;
+		    let len = Array.length f2 in
+(*		      Printf.printf "Blit: %d %d %d\n" (s+l) (s+l - delta) (len - delta- (s+l - delta)); *)
+		      Array.blit f2 (s+l) f2 (s+l-delta) (len - (s+l)); 
+		      write_file f2 str len;
+		end)
+       |  None -> 
+	    (*	    if !brute_force then *)
+
+	    if !link_with != "" then
+	      begin
+		print_endline !link_with;
+		let im = load_file !link_with in
+		  let (s,l,n) = next_section im 0 in
+		  Printf.printf "Blit: %d %d %d\n" s l (Array.length f2); 
+		    Array.blit f2 0 im (s+6) (Array.length f2-6); 
+		    let (s,l,n) = next_section im 0 in
+		      im.(s+10) <- 0x90;
+		      im.(s+11) <- 0x90;
+		      im.(s+12) <- 0x90;
+		      im.(s+13) <- 0x90;
+		      im.(s+14) <- 0x90; 
+		      write_file im !link_with (Array.length im);
+		    
+	      end
+    )
+      
+    
+    
+    let _ = 
+      if Array.length Sys.argv > 1 then
+	parse options process_file usage_text
+      else usage options usage_text
 

@@ -7,6 +7,9 @@ include(dict.m4)
 	.DATA
 #endif
 
+	
+
+
 # Following imports are used and needs to be dereferenced
 _sscanf:	jmp sscanf
 _ungetc:	jmp ungetc
@@ -28,6 +31,9 @@ _fclose:	jmp fclose
 # Out:
 # eax - integer value
 # token - a token
+#libc:	.ASCIZ "/lib/libc-2.8.90.so"
+#stdins:	.ASCIZ "stdin"
+	
 _gettoken:
 # Skip whites
 	call	_get_key_white_skip
@@ -39,7 +45,10 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-	K4_SAFE_CALL(_ungetc,%eax,stdin)	# unget char
+#	mov	%eax,%ecx
+#	K4_SAFE_CALL(dlopen, $libc, ,$ 1)
+#	K4_SAFE_CALL(dlsym, %eax, $stdins)
+	K4_SAFE_CALL(_ungetc,%eax, stdin)	# unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
@@ -212,7 +221,6 @@ main_loop:
 	sub	$4096,%ebx
 interpret_loop:
 
-1:
 	K4_SAFE_CALL(_gettoken)
 
 	movl	$token,	%edi
@@ -226,13 +234,13 @@ interpret_loop:
 	shl	$2, %ecx			# * 4 to ecx
 	mov	semantic(%ecx,%eax,8), %ecx 	# load the code address
 	call	*%ecx
-	jmp	1b
+	jmp	interpret_loop
 
 2:
 	call	_parse_literal
 	jnc 	3f
 	K4_SAFE_CALL(_printf,$msg_not_defined)
-	jmp 	1b
+	jmp 	interpret_loop
 3:
 	cmp	$0, var_state
 	jnz	4f
@@ -242,25 +250,27 @@ interpret_loop:
 	movb	%al,(%ecx)
 	incl	%ecx
 	mov	%ecx,var_here
-	jmp 	1b
+	jmp 	interpret_loop
 
 4:	
 	xchg 	%esp,%ebx
 	push	%eax
 	xchg 	%esp,%ebx
-	jmp	1b
+	jmp	interpret_loop
 _exit2:
 	K4_SAFE_CALL(_exit,$ 0)	
 	ret
 
 	.GLOBL main
 	.GLOBL _start
+
 #ifndef REFERENCE
 	.org . + 0x151234
 	.ALIGN 4096
 #endif
-
-_image_start:
+	
+BEGIN_DICT
+	_image_start:
 	.LONG  _image_start
 
 #ifndef DEBUG
@@ -269,9 +279,14 @@ main:
 #else
 	main:
 #endif
-
-	
 	jmp main_loop
+	mov	%esp,%ebx
+	sub	$4096,%ebx
+	mov	var_current,%eax
+	dec	%eax
+	mov	dsptch(,%eax,4),%eax
+	jmp	*(%eax)
+	
 docol:
 	push	%esi
 	lea	4(%eax),%esi
@@ -289,7 +304,6 @@ docol:
 	jmp 	2b
 
 
-BEGIN_DICT
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
 	lodsb
@@ -528,7 +542,10 @@ END_CODE
 
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
-DEF_VAR(current, [EL_COUNT(NAME_TAB)])
+DEF_VAR(current, [EL_COUNT(NAME_TAB)+1])
+DEF_CODE(test,"test")
+	
+	
 END_DICT
 BUILD_NAME_TABLE
 

@@ -1,11 +1,11 @@
 #!/bin/sh
 m4 -s fourk2.S > t.S 
-gcc -gdb3 -DDEBUG t.S -o fourk-debug && 
-gcc -DREFERENCE t.S -o fourk-ref && 
-gcc t.S -o fourk2 &&
+gcc -gdb3 -ldl -DDEBUG t.S -o fourk-debug && 
+gcc -ldl -DREFERENCE t.S -o fourk-ref && 
+gcc -ldl t.S -o fourk2 &&
 ocamlc image.ml -o image4k &&
-echo "save-image image1.4ki\n" | ./fourk2 &&
-echo "save-image image2.4ki\n" | ./fourk-ref
+cat bootstrap.4k | ./fourk2 
+#&& cat bootstrap.4k | ./fourk-ref
 
 
 

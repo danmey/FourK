@@ -1,6 +1,9 @@
 * General Stuff  
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
 ** TODO Tide up project, makefiles.
+** DONE List words in the fourk2.S file				       :phon:
+* experiments
+** DONE program to TGA converter				       :phon:
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
    http://www.mkssoftware.com/docs/man1/m4.1.asp
@@ -14,6 +17,8 @@
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
 ** TODO Make preprocesor (linker) for images
+** TODO implement comments					       :phon:
+   SCHEDULED: <2009-09-26 Sam>
 ** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
@@ -75,7 +80,7 @@
     The last time I played with it was more than a year
     before 
     -- phon
-**** TODO Reading my x86 reference book       
+**** DONE Reading my x86 reference book       
      SCHEDULED: <2009-09-23 Mit>
 ** spec								       :spec:
 *** x86

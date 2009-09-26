@@ -18,20 +18,28 @@ let options =
   [
     "-o", String    (fun nm  -> output_file := nm), 
     "Output image file name";
+
     "-r", String    (fun nm  -> reference_file := Some nm), 
     "Reference file for resolving relocations";
+
     "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
     "Base address of the image";
+
     "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
     "Perform relocation using reference file";
+
     "-s", Int       (fun i -> which_show := i), 
     "Use base adresses from which file; 1 - reference file";
+
     "-l", Unit      (fun () -> list_sections := true), 
     "List sections";
+
     "-v", Unit      (fun () -> verbose := true), 
     "Be verbose, show relocs in teh section list.";
+
     "--brute-force", Unit (fun () -> brute_force := true), 
     "Be brutal, no relocations, fill garbage with zeroes";
+
     "-link", String (fun nm -> link_with := nm), 
     "Link with fourk engine"
   ]
@@ -62,20 +70,60 @@ let set_dword arr i dword =
 end
 
 module BinaryFile = struct
-let write image nm len = 
-  let file = open_out_bin nm in
-    Array.iteri (fun i x -> if i < len then output_byte file x) image;
-    close_out file
+  let write image nm len = 
+    let file = open_out_bin nm in
+      Array.iteri (fun i x -> if i < len then output_byte file x) image;
+      close_out file
 
-let read nm =
-  let file = open_in_bin nm in
-  let size = in_channel_length file in
-  let array = Array.make size 0 in
-    for i = 0 to size - 1 do
-      array.(i) <- input_byte file
-    done;
-    close_in file;
-    array
+  let read nm =
+    let file = open_in_bin nm in
+    let size = in_channel_length file in
+    let array = Array.make size 0 in
+      for i = 0 to size - 1 do
+	array.(i) <- input_byte file
+      done;
+      close_in file;
+      array
+end
+
+module Section = struct
+  let next image o =
+    try
+      let rec skip_to_section f i = 
+	if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
+	  begin
+	    i+2
+	  end
+	else begin	  
+	  f image.(i);
+	  skip_to_section f (i+1) 
+	end
+      in
+      let i = skip_to_section (fun _ -> ()) o in
+      let name = ref "" in
+      let i' = skip_to_section 
+	(fun c ->
+	   name := !name ^ Printf.sprintf "%c" (char_of_int c)) i
+      in
+	try 
+	  let j = skip_to_section (fun _ -> ()) i' in
+	    (i-2, j - i,!name, image)
+	with _ -> (i-2,Array.length image - (i+2),!name, image)
+    with _ -> (0,0,"", image)
+
+  let fill (s,l,_,im) v = Array.fill im s l v
+    
+  let take image =
+    let rec loop acc = function
+      | (0, 0, _,_) -> List.rev acc
+      | (o, l, n,_) as section -> loop (section::acc) (next image (o+l))
+    in loop [] (next image 0) 
+
+let find image nm =
+  List.find (fun (_,_,nm',_) -> nm' = nm) (take image)
+
+let copy (s1,l1,_,src_image) (s2,l2,_,target_image) = Array.blit src_image s1 target_image s2 l1
+
 end
 
 let compare image1 image2 base = 
@@ -115,42 +163,10 @@ let relocate_section image relocs base =
 	 BinaryArray.set_dword image (Ni.to_int ofs) v') relocs
 
 
-let next_section image o =
-  try
-    let rec skip_to_section f i = 
-      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
-	begin
-	  i+2
-	end
-      else begin	  
-	f image.(i);
-	skip_to_section f (i+1) 
-      end
-    in
-    let i = skip_to_section (fun _ -> ()) o in
-    let name = ref "" in
-    let i' = skip_to_section 
-      (fun c ->
-	 name := !name ^ Printf.sprintf "%c" (char_of_int c)) i
-    in
-      try 
-	let j = skip_to_section (fun _ -> ()) i' in
-	  (i,j - i - 2,!name)
-      with _ -> (i,Array.length image - i,!name)
-  with _ -> (0,0,"")
 
 let relocs_in_section (s,e) = 
   List.fold_left (fun acc r -> let (i,_,_,_) = r in if Ni.to_int i >= s && Ni.to_int i < e then r::acc else acc) []
   
-let cut_section image (s,l) =
-  let rec zeroes i = 
-    if i >= s then
-      if image.(i) = 0 then zeroes (i-1)
-      else i+1
-    else
-      i
-  in
-    zeroes (s+l-1)
 
 let print_reloc base1 base2 (ofs, v1, v2, n) =
   let which = match !Options.which_show with 1 -> base1 | _ -> base2 in
@@ -160,79 +176,63 @@ let print_reloc base1 base2 (ofs, v1, v2, n) =
     Printf.printf "\t%.4lx: byte\t%.8lx -> %.8lx\n" (b ofs) v1 v2
   else 
     Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx\n" (b ofs) v1 v2
-
+(*
 let nop_jump im = 
-  let (s,l,n) = next_section im 0 in
+  let (s,l,n,_) = next_section im 0 in
     im.(s+10) <- 0x90;
     im.(s+11) <- 0x90;
     im.(s+12) <- 0x90;
     im.(s+13) <- 0x90;
     im.(s+14) <- 0x90
+*)
 
-let zero_section (s,l) im = Array.fill im s l 0
-
-let take_sections image =
-  let rec loop acc = function
-    | (0, 0, _) -> List.rev acc
-    | (o, l, n) as section -> loop (section::acc) (next_section image (o+l))
-  in loop [] (next_section image 0) 
 
 let usage_text = "image4k <options> <file>"
 (* String of character *)
 let process_file str =        
   let f2 = BinaryFile.read str in
+
     (match !Options.reference_file with
 	 Some nm -> 
-	   (let f1 = BinaryFile.read nm in
+(*	   (let f1 = BinaryFile.read nm in
 	    let base1 = BinaryArray.get_dword f1 0 in
 	    let base2 = BinaryArray.get_dword f2 0 in
 	    let ofs = Ni.sub base1 base2 in
 	    let diff = compare f1 f2 ofs in
 
-	    let sections = take_sections f2 in
+	    let sections = Section.take f2 in
 	      List.iter 
-		(fun (s,l,n) -> 
+		(fun (s,l,n,im) -> 
 		   Printf.printf "name: %s\toffset: %d\tlen: %d\tzeros: %d\n" 
-		     n s l (s+l-(cut_section f2 (s,l)));
+		     n s l (s+l-(Section.fill f2 (s,l)));
 		   let l = relocs_in_section (s,s+l) diff in
 		     List.iter (print_reloc base1 base2) l) sections;
 
 	      if !Options.relocate then
 		begin
-		  let (s,l,n) = List.hd sections in
+		  let (s,l,n,im) = List.hd sections in
 		  let rest_sections = List.tl sections in
 		  let delta = s+l-cut_section f2 (s, l) in
-		    List.iter (fun (s,l,n) -> relocate_section f2 (relocs_in_section (s,s+l) diff) (Ni.of_int (-delta))) rest_sections;
+		    List.iter (fun (s,l,n,_) -> relocate_section f2 (relocs_in_section (s,s+l) diff) (Ni.of_int (-delta))) rest_sections;
 		    let len = Array.length f2 in
 (*		      Printf.printf "Blit: %d %d %d\n" (s+l) (s+l - delta) (len - delta- (s+l - delta)); *)
 		      Array.blit f2 (s+l) f2 (s+l-delta) (len - (s+l)); 
 		      BinaryFile.write f2 str len;
-		end)
+		end) *) ()
        |  None -> 
 	    (*	    if !brute_force then *)
 
 	    if !Options.link_with != "" then
 	      begin
 		print_endline !Options.link_with;
-		let im = BinaryFile.read !Options.link_with in
-		let sections = take_sections im in
-		  List.iter (fun sec ->
-			       let (s,l,n) = sec in
-				 print_endline n;
-				 match n with 
-				   | "interpret" -> zero_section (s,l-2) im
-				   | "semantic" -> zero_section (s,l-2) im
-				   | "name" -> zero_section (s,l-2) im
-				   | "dict" -> (
-(*				       Array.blit f2 0 im (s+6) (Array.length f2-6); *)
-				       let (s,l,n) = next_section im 0 in
-					 im.(s+10) <- 0x90;
-					 im.(s+11) <- 0x90;
-					 im.(s+12) <- 0x90;
-					 im.(s+13) <- 0x90;
-					 im.(s+14) <- 0x90)
-				   | _ -> ()) sections;
-		      BinaryFile.write im !Options.link_with (Array.length im);
+		let target_image = BinaryFile.read !Options.link_with in
+		let src_image = f2 in
+		let copy_same_section im im' nm = Section.copy (Section.find im nm) (Section.find im' nm) in
+		  copy_same_section src_image target_image "dict";
+		  copy_same_section src_image target_image "dsptch";
+		  copy_same_section src_image target_image "name";
+		  copy_same_section src_image target_image "semantic";
+		  BinaryFile.write target_image !Options.link_with (Array.length target_image);
 	      end
     )
       

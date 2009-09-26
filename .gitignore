@@ -22,3 +22,10 @@ tiny
 fourk-debug
 conv
 fourk2.tga
+*.tga
+*.png
+4k*
+fourk
+fourk-ref
+fourk2
+*.4ki

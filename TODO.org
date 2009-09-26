@@ -1,5 +1,6 @@
 * General Stuff  
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
+** TODO Tide up project, makefiles.
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
    http://www.mkssoftware.com/docs/man1/m4.1.asp
@@ -51,6 +52,9 @@
    
    Inspirations: 
    - http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html1
+     
+     Did a initial prototype, went down to 1094 bytes, and still plenty of optimisations possible.
+     Not counting that this is gzip.
 ** TODO Think about compressor					     :design:
    Maybe ripit from http://en.wikipedia.org/wiki/PAQ =)
 ** TODO Look at tiny.S
@@ -83,12 +87,11 @@
    
 **** TODO Setup a Gobby discussion
 **** TODO Make up a prototype
-
 * experiments
   Programs or whatever which help us to get an 
   understanding in something we are unsure if it 
   is a good thing.
-** TODO fourk2 -> png, grayscale converter 			       :phon:
+** DONE fourk2 -> png, grayscale converter			       :phon:
    SCHEDULED: <2009-09-24 Don>
    I'm just interested into how this kind of
    code looks like as a PNG image, to get a feeling

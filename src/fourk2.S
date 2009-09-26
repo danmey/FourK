@@ -1,28 +1,42 @@
 include(macros.m4)
 include(dict.m4)
 
+# If we use debug version we need to place everything in code section, because GDB resolves symbols
+# only there
+	
 #ifdef DEBUG
 	.TEXT
 #else
 	.DATA
 #endif
-SECTION("interpret")
-	
 
+# Our iterpreting section, we can easily get rid of that and relocate rest
+SECTION("interpret")
 
 # Following imports are used and needs to be dereferenced
-_sscanf:	jmp sscanf
-_ungetc:	jmp ungetc
-_getchar:	jmp getchar
-_printf:	jmp printf
-_exit:		jmp exit
-_fopen:		jmp fopen
-_fwrite:	jmp fwrite
-_mprotect:	jmp mprotect
-_fread:		jmp fread
-_fclose:	jmp fclose
-	
+# I am not sure if it is needed
+## _sscanf:	jmp sscanf
+## _ungetc:	jmp ungetc
+## _getchar:	jmp getchar
+## _printf:	jmp printf
+## _exit:		jmp exit
+## _fopen:		jmp fopen
+## _fwrite:	jmp fwrite
+## _mprotect:	jmp mprotect
+## _fread:		jmp fread
+## _fclose:	jmp fclose
 
+#define _sscanf 	sscanf
+#define _ungetc		ungetc
+#define _getchar	getchar
+#define _printf		printf
+#define _exit		exit
+#define _fopen		fopen
+#define _fwrite		fwrite
+#define _mprotect	mprotect
+#define _fread		fread
+#define _fclose		fclose
+	
 
 ################################################################################
 # Get token, separated by whites, and put it in token
@@ -45,13 +59,11 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-#	mov	%eax,%ecx
-#	K4_SAFE_CALL(dlopen, $libc, ,$ 1)
-#	K4_SAFE_CALL(dlsym, %eax, $stdins)
 	K4_SAFE_CALL(_ungetc,%eax, stdin)	# unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
+
 ################################################################################	
 # Parse literal, string is in token
 # In:
@@ -108,12 +120,6 @@ _parse_literal:
 	stc
 	ret
 	
-	
-	
-	
-	
-	
-	
 ################################################################################	
 # Get key, skipping whites
 # In:
@@ -125,9 +131,6 @@ _get_key_white_skip:
 	call _is_white
 	jz _get_key_white_skip	# loop until we will find something
 	ret
-	
-	
-	
 	
 ################################################################################
 # Is white?
@@ -146,9 +149,6 @@ _is_white:
 	cmpb	$' ',%al	# SPACE ?
 	jz	1f
 1:	ret
-	
-	
-	
 	
 ################################################################################	
 # Get char from STDIN, jumps out in case of EOF
@@ -216,47 +216,58 @@ _find_word:
 	stc
 	ret
 
-main_loop:	
+#Out entry point here the fun begins, this is only valid during compiling/interpreting
+#there will be no code here in final image
+entry_point:	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 interpret_loop:
 
-	K4_SAFE_CALL(_gettoken)
+	K4_SAFE_CALL(_gettoken)	#get next token
 
 	movl	$token,	%edi
-	call	_find_word
-	jc	2f
-	
-	xchg	%esp,%ebx
+	call	_find_word	#find word
+	jc	2f		#if the word is not found, jump to get literal
+
+# Here we will compile/interpret found word
+	xchg	%esp,%ebx	#need to the token on the parameter stack (%ebp)
 	pushl	%eax
 	xchg	%esp,%ebx
 	mov 	var_state, %ecx			#if state = 1 then we compile so get the compile semantics
 	shl	$2, %ecx			# * 4 to ecx
-	mov	semantic(%ecx,%eax,8), %ecx 	# load the code address
-	call	*%ecx
-	jmp	interpret_loop
+	mov	semantic(%ecx,%eax,8), %ecx 	# load the semantics
+	call	*%ecx				# call the semantics
+	jmp	interpret_loop			# loop unti death!
 
+# Here we will parse the literal if word is not found
 2:
 	call	_parse_literal
-	jnc 	3f
+	jnc 	3f		#if literal cannot be parsed give a proper message and loop
 	K4_SAFE_CALL(_printf,$msg_not_defined)
 	jmp 	interpret_loop
+	
+# Literal could be parsed here
 3:
-	cmp	$0, var_state
-	jnz	4f
+	cmp	$0, var_state	#code dependent on the state
+	jnz	4f		#if we are compiling (0) then compile the literal
+
+# Here we compile literal TODO: the state variable has inverted meaning; do something with that
 	mov	var_here,%ecx
 	movb	$0,(%ecx)	# token for literal
+	incl	%ecx		# increment here
+	movb	%al,(%ecx)	# store the actual literal (only byte literals allowed)
+				# TODO: allow different sizes of literals
 	incl	%ecx
-	movb	%al,(%ecx)
-	incl	%ecx
-	mov	%ecx,var_here
-	jmp 	interpret_loop
+	mov	%ecx,var_here	#store the pointer and loop
+	jmp 	interpret_loop	
 
+# Here we are pushing the literal on the stack as we are in interpreting mode
 4:	
 	xchg 	%esp,%ebx
 	push	%eax
 	xchg 	%esp,%ebx
 	jmp	interpret_loop
+	
 _exit2:
 	K4_SAFE_CALL(_exit,$ 0)	
 	ret
@@ -264,12 +275,15 @@ _exit2:
 	.GLOBL main
 	.GLOBL _start
 
+# If it is reference image then relocate it, I stripped it off
+# need to align to change the memory attributes via mprotect
 #ifndef REFERENCE
 	.ALIGN 4096
 #endif
 	
 BEGIN_DICT
-	_image_start:
+
+_image_start:
 	.LONG  _image_start
 
 #ifndef DEBUG
@@ -278,7 +292,8 @@ main:
 #else
 	main:
 #endif
-	jmp main_loop
+# The call is nopped in the final image
+	jmp 	entry_point
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	var_current,%eax
@@ -525,7 +540,6 @@ DEF_CODE(load_image, "load-image")
 #define PROT_READ	0x1		/* Page can be read.  */
 #define PROT_WRITE	0x2		/* Page can be written.  */
 #define PROT_EXEC	0x4		/* Page can be executed.  */
-#define PROT_NONE	0x0		/* Page can not be accessed.  */
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	K4_SAFE_CALL(_mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 	K4_SAFE_CALL(_fopen, $token,$str_rb)
@@ -548,20 +562,21 @@ DEF_CODE(test,"test")
 END_DICT
 BUILD_NAME_TABLE
 
-long_tmp: 	.LONG 0
-token:		.FILL	64
-fmt_float: 	.ASCIZ  "%f"
-fmt_hex:	.ASCIZ 	"%x"
-fmt_dec:	.ASCIZ 	"%d"
-fmt_char:	.ASCIZ 	"%c"
-str_wb:		.ASCIZ 	"wb"
-str_rb:		.ASCIZ 	"rb"
-var_base:	.LONG 	10
-msg:	.ASCIZ "%s\n"
-msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
-msg_test1:	.ASCIZ "Test1\n"
-msg_test2:	.ASCIZ "Test2\n"
-msg_test3:	.ASCIZ "Test3\n"
-	.ALIGN 4096
+.ALIGN 4096
 _image_end:
-.asciz "dummy"
+
+# Our data, it will be stripped off so store it in intepret section
+long_tmp: 		.LONG 0
+token:			.FILL	64
+fmt_float: 		.ASCIZ  "%f"
+fmt_hex:		.ASCIZ 	"%x"
+fmt_dec:		.ASCIZ 	"%d"
+fmt_char:		.ASCIZ 	"%c"
+str_wb:			.ASCIZ 	"wb"
+str_rb:			.ASCIZ 	"rb"
+var_base:		.LONG 	10
+msg:			.ASCIZ "%s\n"
+msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
+msg_test1:		.ASCIZ "Test1\n"
+msg_test2:		.ASCIZ "Test2\n"
+msg_test3:		.ASCIZ "Test3\n"

@@ -12,7 +12,7 @@
 
 .code32
 
-	
+.text	
 
 
 
@@ -25,7 +25,6 @@
 /* iobuf:		resb	iobuf_size	; buffer for I/O */
 /* ENDSTRUC */
 
-.set ., 0x08048000	
 .equ	beg, .
 .equ	stdin, 0
 .equ	stdout, 1
@@ -35,13 +34,10 @@
 
 .equ	iobuf_size, 96
 
-.equ factor, 0
-.equ getchar_rel, 8
-.equ write_rel,   12
-.equ buf,         16
-.equ exit_rel,    28
-.equ iobuf,       32
-.equ data_size, 33
+.equ factor, 		0
+.equ dlsym_rel, 	8
+.equ dlopen_rel,   	12
+.equ data_size, 	16
 	
 /* ; The ELF header and the program header table. The last eight bytes */
 /* ; of the former coexist with the first eight bytes of the former. */
@@ -134,40 +130,31 @@ dynsym:
 		.long 	0
 		.word 	0x11			# STB_GLOBAL, STT_OBJECT
 		.word 	0xFFF1			# SHN_ABS
-.equ exit_sym, 	2
-		.long 	exit_name
+.equ dlsym_sym, 	2
+		.long 	dlsym_name
 		.long 	0
 		.long 	0
 		.word 	0x12			# STB_GLOBAL, STT_FUNC
 		.word 	0
-.equ getchar_sym, 	3
-		.long 	getchar_name
+.equ dlopen_sym, 	3
+		.long 	dlopen_name
 		.long 	0
 		.long 	0
-		.word 	0x22			# STB_WEAK, STT_FUNC
+		.word 	0x12			# STB_WEAK, STT_FUNC
 		.word 	0
-.equ write_sym, 	4
-		.long 	write_name
-		.long 	0
-		.long 	0
-		.word 	0x22			# STB_WEAK, STT_FUNC
-		.word 	0
+
 
 /* # The relocation table. The addresses of the three functions imported */
 /* # from libc are stored in the program's data area. */
 
 reltext:
-		.long 	dataorg + write_rel
+		.long 	dataorg + dlsym_rel
 		.byte 	1			# R_386_32
-		.byte 	write_sym
+		.byte 	dlsym_sym
 		.word 	0
-		.long 	dataorg + getchar_rel
+		.long 	dataorg + dlopen_rel
 		.byte 	1			# R_386_32
-		.byte 	getchar_sym
-		.word 	0
-		.long 	dataorg + exit_rel
-		.byte 	1			# R_386_32
-		.byte 	exit_sym
+		.byte 	dlopen_sym
 		.word 	0
 .equ reltextsz, 	. - reltext
 
@@ -187,30 +174,16 @@ dynstr:
 		.byte 	0
 .equ libc_name, 	. - dynstr
 
-.byte 	
-.ascii "libc.so.6"
-.byte 0
+.asciz "libdl.so.2"
 .equ dynamic_name, 	. - dynstr
-
-.byte 	
-.ascii "_DYNAMIC"
-.byte 0
-.equ exit_name, 	. - dynstr
-
-.byte 	
-.ascii "_exit"
-.byte 0
-.equ getchar_name, 	. - dynstr
-
-.byte 	
-.ascii "getchar"
-.byte 0
-.equ write_name, 	. - dynstr
-
-.byte 	
-.ascii "write"
-.byte 0
+.asciz "_DYNAMIC"
+.equ dlsym_name, 	. - dynstr
+.asciz "dlsym"
+.equ dlopen_name, 	. - dynstr
+.asciz "dlopen"
 .equ dynstrsz, 	. - dynstr
+
+
 
 
 /* ###;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; */
@@ -222,10 +195,24 @@ dynstr:
 
 .GLOBAL _start
 _start:
+
 	pop	%esi
 	pop	%ebx
+
+	movl $1,%eax
+	xor %ebx,%ebx
+	int $128
+	
 	mov	$dataorg,%ebx
-	call	*exit_rel(%ebx)
+	push 	$1
+	push	$lib
+	call	*dlsym_rel(%ebx)
+
+	movl $1,%eax
+	xor %ebx,%ebx
+	int $128
+
+lib:	.asciz "libc.so.6"
 
 
 /* # End of file image. */

@@ -23,7 +23,7 @@ gcc -O1 -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 # Link it..
 #/usr/lib/libSDL.so /usr/lib/libGL.so  /usr/lib/libglut.so
 ld -dynamic-linker /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o 4k-uncompressed
-
+objdump -h 4k-uncompressed
 
 
 

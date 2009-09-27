@@ -4,21 +4,35 @@
 ** DONE List words in the fourk2.S file				       :phon:
 * experiments
 ** DONE program to TGA converter				       :phon:
+** DONE manually getting rid of zero and compress it                   
+   After compressing manualy the binary, the size is:
+   1327 bytes. However this is only made by elf kickers tool, and not optimised yet.
+   I think if we found another way of importing dynamic symbols we will have another 200 bytes.  
 * M4 Specific 
 ** TODO make M4 dict.m4 macro to work with divert() builtin 
    http://www.mkssoftware.com/docs/man1/m4.1.asp
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
 * Forth Specific
+** TODO implement comments					       :phon:
+   SCHEDULED: <2009-09-26 Sam>
+** TODO Different flavours of literals
+   Byte signed, unsigned, dword. float?. Resolved at compile time.
+** TODO Floating point stack
+
 ** TODO research how to define words with embeded comma inside	       :phon:
    SCHEDULED: <2009-09-23 Mit>
    ( i know it is stupid but who cares :-).
    So far I am trying to quote it, but it doesn't work for some reasons. 
    The best example is "c," word which happen to fail, 
    and also [ and ] (which are lb and rb respectively)
-** TODO Make preprocesor (linker) for images
-** TODO implement comments					       :phon:
-   SCHEDULED: <2009-09-26 Sam>
+** TODO make some tests for whole enviroment
+   We need to able to test coherency after each change
+   - tests for Forth itself
+   - for image linker
+** DONE Make preprocesor (linker) for images
+   Basic functionality is there, although stripping zeroes and relocating the dict section is not implemented yet.
+   (relocating the dispatch table works now, this proves that the method for finding relocations is correct)
 ** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
@@ -29,14 +43,14 @@
    Requirment of having some code not loaded dynamically, especially symbols from
    dlls that are accessed directly (not through plt) (problem with the `stdin' variable).
 
-** TODO Make a small program to dump out the places where the executable needs to be backpatched. 
+** DONE Make a small program to dump out the places where the executable needs to be backpatched. 
   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
   Please not that we need that for automated backpatching, during saving the image.
 
 ** TODO Add more Forth words that cover basic stuff
    We need some basic functionality in place, need some more core words, and more FourK
    define words
-** TODO Split code into logical sections, polish loader
+** DONE Split code into logical sections, polish loader
    - Base interpreter code section - stripped off
    - Base runtime section
    - Core words section - preprocesor for the image should get rid of unused and immediate words 
@@ -48,9 +62,6 @@
    Not all the sections are needed maybe we will put a data into separate sections.
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
-** TODO Different flavours of literals
-   Byte signed, unsigned, dword. float?. Resolved at compile time.
-** TODO Floating point stack
 * Size considerations
 ** TODO Think how to make a smallest Linux executable ever,	     :design:
    with proper loading of dynamic symbols, how to do this without ld?
@@ -88,10 +99,12 @@
 **** TODO Find a document about size optimisations
 
 *** Forth
-    How to handle imports?
+**** TODO Do we need local variables??
+**** TODO How to handle imports?
    
 **** TODO Setup a Gobby discussion
 **** TODO Make up a prototype
+
 * experiments
   Programs or whatever which help us to get an 
   understanding in something we are unsure if it 
@@ -106,7 +119,6 @@
    some form-finding compression algorithmens do it's
    magic.
    
-
 * "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>
   - I chose "Planning" because I haven't a better word 

@@ -10,14 +10,23 @@ include(dict.m4)
 	.DATA
 #endif
 
-	.ALIGN 4096
+
 #ifdef REFERENCE
 	.FILL 0x11234
 #endif
 
 _image_start:
 	.LONG  _image_start
-
+#ifndef DEBUG
+#ifdef PARTY
+	_start:
+#else
+main:
+#endif
+#main:				
+#else
+#endif
+	jmp _dict_start
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
 
@@ -306,15 +315,6 @@ _exit2:
 BEGIN_DICT
 
 
-#ifndef DEBUG
-#ifdef PARTY
-	_start:
-#else
-main:
-#endif
-#main:				
-#else
-#endif
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	%esp,%ebx

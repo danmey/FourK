@@ -7,8 +7,10 @@ $(shell test -e $(BIN) || mkdir $(BIN))
 
 $(BIN)/fourk $(BIN)/fourk-ref $(BIN)/fourk-debug: $(FILES)
 	m4 -s $(SRC) > t.S 
+	./m4patch.pl > t.P
+	mv t.P t.S
 	gcc -ldl t.S -o $(BIN)/fourk
-	gcc -gdb3 -ldl -DDEBUG t.S -o $(BIN)/fourk-debug
+	gcc -g3 -ldl -DDEBUG t.S -o $(BIN)/fourk-debug
 	gcc -DREFERENCE -ldl t.S -o $(BIN)/fourk-ref
 	-rm t.S
 

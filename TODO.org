@@ -30,12 +30,20 @@
    We need to able to test coherency after each change
    - tests for Forth itself
    - for image linker
-** DONE Make preprocesor (linker) for images
-   Basic functionality is there, although stripping zeroes and relocating the dict section is not implemented yet.
-   (relocating the dispatch table works now, this proves that the method for finding relocations is correct)
 ** DONE Bootstrap a basic Forth system				       :spec:
    The basic funcionality only that allows us to extend. 
    Including: compile/interpret state, immediate words, postpone, creation of words. 
+** TODO Add more Forth words that cover basic stuff
+   We need some basic functionality in place, need some more core words, and more FourK
+   define words
+** TODO Loading imports
+   Please see the design section. (What we don't know yet)
+* Linker/Image Specific
+** TODO Compile and make work tiny example with imports in the experiment directory
+** TODO Integrate the tiny image example with existing GAS code
+** DONE Make preprocesor (linker) for images
+   Basic functionality is there, although stripping zeroes and relocating the dict section is not implemented yet.
+   (relocating the dispatch table works now, this proves that the method for finding relocations is correct)
 ** DONE Build a first executable image				       :spec:
    Only dumping to executable done, via save-image core word. No postprocessing or loading. 
 ** DONE Very simple load/execution of a saved image		       :spec:
@@ -46,10 +54,6 @@
 ** DONE Make a small program to dump out the places where the executable needs to be backpatched. 
   This will be in the form of builidng two versions of the same core FourK, and binary comparisions.
   Please not that we need that for automated backpatching, during saving the image.
-
-** TODO Add more Forth words that cover basic stuff
-   We need some basic functionality in place, need some more core words, and more FourK
-   define words
 ** DONE Split code into logical sections, polish loader
    - Base interpreter code section - stripped off
    - Base runtime section
@@ -60,8 +64,11 @@
    - Semantic section - stripped off
    
    Not all the sections are needed maybe we will put a data into separate sections.
-** TODO Loading imports
-   Please see the design section. (What we don't know yet)
+
+* Compression Specific
+** Research the best alorithm for compression
+** Way of grouping data/code into segments at the Forth level
+* First Intro Design
 * Size considerations
 ** TODO Think how to make a smallest Linux executable ever,	     :design:
    with proper loading of dynamic symbols, how to do this without ld?

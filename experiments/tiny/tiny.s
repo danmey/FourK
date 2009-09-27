@@ -8,15 +8,12 @@
 /* ; Prints the prime factors of each N. With no arguments, reads N */
 /* ; from standard input. The valid range is 0 <= N < 2^64. */
 
+
+
 .code32
 
-.equ	stdin, 0
-.equ	stdout, 1
-.equ	stderr, 2
+	
 
-/* ; The program's data */
-
-.equ	iobuf_size, 96
 
 
 /* STRUC data */
@@ -28,9 +25,24 @@
 /* iobuf:		resb	iobuf_size	; buffer for I/O */
 /* ENDSTRUC */
 
+.set ., 0x08048000	
+.equ	beg, .
+.equ	stdin, 0
+.equ	stdout, 1
+.equ	stderr, 2
 
-.org		0x08048000
+/* ; The program's data */
 
+.equ	iobuf_size, 96
+
+.equ factor, 0
+.equ getchar_rel, 8
+.equ write_rel,   12
+.equ buf,         16
+.equ exit_rel,    28
+.equ iobuf,       32
+.equ data_size, 33
+	
 /* ; The ELF header and the program header table. The last eight bytes */
 /* ; of the former coexist with the first eight bytes of the former. */
 /* ; The program header table contains three entries. The first is the */
@@ -49,14 +61,14 @@
 		.word 	3			# EM_386
 		.long 	1			# EV_CURRENT
 		.long 	_start
-		.long 	phdrs - $$
+		.long 	phdrs - beg
 		.long 	0
 		.long 	0
 		.word 	0x34			# sizeof(Elf32_Ehdr)
 		.word 	0x20			# sizeof(Elf32_Phdr)
 phdrs:
 	.long 	3			# PT_INTERP
-		.long 	interp - $$
+		.long 	interp - beg
 		.long 	interp
 		.long 	interp
 		.long 	interpsz
@@ -65,14 +77,14 @@ phdrs:
 		.long 	1
 		.long 	1			# PT_LOAD
 		.long 	0
-		.long 	$$
-		.long 	$$
+		.long 	beg
+		.long 	beg
 		.long 	filesz
 		.long 	memsz
 		.long 	7			# PF_R | PF_W | PF_X
 		.long 	0x1000
 		.long 	2			# PT_DYNAMIC
-		.long 	dynamic - $$
+		.long 	dynamic - beg
 		.long 	dynamic
 		.long 	dynamic
 		.long 	dynamicsz
@@ -104,7 +116,7 @@ dynamic:
 		.long 	17, reltext		# DT_REL
 		.long 	18, reltextsz		# DT_RELSZ
 		.long 	19, 0x08		# DT_RELENT
-.equ dynamicsz, 	$ - dynamic + 8
+.equ dynamicsz, 	. - dynamic + 8
 
 /* # The dynamic symbol table. Entries are included for the _DYNAMIC */
 /* # section and the three functions imported from libc: getchar(), */
@@ -157,7 +169,7 @@ reltext:
 		.byte 	1			# R_386_32
 		.byte 	exit_sym
 		.word 	0
-.equ reltextsz, 	$ - reltext
+.equ reltextsz, 	. - reltext
 
 /* # The interpreter pathname. The final NUL byte appears in the next */
 /* # section. */
@@ -167,38 +179,38 @@ interp:
 .byte 	
 .ascii "/lib/ld-linux.so.2"
 
-.equ interpsz, 	$ - interp + 1
+.equ interpsz, 	. - interp + 1
 
 /* # The string table for the dynamic symbol table. */
 
 dynstr:
 		.byte 	0
-.equ libc_name, 	$ - dynstr
+.equ libc_name, 	. - dynstr
 
 .byte 	
 .ascii "libc.so.6"
 .byte 0
-.equ dynamic_name, 	$ - dynstr
+.equ dynamic_name, 	. - dynstr
 
 .byte 	
 .ascii "_DYNAMIC"
 .byte 0
-.equ exit_name, 	$ - dynstr
+.equ exit_name, 	. - dynstr
 
 .byte 	
 .ascii "_exit"
 .byte 0
-.equ getchar_name, 	$ - dynstr
+.equ getchar_name, 	. - dynstr
 
 .byte 	
 .ascii "getchar"
 .byte 0
-.equ write_name, 	$ - dynstr
+.equ write_name, 	. - dynstr
 
 .byte 	
 .ascii "write"
 .byte 0
-.equ dynstrsz, 	$ - dynstr
+.equ dynstrsz, 	. - dynstr
 
 
 /* ###;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; */
@@ -208,12 +220,20 @@ dynstr:
 
 
 
+.GLOBAL _start
 _start:
+	pop	%esi
+	pop	%ebx
+	mov	$dataorg,%ebx
+	call	*exit_rel(%ebx)
+
 
 /* # End of file image. */
 
-.equ filesz, 	$ - $$
+.equ filesz, 	. - beg
 
-.equ dataorg, 	$$ + ((filesz + 16) & ~15)
+.equ dataorg, 	beg + ((filesz + 16) & ~15)
 
-.equ memsz, 	dataorg + data_size - $$
+.equ memsz, 	dataorg + data_size - beg
+
+

@@ -38,9 +38,15 @@
    define words
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
+** TODO Improve dictionary layout
+   Get rid of both dispatch table - build at the runtime.
+   Dictionary as a stream of bytes.
+   Get rid of the leading address for each word.
+
 * Linker/Image Specific
 ** TODO Compile and make work tiny example with imports in the experiment directory
 ** TODO Integrate the tiny image example with existing GAS code
+** TODO Dictionary optimiser, need first an improvement for dictionary layout.
 ** DONE Make preprocesor (linker) for images
    Basic functionality is there, although stripping zeroes and relocating the dict section is not implemented yet.
    (relocating the dispatch table works now, this proves that the method for finding relocations is correct)
@@ -64,6 +70,7 @@
    - Semantic section - stripped off
    
    Not all the sections are needed maybe we will put a data into separate sections.
+
 
 * Compression Specific
 ** Research the best alorithm for compression

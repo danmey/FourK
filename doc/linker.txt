@@ -1,5 +1,25 @@
 FourK image linker and optimiser
+
 ================================
+
+0. User dictionary and byte-code format
+
+The words are defined in terms of byte streams. Each stream consists
+of word tokens. Each token is byte wide. Each word ends with special
+token called `escape'. Words can be escaped in the middle of execution
+by invoking `return' token. There is no explicit back-patch table in
+the image, instead the back-patch table is created during loading.  So
+we can treat user dictionary as continuous byte-code stream. There are
+some prefix words that parse the next token and use it as an
+argument. There is limited number of such words. Branch, ?Branch, Lit
+are best examples. Loader needs to take into account this special
+words.
+
+1. Data section - complete separation of data and byte-code.
+
+Data separation from dictionary is important, it allows to simplify
+loading and allows to adjust better compression model. This separation
+will be achieved by introducing special pointer called `there'.
 
 1. Image sections
 
@@ -12,8 +32,8 @@ example the dictionary section will consist of a static dictionary
 core code padded to 64KB by zeroes initially. Padding by zeroes is
 important as the zeroes will be stripped of the section starting from
 the end of the section. Each section starts with @@name@@ where name
-is identifier of the section, sections ends either at beginning of next
-section or at the end of the image.
+is identifier of the section, sections ends either at beginning of
+next section or at the end of the image.
 
 2. Image linker; re-locations
 
@@ -23,7 +43,7 @@ from an image comparison. Two versions of image FourK run-time will be
 created, one slightly relocated by the `org' directive in GCC. Then
 Image linker will compare two binaries and tell us on which offset the
 images are different, thus will give as offsets to the addresses that
-should be relocated. 
+should be relocated.
 
 3. Optimiser
 

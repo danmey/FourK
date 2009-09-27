@@ -9,9 +9,12 @@ include(dict.m4)
 #else
 	.DATA
 #endif
-#ifndef REFERENCE
+
 	.ALIGN 4096
+#ifdef REFERENCE
+	.FILL 0x11234
 #endif
+
 _image_start:
 	.LONG  _image_start
 
@@ -320,6 +323,7 @@ main:
 	dec	%eax
 	mov	dsptch(,%eax,4),%eax
 	jmp	*(%eax)
+fmt_hex2:		.ASCIZ 	"%x\n"
 	
 docol:
 	push	%esi

@@ -3,11 +3,14 @@ m4 -s fourk2.S > t.S
 #gcc -gdb3 -ldl -DDEBUG t.S -o fourk-debug && 
 #gcc -ldl -DREFERENCE t.S -o fourk-ref && 
 gcc -ldl t.S -o fourk2
+gcc -DREFERENCE -ldl t.S -o fourk-ref
 #&& cat bootstrap.4k | ./fourk-ref
 
+cat bootstrap.4k | ./fourk-ref
+mv image.4ki image-ref.4ki
 cat bootstrap.4k | ./fourk2
-../image4k/image4k -link fourk2 image1.4ki
-
+mv image.4ki image3.4ki
+#../image4k/image4k -link fourk2 image.4ki
 
 
 # Amazing if we got here... Compile our shit
@@ -30,7 +33,9 @@ strip -s -R .comment -R .gnu.version 4k-uncompressed
 sstrip 4k-uncompressed
 
 cat bootstrap.4k | ./4k-uncompressed
-../image4k/image4k -link 4k-uncompressed image1.4ki
+mv image.4ki image5.4ki
+../image4k/image4k -R image5.4ki image5.4ki
+../image4k/image4k -link 4k-uncompressed image2.4ki
 
 # Compress it
 cp unpack.header 4k 

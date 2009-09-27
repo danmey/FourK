@@ -1,10 +1,7 @@
-create ; immediate postpone lb postpone lit -1 ccomma postpone ccomma -1 ccomma
-create : postpone create postpone rb ;
+create ; immediate postpone [ postpone lit -1 c, postpone c, -1 c,
+create : postpone create postpone ] ;
 
-: c, ccomma ;
 : exit, -1 c, ;
-: [ postpone lb ; immediate
-: ] rb ; immediate
 
 
 : <> = invert ;

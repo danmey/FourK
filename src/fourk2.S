@@ -23,8 +23,8 @@ _image_start:
 #else
 main:
 #endif
-#main:				
 #else
+main:				
 #endif
 	jmp _dict_start
 # Our iterpreting section, we can easily get rid of that and relocate rest

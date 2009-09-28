@@ -1,14 +1,21 @@
-PREFIX := $(shell pwd)
+export PREFIX = $(shell pwd)/bin
 SUBDIRS := src \
 	image4k
-BIN := $(PREFIX)/bin
+BIN := $(PREFIX)
 
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all:
-	$(foreach dir, $(SUBDIRS), \
-		$(MAKE) -C $(wildcard $(dir)); \
-		cp $(dir)/bin/* bin;)
+all: basic debug boot linker
+
+basic: 
+	$(MAKE) -C src basic
+debug: 
+	$(MAKE) -C src debug
+boot: 
+	$(MAKE) -C src boot
+
+linker:
+	$(MAKE) -C image4k
 
 
 .PHONY: clean

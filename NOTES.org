@@ -11,8 +11,10 @@ forgotten:
 ** state - 0 - compilation, 1 - interpretation. Reverted then in ANS Forth. Subject to change.
 * dictionary
 ** word byte header 
+   I am not sure if it wasn't simplier to have just length of the word. (subject to change)
 ***  0 - core word (assembly); 
-*** -1 - bytecode word
+*** -1 - bytecode word;
+
 ** special tokens
 *** (-1) - end word and return; serves as a word delimiter
 *** (-2) - return from word; because of above we need separate entity for returning

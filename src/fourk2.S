@@ -1,57 +1,6 @@
 include(macros.m4)
 include(dict.m4)
 
-# If we use debug version we need to place everything in code section, because GDB resolves symbols
-# only there
-	
-#ifdef DEBUG
-	.TEXT
-#else
-	.DATA
-#endif
-
-
-#ifdef REFERENCE
-	.FILL 0x11234
-#endif
-
-_image_start:
-	.LONG  _image_start
-#ifndef DEBUG
-#ifdef PARTY
-	_start:
-#else
-main:
-#endif
-#else
-main:				
-#endif
-	jmp _dict_start
-# Our iterpreting section, we can easily get rid of that and relocate rest
-SECTION("interpret")
-
-#ifdef DEBUG
-	.DATA
-#else
-#endif
-
-	# Our data, it will be stripped off so store it in intepret section
-long_tmp: 		.LONG 0
-token:			.FILL	64
-fmt_float: 		.ASCIZ  "%f"
-fmt_hex:		.ASCIZ 	"%x"
-fmt_dec:		.ASCIZ 	"%d"
-fmt_char:		.ASCIZ 	"%c"
-str_wb:			.ASCIZ 	"wb"
-str_rb:			.ASCIZ 	"rb"
-var_base:		.LONG 	10
-msg:			.ASCIZ "%s\n"
-msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
-msg_test1:		.ASCIZ "Test1\n"
-msg_test2:		.ASCIZ "Test2\n"
-msg_test3:		.ASCIZ "Test3\n"
-whites:                 .BYTE  4,9,10,12,13,0
-
 # Following imports are used and needs to be dereferenced
 # I am not sure if it is needed
 ## _sscanf:	jmp sscanf
@@ -75,10 +24,19 @@ whites:                 .BYTE  4,9,10,12,13,0
 #define _mprotect	mprotect
 #define _fread		fread
 #define _fclose		fclose
+
+# If we use debug version we need to place everything in code section, because GDB resolves symbols
+# only there
 	
 #ifdef DEBUG
 	.TEXT
 #else
+	.DATA
+#endif
+
+
+#ifdef REFERENCE
+	.FILL 0x11234
 #endif
 
 ################################################################################
@@ -90,7 +48,12 @@ whites:                 .BYTE  4,9,10,12,13,0
 # token - a token
 #libc:	.ASCIZ "/lib/libc-2.8.90.so"
 #stdins:	.ASCIZ "stdin"
-	
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# this bit cannot be saved into image, therefore cannot be in the
+# interpret pseudo section due to stdin relocation problem
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 _gettoken:
 # Skip whites
 	call	_get_key_white_skip
@@ -106,6 +69,52 @@ _gettoken:
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
+
+_image_start:
+	.LONG  _image_start
+#ifndef DEBUG
+#ifdef PARTY
+	_start:
+#else
+main:
+#endif
+#else
+main:				
+#endif
+	jmp _dict_start
+
+# Our iterpreting section, we can easily get rid of that and relocate rest
+SECTION("interpret")
+
+#ifdef DEBUG
+	.DATA
+#else
+#endif
+
+	
+	# Our data, it will be stripped off so store it in intepret section
+long_tmp: 		.LONG 0
+token:			.FILL	64
+fmt_float: 		.ASCIZ  "%f"
+fmt_hex:		.ASCIZ 	"%x"
+fmt_dec:		.ASCIZ 	"%d"
+fmt_char:		.ASCIZ 	"%c"
+str_wb:			.ASCIZ 	"wb"
+str_rb:			.ASCIZ 	"rb"
+var_base:		.LONG 	10
+msg:			.ASCIZ "%s\n"
+msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
+msg_test1:		.ASCIZ "Test1\n"
+msg_test2:		.ASCIZ "Test2\n"
+msg_test3:		.ASCIZ "Test3\n"
+whites:                 .BYTE  4,9,10,12,13,0
+
+	
+#ifdef DEBUG
+	.TEXT
+#else
+#endif
+
 
 ################################################################################	
 # Parse literal, string is in token

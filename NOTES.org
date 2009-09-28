@@ -9,3 +9,14 @@ forgotten:
 ** %esi - bytecode instruction pointer
 * variables
 ** state - 0 - compilation, 1 - interpretation. Reverted then in ANS Forth. Subject to change.
+* dictionary
+** word byte header 
+***  0 - core word (assembly); 
+*** -1 - bytecode word
+** special tokens
+*** (-1) - end word and return; serves as a word delimiter
+*** (-2) - return from word; because of above we need separate entity for returning
+    Can we have a dedicated word instead?
+** prefix tokens
+*** (0) `lit' - byte literal, get next byte from bytcode and push it on the stacke sign
+*** `branch', `branch0' - get next byte, extend the sign and skip n (could be negative) tokens

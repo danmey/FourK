@@ -347,16 +347,19 @@ call_word:
 docol:
 	push	%esi
 	lea	1(%eax),%esi
-2:	
+3:
 	xor	%eax,%eax
 	lodsb
 	cmpb	$-1,%al
 	jne	1f
+2:	
 	pop	%esi
 	ret
-1:	
+1:
+	cmpb	$-2,%al
+	je	2b
 	call 	call_word
-	jmp 	2b
+	jmp 	3b
 
 
 DEF_CODE(lit, "lit")
@@ -429,7 +432,7 @@ DEF_CODE(create,"create")
 	lea	dsptch(%eax),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
-	movb	$1,	(%eax)		#store token indictating that we deal with bytecode
+	movb	$-1,	(%eax)		#store token indictating that we deal with bytecode
 	
 	incl	var_here
 	incl	var_current		#increment current word

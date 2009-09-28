@@ -1,0 +1,9 @@
+This file is for all the knowledge 
+about the project, which could get
+forgotten:
+
+
+* registers
+** %ebx - parameter stack
+   pointer to the parameter stack
+** %esi - bytecode instruction pointer

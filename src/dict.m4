@@ -42,7 +42,7 @@ define([_DEF_CODE],
 [PUSH_EL(NAME_TAB, $1)[]
 PUSH_EL(FORTH_NAME_TAB, $2)
 word_$1: 
-.LONG code_$1
+.BYTE 0
 code_$1:])
 define([DEF_CODE],[
 _DEF_CODE($1,$2)

@@ -7,3 +7,5 @@ forgotten:
 ** %ebx - parameter stack
    pointer to the parameter stack
 ** %esi - bytecode instruction pointer
+* variables
+** state - 0 - compilation, 1 - interpretation. Reverted then in ANS Forth. Subject to change.

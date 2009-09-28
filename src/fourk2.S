@@ -30,6 +30,11 @@ main:
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
 
+#ifdef DEBUG
+	.DATA
+#else
+#endif
+
 	# Our data, it will be stripped off so store it in intepret section
 long_tmp: 		.LONG 0
 token:			.FILL	64
@@ -71,6 +76,10 @@ whites:                 .BYTE  4,9,10,12,13,0
 #define _fread		fread
 #define _fclose		fclose
 	
+#ifdef DEBUG
+	.TEXT
+#else
+#endif
 
 ################################################################################
 # Get token, separated by whites, and put it in token
@@ -314,20 +323,30 @@ _exit2:
 	
 BEGIN_DICT
 
-
+	
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	var_current,%eax
 	dec	%eax
-	mov	dsptch(,%eax,4),%eax
-	jmp	*(%eax)
+	call 	call_word
 fmt_hex2:		.ASCIZ 	"%x\n"
-	
+
+call_word:
+	mov	dsptch(,%eax,4),%eax
+	cmpb	$0, (%eax)
+	jz	1f
+	jmp	docol
+1:
+	mov	%eax,%ecx
+	inc	%ecx
+	jmp	*%ecx
+	ret
+
 docol:
 	push	%esi
-	lea	4(%eax),%esi
+	lea	1(%eax),%esi
 2:	
 	xor	%eax,%eax
 	lodsb
@@ -336,9 +355,7 @@ docol:
 	pop	%esi
 	ret
 1:	
-	mov	dsptch(,%eax,4),%eax
-	mov	(%eax), %ecx
- 	call	*%ecx
+	call 	call_word
 	jmp 	2b
 
 
@@ -401,16 +418,20 @@ DEF_CODE(create,"create")
 	lea	(%edi,%eax,8),%edi 	#ntab + index * 4*8
 	mov	$NTAB_ENTRY_SIZE, %ecx #length of the word
 	rep	movsb		       	#copy the token
+	
 	movl	var_current,%eax       	#load index (unneeded?)
 	shl	$2, %eax	       	#multiply by 4
+
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movl	$code_compile, (%edi)
 	movl	$code_execute, 4(%edi)
+	
 	lea	dsptch(%eax),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
-	movl	%eax,(%edi)
-	movl	$docol,	(%eax)
-	addl	$4,var_here	
+	movl	%eax,	(%edi)		#store here address
+	movb	$1,	(%eax)		#store token indictating that we deal with bytecode
+	
+	incl	var_here
 	incl	var_current		#increment current word
 	xchg	%esp,%ebx
 	pop	%esi
@@ -449,7 +470,7 @@ DEF_IMM(postpone,"postpone")
 	incl 	var_here
 	
 	mov	semantic(,%eax,8), %edi	#load the semantics
-	sub	$4, %edi		#convert it to the word token
+	sub	$1, %edi		#convert it to the word token
 	mov	var_current,%ecx	#current word
 	dec	%ecx			
 1:					# find the word of semantics
@@ -477,9 +498,9 @@ END_CODE
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
-	mov	dsptch(,%eax,4),%eax 		#now load the word
 	xchg	%esp,%ebx
-	call	*(%eax)
+	call 	call_word
+
 END_CODE
 DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx

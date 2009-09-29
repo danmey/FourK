@@ -115,7 +115,26 @@ whites:                 .BYTE  4,9,10,12,13,0
 #else
 #endif
 
+################################################################################	
+# Build the dispatch table
+# In:
+# Out:	
 
+build_dispatch:
+	mov	$dsptch, %edi	#load destination table of dwords
+	mov	$_words_start, %esi	#begining of the dictionary
+.loop:
+	mov	%esi,%eax	#load pointer to word
+	stosl			#store the pointer to word in %edi
+	xor	%eax,%eax	#clear out eax
+	lodsb			#load size byte
+	cmp	$-1,%al		#end of core dictionary?
+	je	.out_of_here
+	add	%eax,%esi	#advance to next word
+	jmp	.loop
+.out_of_here:
+	ret
+	
 ################################################################################	
 # Parse literal, string is in token
 # In:
@@ -270,6 +289,7 @@ _find_word:
 entry_point:	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
+	call 	build_dispatch
 interpret_loop:
 
 	K4_SAFE_CALL(_gettoken)	#get next token
@@ -366,7 +386,7 @@ docol:
 	call 	call_word
 	jmp 	3b
 
-.LONG 0
+_words_start:	
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
 	lodsb

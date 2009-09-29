@@ -3,6 +3,9 @@ define([SECTION],
  .ASCII $1
  .ASCII "@@"
 ])
+define([EXECUTE_TOKEN],[2])
+define([COMPILE_TOKEN],[1])
+
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
 define([DICT_SIZE], 4*1024)
@@ -31,23 +34,28 @@ DEF_TAB(FORTH_NAME_TAB)[]
 DEF_TAB(SEMANTIC_TAB)])
 define([END_DICT], 
 here: .FILL DICT_SIZE)
-define([qar], [[$1]])
 define([NORMAL_SEMANTICS],
-[PUSH_EL(SEMANTIC_TAB, [[[code_compile, code_execute]]])])
+[PUSH_EL(SEMANTIC_TAB, [[[COMPILE_TOKEN, EXECUTE_TOKEN]]])])
 
 define([IMMEDIATE_SEMANTICS],
-[PUSH_EL(SEMANTIC_TAB, [[[code_execute, code_execute]]])])
+[PUSH_EL(SEMANTIC_TAB, [[[EXECUTE_TOKEN, EXECUTE_TOKEN]]])])
 
 define([_DEF_CODE],
-[PUSH_EL(NAME_TAB, $1)[]
+[
+define([LAST_WORD],$1)
+PUSH_EL(NAME_TAB, $1)[]
 PUSH_EL(FORTH_NAME_TAB, $2)
 word_$1: 
-.BYTE 0
+.BYTE codeend_$1-code_$1
 code_$1:])
 define([DEF_CODE],[
 _DEF_CODE($1,$2)
 NORMAL_SEMANTICS])
-define([END_CODE],[ret])
+define([END_CODE],
+[ret
+codeend_[]LAST_WORD:
+]
+ )
 define([DEF_VAR],[
 DEF_CODE($1,"$1")
 sub	$ 4,%ebx
@@ -78,7 +86,7 @@ dsptch_end:
 .FILL 4*MAX_WORDS
 SECTION("semantic")
 semantic:
-FOR_EACH(SEMANTIC_TAB, arg, [.LONG arg
+FOR_EACH(SEMANTIC_TAB, arg, [.BYTE arg
 ])
 semantic_end:
 .FILL 8*MAX_WORDS

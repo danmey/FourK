@@ -1,8 +1,7 @@
-create ; immediate postpone [ postpone lit -1 c, postpone c, -1 c,
+create ; immediate postpone [ postpone lit -1 c, postpone c, -1 c, 
 create : postpone create postpone ] ;
 
-: exit, -1 c, ;
-
+: exit, -1 c, ; 
 
 : <> = invert ;
 : 0= 0 = ;

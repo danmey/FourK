@@ -210,7 +210,7 @@ _is_white:
 # token - a token
 _get_key:
 	K4_SAFE_CALL(_getchar)
-	cmpl 	$-1,%eax        # if EOF?
+	cmp 	$-1,%eax        # if EOF?
 	je 	_exit2          # exit the forth
 	cmpb	$10,%al         # if a newline 
 	jne 1f
@@ -237,14 +237,12 @@ _find_word:
 1:	
 
 # If it's end of list then go and report fail
-	cmpb 	$0,(%edx)		# end of dictionary?
+	cmp	$(ntab-NTAB_ENTRY_SIZE) ,%edx
 	jz 	3f			# yes? Not found then.
-	testb	$2,(NTAB_ENTRY_SIZE-1)(%edx)	# Test for immediate
-	jnz	4f			# idden? yes then skip it
 
 # Prepare for string comparition
 	mov 	%edx,%esi		
-	mov 	$(NTAB_ENTRY_SIZE-2),%ecx # Last byte is reserved for flags
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 					  	
 # Compare it
 	push	%edi			# save edi, because it contains
@@ -286,9 +284,10 @@ interpret_loop:
 	pushl	%eax
 	xchg	%esp,%ebx
 	mov 	var_state, %ecx			#if state = 1 then we compile so get the compile semantics
-	shl	$2, %ecx			# * 4 to ecx
-	mov	semantic(%ecx,%eax,8), %ecx 	# load the semantics
-	call	*%ecx				# call the semantics
+	## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
+	## the tokens here are hardcoded! 1  for compiling 2 for executing
+	movzbl	semantic(%ecx,%eax,2),%eax
+	call	call_word
 	jmp	interpret_loop			# loop unti death!
 
 # Here we will parse the literal if word is not found
@@ -329,7 +328,7 @@ _exit2:
 
 # If it is reference image then relocate it, I stripped it off
 # need to align to change the memory attributes via mprotect
-	
+.LONG 0
 BEGIN_DICT
 
 	
@@ -344,8 +343,8 @@ fmt_hex2:		.ASCIZ 	"%x\n"
 
 call_word:
 	mov	dsptch(,%eax,4),%eax
-	cmpb	$0, (%eax)
-	jz	1f
+	cmpb	$-1, (%eax)
+	jne	1f
 	jmp	docol
 1:
 	mov	%eax,%ecx
@@ -365,12 +364,10 @@ docol:
 	pop	%esi
 	ret
 1:
-	cmpb	$-2,%al
-	je	2b
 	call 	call_word
 	jmp 	3b
 
-
+.LONG 0
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
 	lodsb
@@ -378,6 +375,33 @@ DEF_CODE(lit, "lit")
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
+# Don't move below two definitions!
+DEF_CODE(compile, "compile")
+	xchg	%esp,%ebx
+	popl	%eax
+	movl	var_here,%ecx
+	movb	%al,(%ecx)
+	incl	var_here
+	xchg	%esp,%ebx
+	ret
+log_op:
+	mov	(%ebx),%eax
+	add	$4,%ebx
+ 	cmp	%eax,(%ebx)
+	xor	%edx,%edx
+	mov	%edx,%ecx
+	dec 	%ecx
+	cmp	%eax,(%ebx)
+	ret
+END_CODE
+DEF_CODE(execute, "execute")
+	xchg	%esp,%ebx
+	popl	%eax
+	xchg	%esp,%ebx
+	call 	call_word
+
+END_CODE
+	## 
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp
 	pushl	(%esp)
@@ -388,7 +412,6 @@ DEF_CODE(swap,"swap")
 	xchg %eax,(%ebx)
 	mov  %eax,4(%ebx)
 END_CODE
-
 DEF_CODE(drop,"drop")
 	add	$4,%ebx
 END_CODE
@@ -418,7 +441,6 @@ DEF_CODE(comma, ["ccomma"])
 	incl	var_here
 	xchg	%esp,%ebx
 END_CODE
-
 DEF_CODE(create,"create")
 	push	%esi
 	xchg	%esp,%ebx	
@@ -432,13 +454,11 @@ DEF_CODE(create,"create")
 	rep	movsb		       	#copy the token
 	
 	movl	var_current,%eax       	#load index (unneeded?)
-	shl	$2, %eax	       	#multiply by 4
-
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
-	movl	$code_compile, (%edi)
-	movl	$code_execute, 4(%edi)
+	movb	$COMPILE_TOKEN, (%edi)
+	movb	$EXECUTE_TOKEN, 1(%edi)
 	
-	lea	dsptch(%eax),%edi      	#load address to edi
+	lea	dsptch(,%eax,4),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
 	movb	$-1,	(%eax)		#store token indictating that we deal with bytecode
@@ -458,9 +478,9 @@ END_CODE
 DEF_IMM(immediate,"immediate")
 	movl	var_current,%eax
 	dec	%eax
-	lea	semantic(,%eax,8),%edi 	#store semantic actions (two dwords)
-	movl	$code_execute, (%edi)
-	movl	$code_execute, 4(%edi)
+	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
+	movb	$EXECUTE_TOKEN, (%edi)
+	movb	$EXECUTE_TOKEN, 1(%edi)
 	ret
 END_CODE	
 DEF_IMM(postpone,"postpone")
@@ -474,28 +494,21 @@ DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebx
 	call	code_compile		# compile
 	jmp	9f
+
 1:	
 	mov	var_here,%edi
 	movb	$ 0, (%edi)
 	movb	%al, 1(%edi)
 	incl 	var_here
 	incl 	var_here
-	
-	mov	semantic(,%eax,8), %edi	#load the semantics
-	sub	$1, %edi		#convert it to the word token
-	mov	var_current,%ecx	#current word
-	dec	%ecx			
-1:					# find the word of semantics
-	cmp	dsptch(,%ecx,4),%edi 	
-	je	1f			# found
-	loop	1b
+	xor	%eax,%eax
+	movb	semantic(,%eax,2), %al	#load the semantics
 1:
-	push	%ecx
+	push	%eax
 	xchg	%esp,%ebx
 	call	code_compile		# compile
 9:	
 END_CODE
-
 DEF_CODE(fetch, "@")
 	movl	(%ebx),%eax
 	movl	(%eax),%eax
@@ -507,32 +520,6 @@ DEF_CODE(store, "!")
 	mov	%ecx,(%eax)
 	add	$8, %ebx
 END_CODE
-DEF_CODE(execute, "execute")
-	xchg	%esp,%ebx
-	popl	%eax
-	xchg	%esp,%ebx
-	call 	call_word
-
-END_CODE
-DEF_CODE(compile, "compile")
-	xchg	%esp,%ebx
-	popl	%eax
-	movl	var_here,%ecx
-	movb	%al,(%ecx)
-	incl	var_here
-	xchg	%esp,%ebx
-END_CODE
-
-log_op:
-	mov	(%ebx),%eax
-	add	$4,%ebx
-	cmp	%eax,(%ebx)
-	xor	%edx,%edx
-	mov	%edx,%ecx
-	dec 	%ecx
-	cmp	%eax,(%ebx)
-	ret
-	
 DEF_CODE(equals, "=")
 	call 	log_op
 	cmove 	%ecx,%edx
@@ -613,9 +600,7 @@ END_CODE
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)+1])
-DEF_CODE(test,"test")
-	
-	
+
 END_DICT
 BUILD_NAME_TABLE
 

@@ -17,8 +17,8 @@ forgotten:
 
 ** special tokens
 *** (-1) - end word and return; serves as a word delimiter
-*** (-2) - return from word; because of above we need separate entity for returning
-    Can we have a dedicated word instead?
+*** ( 2) - execute token - must be 1
+*** ( 1) - compile token - must be 2
 ** prefix tokens
 *** (0) `lit' - byte literal, get next byte from bytcode and push it on the stacke sign
 *** `branch', `branch0' - get next byte, extend the sign and skip n (could be negative) tokens

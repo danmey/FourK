@@ -1,0 +1,61 @@
+#!/bin/bash
+
+
+quiet_job=
+dirty_job=
+verbose=
+small=
+in_file=
+out_file=4k
+self=${0}
+
+function usage()
+{
+    echo "FourK - an interactive tool for non-interactive 4kb presentations"
+    echo "Compiler front end."
+    echo "Idea at the Function 2009."
+    echo "Please use with precatious, might compress the Universe into 4k."
+    echo 
+    echo "Syntax: ${0} [-q] [-o <out file name prefix> <sources>"
+    echo 
+    echo "Options: "
+    echo "         -q - quiet job control. Suppress stupid messages."
+    echo "         -d - dirty job mode(sometimes called debug mode). Don't clean up any temporary files."
+    echo "         -o <file name> - generate output file name, instead of ./4k"
+    echo 
+    echo
+}
+
+
+function msg()
+{
+    if [[ -z "${quiet_job}" ]]; then
+	echo "${*}"
+    fi
+}
+
+function fatal()
+{
+    echo "Error: ${self}: ${1}" >&2;exit 1
+}
+
+# Standard house keeping, boring part 
+if [ "$#" -eq "0" ]; then
+    usage
+    exit 0
+fi
+
+while getopts "dqo:" opt; do
+    case ${opt} in
+	q) quiet_job=yes;;
+	d) dirty_job=yes;;
+	o) out_file=${OPTARG};;
+	*) fatal "Unrecognized option: ${opt}";;
+    esac
+done
+
+shift $((${OPTIND}-1))
+build $* 
+
+msg $(ls -l ${out_file}-uncompressed | awk '{ print "Un-compressed size: " $5}')
+msg $(ls -l ${out_file} | awk '{ print "Compressed size: " $5}')

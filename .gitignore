@@ -31,3 +31,8 @@ fourk2
 *.4ki
 *.cm*
 *.bak
+bin
+boot.4k
+push.sh
+unpack.header
+robots

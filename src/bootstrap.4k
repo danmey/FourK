@@ -1,7 +1,26 @@
 create ; immediate postpone [ postpone lit -1 c, postpone c, -1 c,
 create : postpone create postpone ] ;
 
-: exit, -1 c, ;
+: label here @ ; immediate
+: literal 0 c, c, ;
+
+: foo 2. ; 
+foo
+: c@ @ 255 and ;
+: c! dup @ ;
+
+: jmp-back postpone branch here @ - 1 - c, ; immediate
+: begin postpone label ; immediate
+: repeat postpone jmp-back ; immediate
+
+: if 1 literal postpone << postpone branch0 postpone branch here @ ; immediate
+
+
+: ;; -1 c, ; immediate
+: ( begin repeat ;
+
+
+
 
 
 : <> = invert ;
@@ -11,12 +30,7 @@ create : postpone create postpone ] ;
 : >= < invert ;
 : cr 10 emit ;
 
-: literal 0 c, c, ;
 
-: jmp-back postpone branch here @ - 1 - c, ; immediate
-: label here @ ; immediate
-: begin postpone label ; immediate
-: repeat postpone jmp-back ; immediate
 
 : a 0 begin 1 + repeat ;
 

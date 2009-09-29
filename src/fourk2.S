@@ -289,7 +289,6 @@ _find_word:
 entry_point:	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
-	call 	build_dispatch
 interpret_loop:
 
 	K4_SAFE_CALL(_gettoken)	#get next token

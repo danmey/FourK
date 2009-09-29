@@ -432,6 +432,19 @@ END_CODE
 DEF_CODE(drop,"drop")
 	add	$4,%ebx
 END_CODE
+
+DEF_CODE(rpush,">r")
+	mov (%ebx), %eax
+	add $4, %ebx
+	push %eax	
+END_CODE
+
+DEF_CODE(rdrop,"r>")
+	pop %eax
+	sub $4, %ebx
+	mov %eax, (%ebx)
+END_CODE
+
 DEF_CODE(plus,"+")
 	mov	(%ebx),%eax
 	add	$4,%ebx
@@ -535,9 +548,24 @@ DEF_CODE(store, "!")
 	mov	%ecx,(%eax)
 	add	$8, %ebx
 END_CODE
+
+DEF_CODE(cfetch, "c@")
+	movl (%ebx), %eax
+	movb (%eax), %al
+	and $0xff, %eax
+	movl %eax, (%ebx)
+END_CODE
+DEF_CODE(cstore, "c!")
+	movl (%ebx), %eax
+	mov 4(%ebx), %ecx
+	movb %cl, (%eax)
+	add $8, %ebx
+END_CODE
+
+	
 DEF_CODE(equals, "=")
 	call 	log_op
-	cmove 	%ecx,%edx
+	cmove 	%ecx,%edx 
 	mov	%edx,(%ebx)
 END_CODE
 
@@ -553,6 +581,41 @@ DEF_CODE(greater, ">")
 	mov	%edx,(%ebx)
 END_CODE
 
+DEF_CODE(lshift, "<<")
+	mov (%ebx),%ecx
+	add $4, %ebx
+	mov (%ebx), %eax
+	shl %cl, %eax
+	mov %eax, (%ebx)
+END_CODE
+
+DEF_CODE(rshift, ">>")
+	mov (%ebx), %ecx
+	add $4, %ebx
+	mov (%ebx), %eax
+	shr %cl, %eax
+	mov %eax, (%ebx)
+END_CODE
+
+DEF_CODE(mkand, "and")
+	mov (%ebx), %eax
+	add $4, %ebx
+	and (%ebx), %eax
+	mov %eax, (%ebx)
+END_CODE
+DEF_CODE(mkor, "or")
+	mov (%ebx), %eax
+	add $4, %ebx
+	or (%ebx), %eax
+	mov %eax, (%ebx)
+END_CODE
+DEF_CODE(mkxor, "xor")
+	mov (%ebx), %eax
+	add $4, %ebx
+	xor (%ebx), %eax
+	mov %eax, (%ebx)
+END_CODE
+
 DEF_CODE(invert, "invert")
 	notl	(%ebx)
 END_CODE
@@ -565,19 +628,20 @@ DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(branch, "branch")
-	lodsb
-	movsbl 	%al,%eax
-	add	%eax,%esi
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # indirect jump ( 8 bit ) 
 END_CODE
 DEF_CODE(branch0, "branch0")
-	mov	(%ebx),%eax
-	add	$4,%ebx
-	or	%eax,%eax
-	jz	1f
-	lodsb
-	movsbl 	%al,%eax
-	add	%eax,%esi
+	mov	(%ebx),%eax   # TOS -> eax
+	add	$4,%ebx       # drop
+	or	%eax,%eax     # refresh flags
+	jnz	1f            # if zero eax=0 
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # do an indirect jump ( 8 bit )
 1:	
+	inc %esi
 END_CODE
 DEF_CODE(tick, "'")
 	xchg	%esp,%ebx	
@@ -586,6 +650,11 @@ DEF_CODE(tick, "'")
 	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebx
+END_CODE
+DEF_CODE(key, "key")
+	K4_SAFE_CALL(_get_key)
+	movl	%eax, (%ebx)
+	add	$4,%eax
 END_CODE
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream

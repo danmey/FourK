@@ -18,6 +18,6 @@ create : postpone create postpone ] ;
 : repeat postpone jmp-back ; immediate
 
 : a 0 begin 1 + dup . cr repeat ;
-a 
+a
 
 

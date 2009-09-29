@@ -523,7 +523,7 @@ log_op:
 	cmp	%eax,(%ebx)  # compare with second element
 	xor	%edx,%edx    # edx = 0
 	mov	%edx,%ecx    # ecx = 0
-	inc 	%ecx         # ecx = 1
+	dec 	%ecx         # ecx = -1
 	cmp	%eax,(%ebx)  # compare wtih second element
 	ret
 	
@@ -600,11 +600,12 @@ DEF_CODE(branch0, "branch0")
 	mov	(%ebx),%eax   # TOS -> eax
 	add	$4,%ebx       # drop
 	or	%eax,%eax     # refresh flags
-	jz	1f            # if not eax=0 
+	jnz	1f            # if zero eax=0 
 	lodsb                 # load byte -> %AL
 	movsbl 	%al,%eax      # clear all the other bytes
 	add	%eax,%esi     # do an indirect jump ( 8 bit )
 1:	
+	inc %esi
 END_CODE
 DEF_CODE(tick, "'")
 	xchg	%esp,%ebx	

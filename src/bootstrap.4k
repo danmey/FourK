@@ -4,11 +4,6 @@ create : postpone create postpone ] ;
 : label here @ ; immediate
 : literal 0 c, c, ;
 
-: foo 2. ; 
-foo
-: c@ @ 255 and ;
-: c! dup @ ;
-
 : jmp-back postpone branch here @ - 1 - c, ; immediate
 : begin postpone label ; immediate
 : repeat postpone jmp-back ; immediate

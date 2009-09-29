@@ -487,6 +487,20 @@ DEF_CODE(store, "!")
 	mov	%ecx,(%eax)
 	add	$8, %ebx
 END_CODE
+
+DEF_CODE(cfetch, "c@")
+	movl (%ebx), %eax
+	movb (%eax), %al
+	and $0xff, %eax
+	movl %eax, (%ebx)
+END_CODE
+DEF_CODE(cstore, "c!")
+	movl (%ebx), %eax
+	mov 4(%ebx), %ecx
+	movb %cl, (%eax)
+	add $8, %ebx
+END_CODE
+
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax

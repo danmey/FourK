@@ -39,7 +39,7 @@ define([NORMAL_SEMANTICS],
 
 define([IMMEDIATE_SEMANTICS],
 [PUSH_EL(SEMANTIC_TAB, [[[EXECUTE_TOKEN, EXECUTE_TOKEN]]])])
-
+define([NEXT_WORD], [jmp next_word])
 define([_DEF_CODE],
 [
 define([LAST_WORD],$1)
@@ -52,7 +52,8 @@ define([DEF_CODE],[
 _DEF_CODE($1,$2)
 NORMAL_SEMANTICS])
 define([END_CODE],
-[ret
+[
+NEXT_WORD
 codeend_[]LAST_WORD:
 ]
  )
@@ -60,7 +61,7 @@ define([DEF_VAR],[
 DEF_CODE($1,"$1")
 sub	$ 4,%ebx
 movl	$var_$1,(%ebx)
-ret
+NEXT_WORD
 var_$1:	.long $2
 END_CODE
 ])

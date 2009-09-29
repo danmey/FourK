@@ -215,7 +215,6 @@ _get_key:
 	cmpb	$10,%al         # if a newline 
 	jne 1f
 1:	ret
-	.STRING "ENDX"
 
 ################################################################################	
 # Find the word in dictionary by comparing strings.
@@ -287,7 +286,7 @@ interpret_loop:
 	## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
 	## the tokens here are hardcoded! 1  for compiling 2 for executing
 	movzbl	semantic(%ecx,%eax,2),%eax
-	call	call_word
+	call    call_word
 	jmp	interpret_loop			# loop unti death!
 
 # Here we will parse the literal if word is not found
@@ -301,7 +300,6 @@ interpret_loop:
 3:
 	cmp	$0, var_state	#code dependent on the state
 	jnz	4f		#if we are compiling (0) then compile the literal
-
 # Here we compile literal TODO: the state variable has inverted meaning; do something with that
 	mov	var_here,%ecx
 	movb	$0,(%ecx)	# token for literal
@@ -339,7 +337,6 @@ BEGIN_DICT
 	mov	var_current,%eax
 	dec	%eax
 	call 	call_word
-fmt_hex2:		.ASCIZ 	"%x\n"
 
 call_word:
 	mov	dsptch(,%eax,4),%eax
@@ -350,7 +347,9 @@ call_word:
 	mov	%eax,%ecx
 	inc	%ecx
 	jmp	*%ecx
+next_word:	
 	ret
+fmt_hex2:		.ASCIZ 	"%x\n"
 
 docol:
 	push	%esi
@@ -383,7 +382,7 @@ DEF_CODE(compile, "compile")
 	movb	%al,(%ecx)
 	incl	var_here
 	xchg	%esp,%ebx
-	ret
+END_CODE
 log_op:
 	mov	(%ebx),%eax
 	add	$4,%ebx
@@ -393,14 +392,13 @@ log_op:
 	dec 	%ecx
 	cmp	%eax,(%ebx)
 	ret
-END_CODE
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg	%esp,%ebx
-	call 	call_word
-
+	jmp 	call_word
 END_CODE
+	
 	## 
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp
@@ -431,7 +429,6 @@ DEF_CODE(dot, ".")
 	call 	printf
 	add	$8,%esp
 	xchg	%esp,%ebx
-	ret
 END_CODE
 DEF_CODE(comma, ["ccomma"])
 	xchg	%esp,%ebx
@@ -467,7 +464,6 @@ DEF_CODE(create,"create")
 	incl	var_current		#increment current word
 	xchg	%esp,%ebx
 	pop	%esi
-	ret
 END_CODE
 DEF_CODE(lb, "lb")		#alias for [
 	movl	$1, var_state
@@ -481,7 +477,6 @@ DEF_IMM(immediate,"immediate")
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$EXECUTE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
-	ret
 END_CODE	
 DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebx	
@@ -492,7 +487,7 @@ DEF_IMM(postpone,"postpone")
 	jne	1f
 	push	%eax
 	xchg	%esp,%ebx
-	call	code_compile		# compile
+	jmp	code_compile		# compile
 	jmp	9f
 
 1:	
@@ -501,12 +496,13 @@ DEF_IMM(postpone,"postpone")
 	movb	%al, 1(%edi)
 	incl 	var_here
 	incl 	var_here
+	mov	%eax,%ecx
 	xor	%eax,%eax
-	movb	semantic(,%eax,2), %al	#load the semantics
+	movb	semantic(,%ecx,2), %al	#load the semantics
 1:
 	push	%eax
 	xchg	%esp,%ebx
-	call	code_compile		# compile
+	jmp	code_compile		# compile
 9:	
 END_CODE
 DEF_CODE(fetch, "@")

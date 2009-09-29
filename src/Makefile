@@ -47,14 +47,14 @@ $(BIN)/fourk-debug: $(SRC_FILES)
 	cp $@ $(PREFIX)
 #	-rm -f t.*
 
-$(BIN)/boot.4ki: $(BASIC_FILES)
+$(BIN)/boot.4ki: $(BASIC_FILES) bootstrap.4k
 	cat bootstrap.4k > boot.4k
 	echo "save-image $(BIN)/boot.4ki" >> boot.4k
 	cat boot.4k | $(BIN)/fourk
 	cp $@ $(PREFIX)
 #	-rm -f boot.4k
 
-$(BIN)/boot-ref.4ki: $(BASIC_FILES)
+$(BIN)/boot-ref.4ki: $(BASIC_FILES) bootstrap.4k
 	cat bootstrap.4k > boot.4k
 	echo "save-image $(BIN)/boot-ref.4ki" >> boot.4k
 	cat boot.4k | $(BIN)/fourk-ref

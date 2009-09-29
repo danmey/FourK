@@ -12,7 +12,7 @@ forgotten:
 * dictionary
 ** word byte header 
    I am not sure if it wasn't simplier to have just length of the word. (subject to change)
-***  0 - core word (assembly); 
+***  byte size - core word (assembly); 
 *** -1 - bytecode word;
 
 ** special tokens

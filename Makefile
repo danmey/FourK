@@ -7,6 +7,7 @@ $(shell test -e $(BIN) || mkdir $(BIN))
 
 all: basic debug boot linker
 
+
 compress:
 	cp $(BIN)/fourk $(BIN)/4k
 	cp unpack.header $(BIN)/4k

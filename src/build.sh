@@ -36,6 +36,9 @@ mv image.4ki image5.4ki
 ../image4k/image4k -R image5.4ki image5.4ki
 ../image4k/image4k -link 4k-uncompressed image2.4ki
 
+strip -s -R .comment -R .gnu.version 4k-uncompressed
+sstrip 4k-uncompressed
+
 # Compress it
 cp unpack.header 4k 
 gzip -cn9 4k-uncompressed >> 4k 

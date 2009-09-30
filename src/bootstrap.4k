@@ -3,6 +3,8 @@ create : postpone create postpone ] ;
 
 : here@ here @ ;
 : literal 0 c, c, ;
+: rliteral 4 c, , ;
+
 : [exit,] -1 c, ; immediate
 
 : begin here@ ; immediate
@@ -16,6 +18,7 @@ create : postpone create postpone ] ;
 | TODO:
 | we need to stay with line comments and shift below for later
 | to make nesting possible with some loops
+
 : ( begin key 41 = if [exit,] then repeat ; immediate
 : (* begin key 42 = if key 41 = if [exit,] then then repeat ; immediate
 
@@ -44,8 +47,19 @@ create : postpone create postpone ] ;
 | === a test routine === 
 : a 0 begin 1 + repeat ;
 
-: a 0 begin 1 + dup . cr repeat ;
+| : a 0 begin 1 + dup . cr repeat ;
 | a
 
 | image saver 
 | save-image image.4ki
+
+| to verbose but will make optimisations later
+| by default we will use byte cells, as it is meant to be 4kb tool
+: cell 1 ;
+: cells cell * ;
+| ref cells
+: rcell 4 ;
+
+: allot there @ + there ! ;
+
+: variable : there @ rliteral postpone ; rcell allot  ;

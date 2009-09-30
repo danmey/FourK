@@ -391,7 +391,7 @@ runbyte:
 next_word:	
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
-
+SECTION("words")
 _words_start:	
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
@@ -409,6 +409,8 @@ DEF_CODE(compile, "compile")
 	incl	var_here
 	xchg	%esp,%ebx
 END_CODE
+DEF_CODE(execute, "execute")
+	jmp	1f
 log_op:
 	mov	(%ebx),%eax
 	add	$4,%ebx
@@ -418,7 +420,7 @@ log_op:
 	dec 	%ecx
 	cmp	%eax,(%ebx)
 	ret
-DEF_CODE(execute, "execute")
+1:	
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
@@ -436,6 +438,22 @@ DEF_CODE(lit4, "lit4")
 	lodsl
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
+END_CODE
+DEF_CODE(branch, "branch")
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # indirect jump ( 8 bit ) 
+END_CODE
+DEF_CODE(branch0, "branch0")
+	mov	(%ebx),%eax   # TOS -> eax
+	add	$4,%ebx       # drop
+	or	%eax,%eax     # refresh flags
+	jnz	1f            # if zero eax=0 
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # do an indirect jump ( 8 bit )
+1:	
+	inc %esi
 END_CODE
 
 DEF_CODE(dup,"dup")
@@ -661,22 +679,6 @@ DEF_CODE(emit, "emit")
 	call 	printf
 	add	$8,%esp
 	xchg	%esp,%ebx
-END_CODE
-DEF_CODE(branch, "branch")
-	lodsb                 # load byte -> %AL
-	movsbl 	%al,%eax      # clear all the other bytes
-	add	%eax,%esi     # indirect jump ( 8 bit ) 
-END_CODE
-DEF_CODE(branch0, "branch0")
-	mov	(%ebx),%eax   # TOS -> eax
-	add	$4,%ebx       # drop
-	or	%eax,%eax     # refresh flags
-	jnz	1f            # if zero eax=0 
-	lodsb                 # load byte -> %AL
-	movsbl 	%al,%eax      # clear all the other bytes
-	add	%eax,%esi     # do an indirect jump ( 8 bit )
-1:	
-	inc %esi
 END_CODE
 DEF_CODE(tick, "'")
 	xchg	%esp,%ebx	

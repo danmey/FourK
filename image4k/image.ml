@@ -145,9 +145,30 @@ module BinaryFile = struct
       array
 end
 
-let list_words name_section (*dict_section*) =
-(*  let names = Section.to_list name_section in *)
+let list_words name_section dict_section =
+  let dict_image = Section.to_list dict_section in
+  let rec drop n = function
+    | [] -> []
+    | x::xs when n > 0 -> drop (n-1) xs
+    | xs -> xs in
+  let rec byte_loop size =
+    function
+	(* prefix words *)
+      |	[] -> []
+      | 0::_::xs | 4::_::xs | 5::_::xs | 6::_::xs ->
+	  byte_loop (size+2) xs 
+      | 255::xs -> size::(word_loop (255::xs))
+      | _::xs -> byte_loop (size+1) xs
+and word_loop = acc
+  function
+    | [] -> acc
+    | 0::_ -> acc
+    | 255::xs -> byte_loop 0 xs
+    | n::xs -> (word_loop (n::acc) (drop n xs)) in
   let (s,l,_,image) = name_section in
+  let sizes = word_loop dict_image in
+  let sizes_a = Array.create (List.length sizes) 0 in
+    List.fold_left (fun i x -> sizes_a.(i) <- x; i+1) 0 sizes;
   let get_string i = 
     let lst = 
 	List.rev ((Array.fold_left 
@@ -163,7 +184,7 @@ let list_words name_section (*dict_section*) =
       let s = (get_string i) in
 	if not (s = "") then
 	  begin
-	    Printf.printf "Name: %s Len: %d\n" s i;
+	    Printf.printf "Name: %.32s\tLen: %d\n" s (sizes_a.(!count));
 	    count := !count + 1;
 	  end
     done;
@@ -205,7 +226,10 @@ let options =
     "-link", String (fun nm -> link_with := nm), 
     "Link with fourk engine";
 
-    "-words", String (fun x -> list_words (Section.find (BinaryFile.read x) "name")),
+    "-words", String (fun x -> list_words 
+			(Section.find (BinaryFile.read x) "name")
+			(Section.find (BinaryFile.read x) "words")
+		     ),
     "Print words"
   ]
 end

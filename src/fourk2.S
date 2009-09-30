@@ -712,6 +712,9 @@ DEF_CODE(load_image, "load-image")
 	K4_SAFE_CALL(_fclose, %eax)
 	jmp interpret_loop
 END_CODE
+DEF_CODE(exit,"exit")
+	pop	%esi
+END_CODE
 DEF_VAR(there, there)
 #ifdef DEBUG
 	.data

@@ -5,7 +5,6 @@ create : postpone create postpone ] ;
 : literal 0 c, c, ;
 : rliteral 4 c, , ;
 
-: [exit,] -1 c, ; immediate
 
 : begin here@ ; immediate
 : repeat postpone branch here@ - 1 - c, ; immediate
@@ -13,14 +12,14 @@ create : postpone create postpone ] ;
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - 2 - swap c! ; immediate 
 
-: | begin key 10 = if [exit,] then repeat ; immediate
+: | begin key 10 = if postpone exit then repeat ; immediate
 
 | TODO:
 | we need to stay with line comments and shift below for later
 | to make nesting possible with some loops
 
-: ( begin key 41 = if [exit,] then repeat ; immediate
-: (* begin key 42 = if key 41 = if [exit,] then then repeat ; immediate
+: ( begin key 41 = if postpone exit then repeat ; immediate
+: (* begin key 42 = if key 41 = if postpone exit then then repeat ; immediate
 
 | this is a retroforth one line comment
 ( this is a stack comment ) 

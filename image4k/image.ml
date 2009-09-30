@@ -158,9 +158,22 @@ let list_words name_section (*dict_section*) =
       str
   in
   let no = l / 32 in
+  let count = ref 0 in
     for i = 0 to no - 1 do
-      Printf.printf "Name: %s Len: %d\n" (get_string i) i
-    done
+      let s = (get_string i) in
+	if not (s = "") then
+	  begin
+	    Printf.printf "Name: %s Len: %d\n" s i;
+	    count := !count + 1;
+	  end
+    done;
+    Printf.printf "%n words defined.\n" !count
+
+let list_sections image after_sec =
+  List.iter (fun x -> Section.print x; after_sec x) (Section.take image)
+
+let list_sections_simple nm =
+  list_sections (BinaryFile.read nm) (fun _ -> ())
 
 module Options = struct
   let output_file = ref "a.4ki"
@@ -177,7 +190,7 @@ let options =
     "-o", String    (fun nm  -> output_file := nm), 
     "Output image file name";
 
-    "-relocs", String    (fun nm -> reference_file := Some nm), 
+    "relocs", String    (fun nm -> reference_file := Some nm), 
     "List relocations";
 
     "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
@@ -186,17 +199,8 @@ let options =
     "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
     "Perform relocation using reference file";
 
-    "-s", Int       (fun i -> which_show := i), 
-    "Use base adresses from which file; 1 - reference file";
-
-    "-l", Unit      (fun () -> list_sections := true), 
+    "-sections", String (fun nm -> list_sections_simple nm ), 
     "List sections";
-
-    "-v", Unit      (fun () -> verbose := true), 
-    "Be verbose, show relocs in teh section list.";
-
-    "--brute-force", Unit (fun () -> brute_force := true), 
-    "Be brutal, no relocations, fill garbage with zeroes";
 
     "-link", String (fun nm -> link_with := nm), 
     "Link with fourk engine";
@@ -250,8 +254,6 @@ let nop_jump im =
 
 let usage_text = "image4k <options> <file>"
 
-let list_sections image after_sec =
-  List.iter (fun x -> Section.print x; after_sec x) (Section.take image)
 
 let list_relocs image ref_image relocate =
   let base1 = BinaryArray.get_dword image 0 in

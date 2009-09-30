@@ -4,7 +4,7 @@ $(shell test -e $(BIN) || mkdir $(BIN))
 
 $(BIN)/image4k:	image.ml dict.ml
 	ocamlc $< -o $@
-	cp $@ $(PREFIX)
+	cp $@ ../bin
 
 .PHONY: clean
 clean:

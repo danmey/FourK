@@ -51,7 +51,7 @@ include(dict.m4)
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # this bit cannot be saved into image, therefore cannot be in the
-# interpret pseudo section due to stdin relocation problem
+# interpret pseudo section due to `stdin' symbol relocation problem
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 _gettoken:
@@ -70,16 +70,22 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
+################################################################################
+# Our image starts here and will be saved by a save-image word, and load by
+# load-image word
+#
 _image_start:
-	.LONG  _image_start
+	.LONG  _image_start	# at the begining we need the actual memory address
+				# for relocations
+	
 #ifndef DEBUG
 #ifdef PARTY
 	_start:
 #else
-main:
+	main:
 #endif
 #else
-main:				
+	main:				
 #endif
 	jmp _dict_start
 
@@ -108,8 +114,8 @@ msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
-
-	
+bytecode:		.BYTE  0,3
+ex_bytecode:		.BYTE  0,-1
 #ifdef DEBUG
 	.TEXT
 #else
@@ -125,12 +131,17 @@ build_dispatch:
 	mov	$_words_start, %esi	#begining of the dictionary
 .loop:
 	mov	%esi,%eax	#load pointer to word
+	cmp	%eax,(%esi)
+	jne 	1f
+	K4_SAFE_CALL(printf,$msg_test1)
+1:	
 	stosl			#store the pointer to word in %edi
 	xor	%eax,%eax	#clear out eax
 	lodsb			#load size byte
 	cmp	$-1,%al		#end of core dictionary?
 	je	.out_of_here
 	add	%eax,%esi	#advance to next word
+
 	jmp	.loop
 .out_of_here:
 	ret
@@ -286,7 +297,8 @@ _find_word:
 
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
-entry_point:	
+entry_point:
+#	call build_dispatch
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 interpret_loop:
@@ -305,8 +317,10 @@ interpret_loop:
 	## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
 	## the tokens here are hardcoded! 1  for compiling 2 for executing
 	movzbl	semantic(%ecx,%eax,2),%eax
-	call    call_word
-	jmp	interpret_loop			# loop unti death!
+	mov	%al,bytecode
+	movb	$3,(bytecode+1)
+	mov	$(bytecode-1),%eax
+	jmp	runbyte
 
 # Here we will parse the literal if word is not found
 2:
@@ -343,11 +357,9 @@ _exit2:
 	.GLOBL main
 	.GLOBL _start
 
-# If it is reference image then relocate it, I stripped it off
-# need to align to change the memory attributes via mprotect
-.LONG 0
+SECTION("dict")
+	
 BEGIN_DICT
-
 	
 # The call is nopped in the final image
 	jmp 	entry_point
@@ -355,35 +367,30 @@ BEGIN_DICT
 	sub	$4096,%ebx
 	mov	var_current,%eax
 	dec	%eax
-	call 	call_word
 
-call_word:
-	mov	dsptch(,%eax,4),%eax
-	cmpb	$-1, (%eax)
-	jne	1f
-	jmp	docol
-1:
-	mov	%eax,%ecx
-	inc	%ecx
-	jmp	*%ecx
+################################################################################
+# Main bytecode interpreter loop,
+# Function escapes to main text interpreter loop throuh `interpret' token
+# In: %eax - contains a word pointer
+runbyte:	
+	push	%esi		# push the current word address on the return stack
+	lea	1(%eax),%esi	# load the byte code pointer
+.fetchbyte:			
+	xor	%eax,%eax	# fetch the byte, first clear up the %eax
+	lodsb			# byte code in %eax
+	cmpb	$-1,%al		# if it is end of word, escape by returning
+	je	.fold		# the previous byte code pointer
+	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
+	je	runbyte		     # if it is byte code then thread again
+	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
+	inc	%ecx		     # asm defined words escape to next_word at the end
+	jmp	*%ecx		     # jump there
+.fold:	
+	pop	%esi		# we are threading out
 next_word:	
-	ret
-fmt_hex2:		.ASCIZ 	"%x\n"
+	jmp 	.fetchbyte	# this is called by every asm word at the end
 
-docol:
-	push	%esi
-	lea	1(%eax),%esi
-3:
-	xor	%eax,%eax
-	lodsb
-	cmpb	$-1,%al
-	jne	1f
-2:	
-	pop	%esi
-	ret
-1:
-	call 	call_word
-	jmp 	3b
 
 _words_start:	
 DEF_CODE(lit, "lit")
@@ -414,10 +421,16 @@ log_op:
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
-	xchg	%esp,%ebx
-	jmp 	call_word
+	xchg 	%esp,%ebx
+	mov	%al,ex_bytecode
+	movb	$-1,(ex_bytecode+1)
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
 END_CODE
-	
+
+DEF_CODE(interpret,"interpret")
+	jmp	interpret_loop
+END_CODE
 	## 
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp

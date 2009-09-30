@@ -1,51 +1,8 @@
-type section = { offset:int; length:int }
-type symbol = {id:int; offset:int; backpatch: int list }
-type image = {sections:section list; symbols:symbol list}
 open Arg 
 module Ni = Int32
 
-module Options = struct
-  let output_file = ref "a.4ki"
-  let reference_file = ref None
-  let base_address = ref None
-  let which_show = ref 1
-  let relocate = ref false
-  let list_sections = ref false
-  let verbose = ref false
-  let brute_force = ref false
-  let link_with = ref ""
-let options = 
-  [
-    "-o", String    (fun nm  -> output_file := nm), 
-    "Output image file name";
-
-    "-r", String    (fun nm -> reference_file := Some nm), 
-    "List relocations";
-
-    "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
-    "Base address of the image";
-
-    "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
-    "Perform relocation using reference file";
-
-    "-s", Int       (fun i -> which_show := i), 
-    "Use base adresses from which file; 1 - reference file";
-
-    "-l", Unit      (fun () -> list_sections := true), 
-    "List sections";
-
-    "-v", Unit      (fun () -> verbose := true), 
-    "Be verbose, show relocs in teh section list.";
-
-    "--brute-force", Unit (fun () -> brute_force := true), 
-    "Be brutal, no relocations, fill garbage with zeroes";
-
-    "-link", String (fun nm -> link_with := nm), 
-    "Link with fourk engine"
-  ]
-end
-
 module BinaryArray = struct
+  type t = int array
 let get_dword arr i = 
   let ni = Ni.of_int in
   let b1 = ni arr.(i+3) in
@@ -69,24 +26,8 @@ let set_dword arr i dword =
     ()
 end
 
-module BinaryFile = struct
-  let write image nm len = 
-    let file = open_out_bin nm in
-      Array.iteri (fun i x -> if i < len then output_byte file x) image;
-      close_out file
-
-  let read nm =
-    let file = open_in_bin nm in
-    let size = in_channel_length file in
-    let array = Array.make size 0 in
-      for i = 0 to size - 1 do
-	array.(i) <- input_byte file
-      done;
-      close_in file;
-      array
-end
-
 module Section = struct
+  type t = { offset:int; length:int; name:string; image: BinaryArray.t}
   let next image o =
     try
       let rec skip_to_section f i = 
@@ -110,6 +51,7 @@ module Section = struct
 	    (i', j - i'-2,!name, image)
 	with _ -> (i',Array.length image - i',!name, image)
     with _ -> (0,0,"", image)
+
 
   let fill_all (s,l,_,im) v = Array.fill im s l v
   let fill (s,l,_,im) v o n = Array.fill im (s+o) n v
@@ -174,7 +116,98 @@ let relocs (s,l,_,image) (s_ref,l_ref,_,image_ref) =
     done;
     List.rev !relocs
 
+let to_list (s,l,_,im) = Array.fold_right (fun x acc -> x::acc) (Array.sub im s l) []
+
 end
+
+module Symbol = struct
+  type t = {name:int; offset:int; backpatch: int list }
+end
+
+module Image = struct
+  type t = {sections:Section.t list; symbols:Symbol.t list}
+end
+
+module BinaryFile = struct
+  let write image nm len = 
+    let file = open_out_bin nm in
+      Array.iteri (fun i x -> if i < len then output_byte file x) image;
+      close_out file
+
+  let read nm =
+    let file = open_in_bin nm in
+    let size = in_channel_length file in
+    let array = Array.make size 0 in
+      for i = 0 to size - 1 do
+	array.(i) <- input_byte file
+      done;
+      close_in file;
+      array
+end
+
+let list_words name_section (*dict_section*) =
+(*  let names = Section.to_list name_section in *)
+  let (s,l,_,image) = name_section in
+  let get_string i = 
+    let lst = 
+	List.rev ((Array.fold_left 
+	   (fun acc x -> match x with 0 -> acc | _ -> (char_of_int x)::acc)
+	   [] (Array.sub image (s+i*32) 32))) in
+    let str = String.create (List.length lst) in
+      (List.fold_left (fun i x -> str.[i] <- x; i+1) 0 lst);
+      str
+  in
+  let no = l / 32 in
+    for i = 0 to no - 1 do
+      Printf.printf "Name: %s Len: %d\n" (get_string i) i
+    done
+
+module Options = struct
+  let output_file = ref "a.4ki"
+  let reference_file = ref None
+  let base_address = ref None
+  let which_show = ref 1
+  let relocate = ref false
+  let list_sections = ref false
+  let verbose = ref false
+  let brute_force = ref false
+  let link_with = ref ""
+let options = 
+  [
+    "-o", String    (fun nm  -> output_file := nm), 
+    "Output image file name";
+
+    "-relocs", String    (fun nm -> reference_file := Some nm), 
+    "List relocations";
+
+    "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
+    "Base address of the image";
+
+    "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
+    "Perform relocation using reference file";
+
+    "-s", Int       (fun i -> which_show := i), 
+    "Use base adresses from which file; 1 - reference file";
+
+    "-l", Unit      (fun () -> list_sections := true), 
+    "List sections";
+
+    "-v", Unit      (fun () -> verbose := true), 
+    "Be verbose, show relocs in teh section list.";
+
+    "--brute-force", Unit (fun () -> brute_force := true), 
+    "Be brutal, no relocations, fill garbage with zeroes";
+
+    "-link", String (fun nm -> link_with := nm), 
+    "Link with fourk engine";
+
+    "-words", String (fun x -> list_words (Section.find (BinaryFile.read x) "name")),
+    "Print words"
+  ]
+end
+
+
+
 
 let relocate_section (s,e) offs relocs base =
   List.iter 
@@ -225,10 +258,13 @@ let list_relocs image ref_image relocate =
   let base2 = BinaryArray.get_dword ref_image 0 in
   let delta = Ni.sub base1 base2 in
     if not relocate then
+(*
       let sections = Section.take image in
       let print_relocs sec = 
 	let _,_,name,_ = sec in List.iter (print_reloc base1 base2) (Section.relocs sec (Section.find ref_image name)) in
       list_sections image print_relocs
+*)
+()
     else 
       begin
 	Printf.printf "Delta: %lx\n" delta;

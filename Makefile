@@ -5,7 +5,7 @@ BIN := $(PREFIX)
 
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all: basic debug boot linker
+all: basic debug boot linker compiler
 
 
 compress:
@@ -24,6 +24,7 @@ boot:
 linker:
 	$(MAKE) -C image4k
 
+compiler: linker
 
 .PHONY: clean
 clean:

@@ -70,16 +70,22 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
+################################################################################
+# Our image starts here and will be saved by a save-image word, and load by
+# load-image word
+#
 _image_start:
-	.LONG  _image_start
+	.LONG  _image_start	# at the begining we need the actual memory address
+				# for relocations
+	
 #ifndef DEBUG
 #ifdef PARTY
 	_start:
 #else
-main:
+	main:
 #endif
 #else
-main:				
+	main:				
 #endif
 	jmp _dict_start
 
@@ -362,24 +368,28 @@ BEGIN_DICT
 	mov	var_current,%eax
 	dec	%eax
 
+################################################################################
+# Main bytecode interpreter loop,
+# Function escapes to main text interpreter loop throuh `interpret' token
+# In: %eax - contains a word pointer
 runbyte:	
-	push	%esi
-	lea	1(%eax),%esi
-.fetchbyte:
-	xor	%eax,%eax
-	lodsb
-	cmpb	$-1,%al
-	je	.fold
-	mov	dsptch(,%eax,4),%eax
-	cmpb	$-1, (%eax)
-	je	runbyte
-	mov	%eax,%ecx
-	inc	%ecx
-	jmp	*%ecx
+	push	%esi		# push the current word address on the return stack
+	lea	1(%eax),%esi	# load the byte code pointer
+.fetchbyte:			
+	xor	%eax,%eax	# fetch the byte, first clear up the %eax
+	lodsb			# byte code in %eax
+	cmpb	$-1,%al		# if it is end of word, escape by returning the 
+	je	.fold		# the previous byte code pointer
+	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
+	je	runbyte		     # if it is byte code then thread again
+	mov	%eax,%ecx	     # if it is asm code skip the size and jump there
+	inc	%ecx		     # asm defined words escape to next_word at the end
+	jmp	*%ecx		     # jump there
 .fold:	
-	pop	%esi
+	pop	%esi		# we are threading out
 next_word:	
-	jmp 	.fetchbyte
+	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 
 _words_start:	

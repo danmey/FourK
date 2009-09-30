@@ -378,12 +378,12 @@ runbyte:
 .fetchbyte:			
 	xor	%eax,%eax	# fetch the byte, first clear up the %eax
 	lodsb			# byte code in %eax
-	cmpb	$-1,%al		# if it is end of word, escape by returning the 
+	cmpb	$-1,%al		# if it is end of word, escape by returning
 	je	.fold		# the previous byte code pointer
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
 	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
 	je	runbyte		     # if it is byte code then thread again
-	mov	%eax,%ecx	     # if it is asm code skip the size and jump there
+	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
 	inc	%ecx		     # asm defined words escape to next_word at the end
 	jmp	*%ecx		     # jump there
 .fold:	

@@ -26,7 +26,7 @@ $(BIN)/fourk: $(SRC_FILES)
 	gcc -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
 	strip -s -R .comment -R .gnu.version $@
-	sstrip $@
+	../tools/sstrip $@
 
 #	-rm t.*
 	cp $@ $(PREFIX)
@@ -38,7 +38,7 @@ $(BIN)/fourk-ref: $(SRC_FILES)
 	gcc  -DREFERENCE -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
 	strip -s -R .comment -R .gnu.version $@
-	sstrip $@
+	../tools/sstrip $@
 	cp $@ $(PREFIX)
 #	-rm -f t.*
 

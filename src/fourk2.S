@@ -693,6 +693,47 @@ DEF_CODE(key, "key")
 	movl	%eax, (%ebx)
 	add	$4,%eax
 END_CODE
+
+# floating point magic
+DEF_CODE(f_init, "finit")
+	fninit
+END_CODE
+
+DEF_CODE(f_push, ">f")
+	fildl (%ebx)
+	add $4, %ebx
+END_CODE
+
+DEF_CODE(f_pop, "f>")
+	sub $4, %ebx
+	fistpl (%ebx)
+END_CODE
+
+DEF_CODE(f_add, "f+")
+	faddp
+END_CODE
+
+DEF_CODE(f_sub, "f-")
+	fsubp
+END_CODE
+
+DEF_CODE(f_mul, "f*")
+	fmulp
+END_CODE
+
+DEF_CODE(f_div, "f/")
+	fdivp
+END_CODE
+
+DEF_CODE(dotf, ".f")
+	xchg	%esp,%ebx
+	pushl 	$fmt_float	
+	call 	printf
+	add	$8,%esp
+	xchg	%esp,%ebx
+END_CODE
+
+
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	K4_SAFE_CALL(_fopen, $token,$str_wb)

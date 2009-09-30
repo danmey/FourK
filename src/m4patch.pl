@@ -3,6 +3,7 @@
 
 # replacements 
 %rep = ('ccomma' => 'c,',
+	'comma' => ',',
 	  'lb' => '[',
 	  'rb' => ']');
 

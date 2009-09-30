@@ -400,7 +400,7 @@ DEF_CODE(lit, "lit")
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
-# Don't move below two definitions!
+# Don't move below *three* definitions!
 DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
@@ -431,7 +431,13 @@ END_CODE
 DEF_CODE(interpret,"interpret")
 	jmp	interpret_loop
 END_CODE
-	## 
+	##
+DEF_CODE(lit4, "lit4")
+	lodsl
+	sub	$4,%ebx
+	mov	%eax,(%ebx)
+END_CODE
+
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp
 	pushl	(%esp)
@@ -463,6 +469,13 @@ DEF_CODE(plus,"+")
 	add	$4,%ebx
 	add	%eax,(%ebx)
 END_CODE
+DEF_CODE(mult,"*")
+	mov	(%ebx),%eax
+	add	$4,%ebx
+	imul	(%ebx),%eax
+	mov	%eax,(%ebx)
+END_CODE
+
 DEF_CODE(minus,"-")
 	mov	(%ebx),%eax
 	add	$4,%ebx
@@ -475,7 +488,7 @@ DEF_CODE(dot, ".")
 	add	$8,%esp
 	xchg	%esp,%ebx
 END_CODE
-DEF_CODE(comma, ["ccomma"])
+DEF_CODE(ccomma, ["ccomma"])
 	xchg	%esp,%ebx
 	pop	%eax
 	mov	var_here,%ecx
@@ -483,6 +496,15 @@ DEF_CODE(comma, ["ccomma"])
 	incl	var_here
 	xchg	%esp,%ebx
 END_CODE
+DEF_CODE(comma, ["comma"])
+	xchg	%esp,%ebx
+	pop	%eax
+	mov	var_here, %ecx
+	movl	%eax,	(%ecx)
+	add	$4, var_here
+	xchg	%esp,%ebx
+END_CODE
+
 DEF_CODE(create,"create")
 	push	%esi
 	xchg	%esp,%ebx	
@@ -690,6 +712,7 @@ DEF_CODE(load_image, "load-image")
 	K4_SAFE_CALL(_fclose, %eax)
 	jmp interpret_loop
 END_CODE
+DEF_VAR(there, there)
 #ifdef DEBUG
 	.data
 #endif
@@ -701,5 +724,8 @@ DEF_VAR(current, [EL_COUNT(NAME_TAB)+1])
 END_DICT
 BUILD_NAME_TABLE
 
+# TODO: For real usage maybe we need malloced heap
+there:	
+.FILL 16*1024
 .ALIGN 4096
 _image_end:

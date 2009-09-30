@@ -1,4 +1,4 @@
-create ; immediate postpone [ postpone lit -1 c, postpone c, -1 c,
+create ; immediate postpone [ 
 create : postpone create postpone ] ;
 
 : here@ here @ ;
@@ -33,7 +33,7 @@ create : postpone create postpone ] ;
 | comparison words
 : <> = invert ;
 : 0= 0 = ;
-: 0<> 0 <> ;
+: 0<> 0= invert ;
 : <= > invert ;
 : >= < invert ;
 
@@ -61,3 +61,6 @@ create : postpone create postpone ] ;
 : allot there @ + there ! ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
+
+variable b
+

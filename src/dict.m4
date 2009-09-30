@@ -39,7 +39,7 @@ define([NORMAL_SEMANTICS],
 
 define([IMMEDIATE_SEMANTICS],
 [PUSH_EL(SEMANTIC_TAB, [[[EXECUTE_TOKEN, EXECUTE_TOKEN]]])])
-define([NEXT_WORD], [jmp next_word])
+define([NEXT_WORD], [jmp *%ebp])
 define([_DEF_CODE],
 [
 define([LAST_WORD],$1)

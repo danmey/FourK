@@ -7,18 +7,23 @@ forgotten:
 ** %ebx - parameter stack
    pointer to the parameter stack
 ** %esi - bytecode instruction pointer
+** %esp - return stack
+** %ebp - address of next_word label, end of the word (cute optimisation, few bytes for each core word)
 * variables
 ** state - 0 - compilation, 1 - interpretation. Reverted then in ANS Forth. Subject to change.
 * dictionary
 ** word byte header 
    I am not sure if it wasn't simplier to have just length of the word. (subject to change)
 ***  byte size - core word (assembly); 
-*** -1 - bytecode word;
-
+*** -1 - bytecode word; acts like a word delimiter as well
 ** special tokens
 *** (-1) - end word and return; serves as a word delimiter
 *** ( 2) - execute token - must be 1
 *** ( 1) - compile token - must be 2
 ** prefix tokens
 *** (0) `lit' - byte literal, get next byte from bytcode and push it on the stacke sign
-*** `branch', `branch0' - get next byte, extend the sign and skip n (could be negative) tokens
+*** (4) `lit4' - as above, dword literal
+*** `branch' (5), `branch0' (6) - get next byte, extend the sign and skip n (could be negative) tokens
+* image linker
+** basic options
+** image4k -words <file name> - produces word list with sizes

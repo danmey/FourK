@@ -304,7 +304,7 @@ entry_point:
 interpret_loop:
 
 	K4_SAFE_CALL(_gettoken)	#get next token
-
+	mov	$next_word,%ebp
 	movl	$token,	%edi
 	call	_find_word	#find word
 	jc	2f		#if the word is not found, jump to get literal

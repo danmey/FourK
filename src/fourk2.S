@@ -51,7 +51,7 @@ include(dict.m4)
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # this bit cannot be saved into image, therefore cannot be in the
-# interpret pseudo section due to stdin relocation problem
+# interpret pseudo section due to `stdin' symbol relocation problem
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 _gettoken:
@@ -351,11 +351,9 @@ _exit2:
 	.GLOBL main
 	.GLOBL _start
 
-# If it is reference image then relocate it, I stripped it off
-# need to align to change the memory attributes via mprotect
-.LONG 0
+SECTION("dict")
+	
 BEGIN_DICT
-
 	
 # The call is nopped in the final image
 	jmp 	entry_point
@@ -363,27 +361,7 @@ BEGIN_DICT
 	sub	$4096,%ebx
 	mov	var_current,%eax
 	dec	%eax
-	call 	call_word
 
-call_word:
-	mov	dsptch(,%eax,4),%eax
-	cmpb	$-1, (%eax)
-	jne	1f
-	jmp	docol
-1:
-	mov	%eax,%ecx
-	inc	%ecx
-	jmp	*%ecx
-	
-fmt_hex2:		.ASCIZ 	"%x\n"
-
-docol:
-	mov	dsptch(,%eax,4),%eax
-	cmpb	$-1, (%eax)
-	je	runbyte
-	mov	%eax,%ecx
-	inc	%ecx
-	jmp	*%ecx
 runbyte:	
 	push	%esi
 	lea	1(%eax),%esi
@@ -391,10 +369,18 @@ runbyte:
 	xor	%eax,%eax
 	lodsb
 	cmpb	$-1,%al
-	jne	docol
+	je	.fold
+	mov	dsptch(,%eax,4),%eax
+	cmpb	$-1, (%eax)
+	je	runbyte
+	mov	%eax,%ecx
+	inc	%ecx
+	jmp	*%ecx
+.fold:	
 	pop	%esi
 next_word:	
 	jmp 	.fetchbyte
+
 
 _words_start:	
 DEF_CODE(lit, "lit")

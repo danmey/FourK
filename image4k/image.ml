@@ -125,7 +125,7 @@ module Symbol = struct
 end
 
 module Image = struct
-  type t = {sections:section list; symbols:symbol list}
+  type t = {sections:Section.t list; symbols:Symbol.t list}
 end
 
 module BinaryFile = struct

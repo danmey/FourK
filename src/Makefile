@@ -35,7 +35,10 @@ $(BIN)/fourk-ref: $(SRC_FILES)
 	m4 -s $(SRC) > t.S 
 	./m4patch.pl > t.P
 	mv t.P t.S
-	gcc -DREFERENCE -ldl t.S -o $@
+	gcc  -DREFERENCE -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
+	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
+	strip -s -R .comment -R .gnu.version $@
+	sstrip $@
 	cp $@ $(PREFIX)
 #	-rm -f t.*
 

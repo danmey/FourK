@@ -108,8 +108,8 @@ msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
-
-	
+bytecode:		.BYTE  0,3
+ex_bytecode:		.BYTE  0,-1
 #ifdef DEBUG
 	.TEXT
 #else
@@ -125,12 +125,17 @@ build_dispatch:
 	mov	$_words_start, %esi	#begining of the dictionary
 .loop:
 	mov	%esi,%eax	#load pointer to word
+	cmp	%eax,(%esi)
+	jne 	1f
+	K4_SAFE_CALL(printf,$msg_test1)
+1:	
 	stosl			#store the pointer to word in %edi
 	xor	%eax,%eax	#clear out eax
 	lodsb			#load size byte
 	cmp	$-1,%al		#end of core dictionary?
 	je	.out_of_here
 	add	%eax,%esi	#advance to next word
+
 	jmp	.loop
 .out_of_here:
 	ret
@@ -286,7 +291,8 @@ _find_word:
 
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
-entry_point:	
+entry_point:
+#	call build_dispatch
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 interpret_loop:
@@ -305,8 +311,10 @@ interpret_loop:
 	## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
 	## the tokens here are hardcoded! 1  for compiling 2 for executing
 	movzbl	semantic(%ecx,%eax,2),%eax
-	call    call_word
-	jmp	interpret_loop			# loop unti death!
+	mov	%al,bytecode
+	movb	$3,(bytecode+1)
+	mov	$(bytecode-1),%eax
+	jmp	runbyte
 
 # Here we will parse the literal if word is not found
 2:
@@ -366,24 +374,27 @@ call_word:
 	mov	%eax,%ecx
 	inc	%ecx
 	jmp	*%ecx
-next_word:	
-	ret
+	
 fmt_hex2:		.ASCIZ 	"%x\n"
 
 docol:
+	mov	dsptch(,%eax,4),%eax
+	cmpb	$-1, (%eax)
+	je	runbyte
+	mov	%eax,%ecx
+	inc	%ecx
+	jmp	*%ecx
+runbyte:	
 	push	%esi
 	lea	1(%eax),%esi
-3:
+.fetchbyte:
 	xor	%eax,%eax
 	lodsb
 	cmpb	$-1,%al
-	jne	1f
-2:	
+	jne	docol
 	pop	%esi
-	ret
-1:
-	call 	call_word
-	jmp 	3b
+next_word:	
+	jmp 	.fetchbyte
 
 _words_start:	
 DEF_CODE(lit, "lit")
@@ -414,10 +425,16 @@ log_op:
 DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
-	xchg	%esp,%ebx
-	jmp 	call_word
+	xchg 	%esp,%ebx
+	mov	%al,ex_bytecode
+	movb	$-1,(ex_bytecode+1)
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
 END_CODE
-	
+
+DEF_CODE(interpret,"interpret")
+	jmp	interpret_loop
+END_CODE
 	## 
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp

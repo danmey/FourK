@@ -12,9 +12,9 @@ create : postpone create postpone ] ;
 : then dup here @ swap - 2 - swap c! ; immediate 
 : ;; -1 c, ; immediate
 
-: ( begin key 41 = if ;; then repeat ;
-: | begin key 10 = if ;; then repeat ; 
-: (* begin key 42 = if key 41 = if ;; then then repeat ;
+: ( begin key 41 = if ;; then repeat ; immediate
+: | begin key 10 = if ;; then repeat ; immediate
+: (* begin key 42 = if key 41 = if ;; then then repeat ; immediate
 
 | this is a retroforth one line comment
 ( this is a stack comment ) 
@@ -45,4 +45,4 @@ create : postpone create postpone ] ;
 
 
 | image saver 
-save-image image.4ki
+| save-image image.4ki

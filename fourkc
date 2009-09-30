@@ -8,6 +8,7 @@ small=
 in_file=
 out_file=4k
 self=${0}
+bootstrap=src/bootstrap.4k
 
 function usage()
 {
@@ -54,8 +55,22 @@ while getopts "dqo:" opt; do
     esac
 done
 
-shift $((${OPTIND}-1))
-build $* 
+shift $(( ${OPTIND}-1 ))
 
-msg $(ls -l ${out_file}-uncompressed | awk '{ print "Un-compressed size: " $5}')
-msg $(ls -l ${out_file} | awk '{ print "Compressed size: " $5}')
+cp src/bootstrap.4k boot.4k
+cat $1 >> boot.4k
+echo "save-image boot.4ki" >> boot.4k
+cat boot.4k | bin/fourk
+
+./image4k/image4k -R image.4ki image.4ki
+cp bin/fourk 4k-uncompressed
+./image4k/image4k -link bin/4k-uncompressed image.4ki
+
+# Compress it
+cp unpack.header 4k 
+gzip -cn9 4k-uncompressed >> 4k 
+chmod +x 4k
+
+
+msg $(ls -l 4k-uncompressed | awk '{ print "Un-compressed size: " $5}')
+msg $(ls -l 4k | awk '{ print "Compressed size: " $5}')

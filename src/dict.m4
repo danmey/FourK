@@ -72,7 +72,6 @@ IMMEDIATE_SEMANTICS])
 
 define([BUILD_NAME_TABLE],[
 SECTION("name")
-var_ntab: .LONG ntab_end
 .equ NCORE_WORDS,EL_COUNT(NAME_TAB)
 ntab: 
 FOR_EACH(FORTH_NAME_TAB, arg,[.ASCII arg

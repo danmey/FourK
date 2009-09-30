@@ -1,6 +1,6 @@
 * General Stuff  
 ** DONE Handle this org mode file so we can use it! (as I am a org mode newbie) :-) :phon:  
-** TODO Tide up project, makefiles.
+** DONE Tide up project, makefiles.
 ** DONE List words in the fourk2.S file				       :phon:
 * experiments
 ** DONE program to TGA converter				       :phon:
@@ -14,13 +14,14 @@
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
 * Forth Specific
-** TODO implement comments					       :phon:
+** TODO Implement variables
+** TODO Allow nesting of block comments
+** DONE implement comments					       :phon:
    SCHEDULED: <2009-09-26 Sam>
 ** TODO Different flavours of literals
    Byte signed, unsigned, dword. float?. Resolved at compile time.
 ** TODO Floating point stack
-
-** TODO research how to define words with embeded comma inside	       :phon:
+** DONE research how to define words with embeded comma inside	       :phon:
    SCHEDULED: <2009-09-23 Mit>
    ( i know it is stupid but who cares :-).
    So far I am trying to quote it, but it doesn't work for some reasons. 
@@ -38,7 +39,7 @@
    define words
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
-** TODO Improve dictionary layout
+** DONE Improve dictionary layout
    Get rid of both dispatch table - build at the runtime.
    Dictionary as a stream of bytes.
    Get rid of the leading address for each word.
@@ -70,7 +71,6 @@
    - Semantic section - stripped off
    
    Not all the sections are needed maybe we will put a data into separate sections.
-
 
 * Compression Specific
 ** Research the best alorithm for compression
@@ -139,7 +139,7 @@
     for it -- phon
   - I set the deadline to there we said, that this would 
     be our target -- phon
-      
+    
 * Things which could slow down the project
 ** phon 
 *** university

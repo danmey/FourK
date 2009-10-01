@@ -27,3 +27,67 @@ forgotten:
 * image linker
 ** basic options
 ** image4k -words <file name> - produces word list with sizes
+* imports
+** separate static section with import table alloted in bootstrap code
+** format of the Import Name Table (only one Import Name Table, alloted at the begining of heap)
+   We use zero terminated approach.
+
+   lib-name1    :cstring
+      import-name1 :cstring
+      size-of-args :byte
+   
+      import-name2 :cstring
+      size-of-args :byte
+      
+      ...
+      
+      import-nameN :cstring
+      size-of-args :byte
+      \0
+   
+   lib-name2    :cstring
+      import-name1 :cstring
+      size-of-args :byte
+      
+      import-name2 :cstring
+      size-of-args :byte
+
+      ...
+
+      import-nameN :cstring
+      size-of-args :byte
+      \0
+   ...
+   \0\0
+** Output *Import Table*, table of dwords, initially zeroes, fixed size at compilation (we need to strip it in the ml)
+   Each entry is a pair. Dword pointer to import and dword with size of stack fixture (we use dword as it is simplier,
+   and the table will not exist in the image).
+   In the same order as the import table.
+   ??Loaded it in core, we will use lodsb, stosl, stosb etc. :-)?? QUESTION: Maybe first try to do it Forth? I thinkg it is 
+   possible and we need to push everything on the Forth side.
+   
+   cfunc-ptr :dword
+   args-size :dword
+   cfunc-ptr :dword
+   args-size :dword
+   ...
+
+** explicit call to load-imports word in the main or interpreter (or/and maybe during loading?)
+** ccall prefix word
+   - Low level core word to perform the actual call
+   - Located in fourk2.S somewhere after lit4 (we collect all the prefix word at the begining
+     TODO would be to shift the `execute' and `compile' somewhere up in the dictionary, 
+     it is little more tricky then one can think:-))
+   - Gets the next byte code, and treats as an index to Imports Table
+   - *Saves the context* of the VM in the memory (i have sample code that you can use)
+   - performs a call
+   - restores the context from the memory
+   - fixes the stack from the ccall arguments, by adding a value from the Import Table second dword value to %esp register
+   - pushes the *previous result* in the *%eax* from a ccall (we need to manage this bit somewhat)
+** high level parsing immediate word
+   - get's the next token, c function name
+   - find the import in the Import Name Table, get the index
+   - compile ccall with proper index
+   - basically should look like that: (replace ^ with something more meaningful)
+      0. 1. 2. ^ glVertex3f
+   - also second version which drops the result after the call

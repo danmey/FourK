@@ -130,18 +130,15 @@ build_dispatch:
 	mov	$dsptch, %edi	#load destination table of dwords
 	mov	$_words_start, %esi	#begining of the dictionary
 .loop:
-	mov	%esi,%eax	#load pointer to word
-	cmp	%eax,(%esi)
-	jne 	1f
-	K4_SAFE_CALL(printf,$msg_test1)
-1:	
-	stosl			#store the pointer to word in %edi
 	xor	%eax,%eax	#clear out eax
-	lodsb			#load size byte
+	lodsb
+	mov	%eax,%ecx
 	cmp	$-1,%al		#end of core dictionary?
 	je	.out_of_here
-	add	%eax,%esi	#advance to next word
-
+	mov	%esi,%eax	#load pointer to word
+	dec	%eax
+	stosl			#store the pointer to word in %edi
+	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .out_of_here:
 	ret
@@ -362,6 +359,7 @@ SECTION("dict")
 BEGIN_DICT
 	
 # The call is nopped in the final image
+	call 	build_dispatch
 	jmp 	entry_point
 	mov	%esp,%ebx
 	sub	$4096,%ebx
@@ -765,7 +763,7 @@ DEF_VAR(there, there)
 
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
-DEF_VAR(current, [EL_COUNT(NAME_TAB)+1])
+DEF_VAR(current, [EL_COUNT(NAME_TAB)])
 
 END_DICT
 BUILD_NAME_TABLE

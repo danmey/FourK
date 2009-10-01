@@ -80,8 +80,7 @@ ntab_end:
 .FILL NTAB_ENTRY_SIZE*MAX_WORDS
 SECTION("dsptch")
 dsptch:
-FOR_EACH(NAME_TAB, arg, [.LONG word_[]arg
-])
+.FILL NCORE_WORDS*4
 dsptch_end:
 .FILL 4*MAX_WORDS
 SECTION("semantic")

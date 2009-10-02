@@ -114,8 +114,8 @@ msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
-bytecode:		.BYTE  0,3
-ex_bytecode:		.BYTE  0,-1
+bytecode:		.BYTE  0,INTERPRET_TOKEN
+ex_bytecode:		.BYTE  0,END_TOKEN
 #ifdef DEBUG
 	.TEXT
 #else
@@ -134,13 +134,14 @@ build_dispatch:
 	lodsb
 	mov	%eax,%ecx
 	cmp	$-1,%al		#end of core dictionary?
-	je	.out_of_here
+	je	.user_dictionary
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
-.out_of_here:
+.user_dictionary:
+	
 	ret
 	
 ################################################################################	
@@ -315,7 +316,6 @@ interpret_loop:
 	## the tokens here are hardcoded! 1  for compiling 2 for executing
 	movzbl	semantic(%ecx,%eax,2),%eax
 	mov	%al,bytecode
-	movb	$3,(bytecode+1)
 	mov	$(bytecode-1),%eax
 	jmp	runbyte
 
@@ -390,7 +390,8 @@ next_word:
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 SECTION("words")
-_words_start:	
+_words_start:
+# Define prefix words here!
 DEF_CODE(lit, "lit")
 	xor	%eax,%eax
 	lodsb
@@ -398,7 +399,31 @@ DEF_CODE(lit, "lit")
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
-# Don't move below *three* definitions!
+DEF_CODE(lit4, "lit4")
+	lodsl
+	sub	$4,%ebx
+	mov	%eax,(%ebx)
+END_CODE
+DEF_CODE(branch, "branch")
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # indirect jump ( 8 bit ) 
+END_CODE
+DEF_CODE(branch0, "branch0")
+	mov	(%ebx),%eax   # TOS -> eax
+	add	$4,%ebx       # drop
+	or	%eax,%eax     # refresh flags
+	jnz	1f            # if zero eax=0 
+	lodsb                 # load byte -> %AL
+	movsbl 	%al,%eax      # clear all the other bytes
+	add	%eax,%esi     # do an indirect jump ( 8 bit )
+1:	
+	inc %esi
+END_CODE
+
+# If you move below *three* definitions, you need to update the TOKEN
+# constants in dict.m4
+
 DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
@@ -432,27 +457,6 @@ DEF_CODE(interpret,"interpret")
 	jmp	interpret_loop
 END_CODE
 	##
-DEF_CODE(lit4, "lit4")
-	lodsl
-	sub	$4,%ebx
-	mov	%eax,(%ebx)
-END_CODE
-DEF_CODE(branch, "branch")
-	lodsb                 # load byte -> %AL
-	movsbl 	%al,%eax      # clear all the other bytes
-	add	%eax,%esi     # indirect jump ( 8 bit ) 
-END_CODE
-DEF_CODE(branch0, "branch0")
-	mov	(%ebx),%eax   # TOS -> eax
-	add	$4,%ebx       # drop
-	or	%eax,%eax     # refresh flags
-	jnz	1f            # if zero eax=0 
-	lodsb                 # load byte -> %AL
-	movsbl 	%al,%eax      # clear all the other bytes
-	add	%eax,%esi     # do an indirect jump ( 8 bit )
-1:	
-	inc %esi
-END_CODE
 
 DEF_CODE(dup,"dup")
 	xchg	%ebx,%esp

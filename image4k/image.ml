@@ -27,60 +27,77 @@ let set_dword arr i dword =
 end
 
 module Section = struct
-  type t = { offset:int; length:int; name:string; image: BinaryArray.t}
+  type t = { offset:int; len:int; real_len:int; name:string; image: BinaryArray.t}
+  let real_len s e image =
+    let rec zeroes i = 
+      if i >= s then
+	if image.(i) = 0 then zeroes (i-1)
+	else i+1-s
+      else
+	i
+    in
+    zeroes (e-1)
+
   let next image o =
     try
       let rec skip_to_section f i = 
 	if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
-	  begin
-	    i+2
+	  i+2
+	else 
+	  begin	  
+	    f image.(i);
+	    skip_to_section f (i+1) 
 	  end
-	else begin	  
-	  f image.(i);
-	  skip_to_section f (i+1) 
-	end
       in
-      let i = skip_to_section (fun _ -> ()) o in
-      let name = ref "" in
-      let i' = skip_to_section 
-	(fun c ->
-	   name := !name ^ Printf.sprintf "%c" (char_of_int c)) i
+      let i          = skip_to_section (fun _ -> ()) o in
+      let name       = ref "" in
+      let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
+      let i'         = skip_to_section get_name i
       in
 	try 
 	  let j = skip_to_section (fun _ -> ()) i' in
-	    (i', j - i'-2,!name, image)
-	with _ -> (i',Array.length image - i',!name, image)
-    with _ -> (0,0,"", image)
+	  let sec_im = Array.sub image i' (j-i'-2) in
+	    j-2, { offset   = i'; 
+		 name     = !name; 
+		 image    = sec_im; 
+		 len      = j-i'-2; 
+		 real_len = real_len i' (j-2) image }
+	with _ -> 
+	  begin
+	    let endo = Array.length image in
+	    let sec_im = Array.sub image i' (endo - i) in
+	      endo, { offset   = i'; 
+	              name     = !name; 
+	              image    = sec_im; 
+	              len      = Array.length image - i;
+	              real_len = real_len i' endo image }
+	  end
+    with _ -> 
+      let endo = Array.length image in
+	endo, {	offset   = 0;
+		name     = ""; 
+		image    = image; 
+		len      = Array.length image;
+		real_len = real_len 0 endo image }
 
+(*
 
   let fill_all (s,l,_,im) v = Array.fill im s l v
   let fill (s,l,_,im) v o n = Array.fill im (s+o) n v
-
+*)
   let take image =
+    let endo = Array.length image in
     let rec loop acc = function
-      | (0, 0, _,_) -> List.rev acc
-      | (o, l, n,_) as section -> loop (section::acc) (next image (o+l))
+      | endo',_ when endo = endo'                -> List.rev acc
+      | endo', {offset=o; real_len=l} as section -> loop (section::acc) (next image endo')
     in loop [] (next image 0) 
 
-let find image nm =
-  List.find (fun (_,_,nm',_) -> nm' = nm) (take image)
+(*let copy (s1,l1,_,src_image) (s2,l2,_,target_image) = Array.blit src_image s1 target_image s2 l1 *)
 
-let copy (s1,l1,_,src_image) (s2,l2,_,target_image) = Array.blit src_image s1 target_image s2 l1
 
-let real_end (s,l,_,image) =
-  let rec zeroes i = 
-    if i >= s then
-      if image.(i) = 0 then zeroes (i-1)
-      else i+1
-    else
-      i
-  in
-    zeroes (s+l-1)
-
-let print sec = 
-  let (s,l,n,_) = sec in
-  let re = s+l-(real_end sec) in
-  Printf.printf "name: %s\toffset: %d\tlen: %d\tzeros: %d\n" n s l re
+let to_string sec = 
+  let re = sec.offset + sec.len - sec.real_len  in
+  Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d\n" sec.name sec.offset sec.real_len re
 
 let relocs (s,l,_,image) (s_ref,l_ref,_,image_ref) = 
   let relocs = ref [] in
@@ -116,11 +133,8 @@ let relocs (s,l,_,image) (s_ref,l_ref,_,image_ref) =
     done;
     List.rev !relocs
 
-let to_list im = 
-  let (s,l,_,ima) = im in 
-  let re = real_end im in
-    Array.fold_right (fun x acc -> x::acc) (Array.sub ima s (re-s)) []
-
+let to_list sec = 
+  Array.fold_right (fun x acc -> x::acc) sec.image []
 end
 
 module Symbol = struct
@@ -128,16 +142,23 @@ module Symbol = struct
 end
 
 module Image = struct
-  type t = {sections:Section.t list; symbols:Symbol.t list}
-end
-
-module BinaryFile = struct
-  let write image nm len = 
+  type t = {rva:Int32.t;sections:Section.t list;}
+      
+  let save image nm = 
+    let module S = Section in
     let file = open_out_bin nm in
-      Array.iteri (fun i x -> if i < len then output_byte file x) image;
+    let write_section sec =
+      let pos = pos_out file in
+      let d = sec.S.offset - pos in
+	if d < 0 then begin close_out file; failwith "misplaced section" end
+	else begin 
+	  for i=1 to d do output_byte file 0 done;
+	  Array.iter (fun x -> output_byte file x) sec.S.image;
+	end in
+      List.iter write_section image.sections;
       close_out file
 
-  let read nm =
+  let load nm =
     let file = open_in_bin nm in
     let size = in_channel_length file in
     let array = Array.make size 0 in
@@ -145,7 +166,83 @@ module BinaryFile = struct
 	array.(i) <- input_byte file
       done;
       close_in file;
-      array
+      let rva = BinaryArray.get_dword array 0 in
+      let rec loop o acc =
+	let o',section = Section.next array o in
+	  if o' < size then loop o' (section::acc)
+	  else List.rev acc in
+	{sections = loop 4 []; rva = rva}
+
+  let find_section image nm = List.find (fun {Section.name=nm'} -> print_endline nm'; nm' = nm) image.sections
+  let print_sections image =
+    List.iter (fun x -> print_endline (Section.to_string x)) image.sections
+
+end
+
+module Word = struct
+  type t = { name:string; offset:int; index:int; len:int; bytecoded:bool }
+  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
+end
+module FourkImage = struct
+  let words image = 
+    let module S = Section in
+    let name_section = Image.find_section image "name" in
+    let word_section = Image.find_section image "words" in
+    let word_image = Section.to_list word_section in
+    let rec drop n = function
+      | []               -> []
+      | x::xs when n > 0 -> drop (n-1) xs
+      | xs               -> xs 
+    in
+    let rec byte_loop prev acc size offset =
+      function
+	| []                  -> (offset,size)::acc
+	| i::_::xs when i < 4 -> byte_loop prev acc (size+2) offset xs
+	| 255::xs when prev   -> word_loop true ((offset,size)::acc) (offset+size) (255::xs) 
+	| 255::xs             -> word_loop true acc (offset+size) (255::xs) 
+	| _::xs               -> byte_loop prev acc (size+1) offset xs
+    and word_loop prev acc offset =
+      function
+	| []      -> acc 
+	| 0::_    -> acc
+	| 255::xs -> byte_loop prev acc 0 offset xs
+	| n::xs   -> word_loop false ((offset,n)::acc) (offset+n) (drop n xs)  
+    in
+
+    let sizes = List.rev (List.tl (word_loop false [] 0 word_image)) in
+    let implode lst = 
+      let str = String.create (List.length lst) in
+      let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
+      in
+	loop 0 lst 
+    in 
+    let name i =  
+      implode (List.rev (Array.fold_left 
+			   (fun acc x -> 
+			      match x with
+				| 0 -> acc 
+				| _ -> (char_of_int x)::acc) [] (Array.sub name_section.S.image (i*32) 32)))
+    in
+    let rec names i =
+      if i * 32 < name_section.S.len then
+	let n = name i in
+	  if n = "" then names (i+1) else n::(names (i+1))
+      else [] 
+    in
+
+    let name_list = names 0 in
+      Printf.printf "names len %d\n" (List.length name_list);
+      Printf.printf "sizes len %d\n" (List.length sizes);
+    let word_names = List.combine sizes name_list 
+    in
+      fst (List.fold_right 
+	(fun  ((offset,len),name) (lst,i) -> 
+	   { Word.offset = offset; 
+	     Word.len = len; 
+	     Word.name = name;
+	     Word.index = i;
+	     Word.bytecoded = true;
+	   }::lst,i) word_names ([],0))
 end
 
 type bytecode = Lit of int | Lit4 of int | Branch of int | Branch0 of int | Label
@@ -161,60 +258,8 @@ type bytecode = Lit of int | Lit4 of int | Branch of int | Branch0 of int | Labe
       | 255::xs  -> word_loop true acc (255::xs)
       | _::xs -> byte_loop prev acc (size+1) xs
 *)
-let list_words name_section dict_section =
-  let dict_image = Section.to_list dict_section in
-  let rec drop n = function
-    | [] -> []
-    | x::xs when n > 0 -> drop (n-1) xs
-    | xs -> xs in
-  let rec byte_loop prev acc size =
-    function
-	(* prefix words *)
-      |	[] -> size::acc
-      | 0::_::xs | 4::_::xs | 5::_::xs | 6::_::xs ->
-	  byte_loop prev acc (size+2) xs 
-      | 255::xs when prev  -> word_loop true (size::acc) (255::xs)
-      | 255::xs  -> word_loop true acc (255::xs)
-      | _::xs -> byte_loop prev acc (size+1) xs
-and word_loop prev acc =
-  function
-    | [] -> acc
-    | 0::_ -> acc
-    | 255::xs -> byte_loop prev acc 0 xs
-    | n::xs -> (word_loop false (n::acc) (drop n xs)) in
-  let (s,l,_,image) = name_section in
-  let sizes = List.rev (word_loop false [] dict_image) in
-  let sizes_a = Array.create (List.length sizes) 0 in
-    List.fold_left (fun i x -> sizes_a.(i) <- x; i+1) 0 sizes;
-  let get_string i = 
-    let lst = 
-	List.rev ((Array.fold_left 
-	   (fun acc x -> match x with 0 -> acc | _ -> (char_of_int x)::acc)
-	   [] (Array.sub image (s+i*32) 32))) in
-    let str = String.create (List.length lst) in
-      (List.fold_left (fun i x -> str.[i] <- x; i+1) 0 lst);
-      str
-  in
-  let no = l / 32 in
-  let count = ref 0 in
-  let sum = ref 0 in
-    for i = 0 to no - 1 do
-      let s = (get_string i) in
-	if not (s = "") then
-	  begin
-	    let size = sizes_a.(!count) in
-	      Printf.printf "Name: %.32s\tLen: %d\n" s size;
-	      count := !count + 1;
-	      sum := !sum + size;
-	  end
-    done;
-    Printf.printf "%n words defined. %n bytes uncompressed total.\n" !count !sum
 
-let list_sections image after_sec =
-  List.iter (fun x -> Section.print x; after_sec x) (Section.take image)
 
-let list_sections_simple nm =
-  list_sections (BinaryFile.read nm) (fun _ -> ())
 
 module Options = struct
   let output_file = ref "a.4ki"
@@ -240,22 +285,24 @@ let options =
     "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
     "Perform relocation using reference file";
 
-    "-sections", String (fun nm -> list_sections_simple nm ), 
+    "-sections", String (fun nm -> 
+			   let image = Image.load nm in     
+			     Image.print_sections image
+			), 
     "List sections";
 
     "-link", String (fun nm -> link_with := nm), 
     "Link with fourk engine";
 
-    "-words", String (fun x -> list_words 
-			(Section.find (BinaryFile.read x) "name")
-			(Section.find (BinaryFile.read x) "words")
+    "-words", String (fun x -> 
+			let image = Image.load x in     
+			let words = FourkImage.words image in 
+			  List.iter (fun x -> print_endline (Word.to_string x)) words
 		     ),
+
     "Print words"
   ]
 end
-
-
-
 
 let relocate_section (s,e) offs relocs base =
   List.iter 
@@ -269,13 +316,8 @@ let relocate_section (s,e) offs relocs base =
 	   end
     ) relocs
 
-    
-
-
-
 let relocs_in_section (s,l,_,_) = 
   List.fold_left (fun acc r -> let (i,_,_,_,_) = r in if Ni.to_int i >= s && Ni.to_int i < s+l then r::acc else acc) []
-  
 
 let print_reloc base1 base2 (ofs,_, v1, v2, n, img) =
   let which = match !Options.which_show with 1 -> base1 | _ -> base2 in
@@ -295,31 +337,30 @@ let nop_jump im =
     im.(s+14) <- 0x90
 *)
 
-
 let usage_text = "image4k <options> <file>"
 
-
+(*
 let list_relocs image ref_image relocate =
-  let base1 = BinaryArray.get_dword image 0 in
+  let base1 = BinaryArray.get_dword image. 0 in
   let base2 = BinaryArray.get_dword ref_image 0 in
   let delta = Ni.sub base1 base2 in
     if not relocate then
-(*
+
       let sections = Section.take image in
       let print_relocs sec = 
 	let _,_,name,_ = sec in List.iter (print_reloc base1 base2) (Section.relocs sec (Section.find ref_image name)) in
       list_sections image print_relocs
-*)
+
 ()
     else 
       begin
 	Printf.printf "Delta: %lx\n" delta;
-	let sections = Section.take image in
-	let dict = Section.find image "dict" in
-	let dict' = Section.find ref_image "dict" in
-	let dsptch = Section.find image "dsptch" in
+	let sections = Section.take image in 
+	let dict = Image.find_section image "dict" in
+	let dict' = Image.find_section ref_image "dict" in
+	let dsptch = Image.find_section image "dsptch" in
 	let (ds,dl,_,_) = dsptch in
-	let (s,l,nm,im) = dict in
+	let (s,l,nm,im) = dict in 
 	let real_end = Section.real_end dict in
 	let offs = real_end - ds in 
 	let range = ds,ds+dl in
@@ -328,7 +369,7 @@ let list_relocs image ref_image relocate =
 	  Array.blit image ds image real_end dl;
 	  BinaryFile.write image "image2.4ki" (Array.length image)
       end
-      
+*)      
 			   
        
      
@@ -338,23 +379,26 @@ let list_relocs image ref_image relocate =
 *)  
 (* String of character *)
 
+
+(*
 let process_file file_name =        
-  let image = BinaryFile.read file_name in
+
+  let image = Image.load file_name in
     (match !Options.reference_file with
 	 Some ref_nm ->
-	   let ref_image = BinaryFile.read ref_nm in
+	   let ref_image = Image.load ref_nm in
 	     list_relocs image ref_image !Options.relocate;
 	     ()
        | None -> ());
     if !Options.list_sections then
       begin
-	list_sections (BinaryFile.read file_name) (fun _ -> ())
+	list_sections (Image.load file_name) (fun _ -> ())
       end
     else
     if !Options.link_with != "" then
       begin
 	print_endline !Options.link_with;
-	let target_image = BinaryFile.read !Options.link_with in
+	let target_image = Image.load !Options.link_with in
 	let src_image = image in
 	let copy_same_section im im' nm = Section.copy (Section.find im nm) (Section.find im' nm) in
 	  copy_same_section src_image target_image "dict"; 
@@ -369,13 +413,16 @@ let process_file file_name =
 
       BinaryFile.write target_image !Options.link_with (Array.length target_image);
 
-      end;; 
-
-let _ = 
+  ()
+      end
+*) 
+  
+  let process_file nm = ()
+  let _ = 
   if Array.length Sys.argv > 1 then
     parse Options.options process_file usage_text
   else usage Options.options usage_text
-
+;;
 (*
       if !Options.relocate then
       begin
@@ -384,7 +431,8 @@ let _ =
       let delta = s+l-cut_section f2 (s, l) in
       List.iter (fun (s,l,n,_) -> relocate_section f2 (relocs_in_section (s,s+l) diff) (Ni.of_int (-delta))) rest_sections;
       let len = Array.length f2 in
-    (*		      Printf.printf "Blit: %d %d %d\n" (s+l) (s+l - delta) (len - delta- (s+l - delta)); *)
+(*		      Printf.printf "Blit: %d %d %d\n" (s+l) (s+l - delta) (len - delta- (s+l - delta)); *)
       Array.blit f2 (s+l) f2 (s+l-delta) (len - (s+l)); 
       BinaryFile.write f2 str len;
-*)
+*) 
+

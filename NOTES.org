@@ -29,7 +29,8 @@ forgotten:
 ** image4k -words <file name> - produces word list with sizes
 * imports
 ** separate static section with import table alloted in bootstrap code
-** format of the Import Name Table (only one Import Name Table, alloted at the begining of heap)
+** format of the Import Name Table 
+   (only one Import Name Table, alloted at the begining of heap)
    We use zero terminated approach.
 
    lib-name1    :cstring
@@ -59,11 +60,19 @@ forgotten:
       \0
    ...
    \0\0
-** Output *Import Table*, table of dwords, initially zeroes, fixed size at compilation (we need to strip it in the ml)
-   Each entry is a pair. Dword pointer to import and dword with size of stack fixture (we use dword as it is simplier,
+** Output *Import Table*
+   - table of dwords
+   - initially zeroes
+   - fixed size at compilation 
+   (we need to strip it in the ml)
+   
+   Each entry is a pair. Dword pointer to import and dword 
+   with size of stack fixture (we use dword as it is simplier,
    and the table will not exist in the image).
+   
    In the same order as the import table.
-   ??Loaded it in core, we will use lodsb, stosl, stosb etc. :-)?? QUESTION: Maybe first try to do it Forth? I thinkg it is 
+   ??Loaded it in core, we will use lodsb, stosl, stosb etc. :-)?? 
+   QUESTION: Maybe first try to do it Forth? I think it is 
    possible and we need to push everything on the Forth side.
    
    cfunc-ptr :dword
@@ -72,7 +81,8 @@ forgotten:
    args-size :dword
    ...
 
-** explicit call to load-imports word in the main or interpreter (or/and maybe during loading?)
+** explicit call to load-imports word in the main or interpreter 
+   (or/and maybe during loading?)
 ** ccall prefix word
    - Low level core word to perform the actual call
    - Located in fourk2.S somewhere after lit4 (we collect all the prefix word at the begining

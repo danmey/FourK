@@ -3,8 +3,13 @@ define([SECTION],
  .ASCII $1
  .ASCII "@@"
 ])
-define([EXECUTE_TOKEN],[2])
-define([COMPILE_TOKEN],[1])
+define([EXECUTE_TOKEN],[5])
+define([COMPILE_TOKEN],[4])
+define([INTERPRET_TOKEN],[6])
+define([END_TOKEN],[-1])
+define([LIT_TOKEN],[0])
+
+
 
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
@@ -32,7 +37,6 @@ DEF_TAB(DISPATCH_TAB)[]
 DEF_TAB(FORTH_NAME_TAB)[]
 DEF_TAB(SEMANTIC_TAB)])
 define([END_DICT], 
-.byte -1
 here: .FILL DICT_SIZE)
 define([NORMAL_SEMANTICS],
 [PUSH_EL(SEMANTIC_TAB, [[[COMPILE_TOKEN, EXECUTE_TOKEN]]])])
@@ -80,8 +84,7 @@ ntab_end:
 .FILL NTAB_ENTRY_SIZE*MAX_WORDS
 SECTION("dsptch")
 dsptch:
-FOR_EACH(NAME_TAB, arg, [.LONG word_[]arg
-])
+.FILL NCORE_WORDS*4
 dsptch_end:
 .FILL 4*MAX_WORDS
 SECTION("semantic")

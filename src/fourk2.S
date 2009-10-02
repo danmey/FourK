@@ -135,6 +135,8 @@ build_dispatch:
 	mov	%eax,%ecx
 	cmp	$-1,%al		#end of core dictionary?
 	je	.user_dictionary
+	cmp	$0,%al		#end of core dictionary?
+	je	.user_dictionary
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
@@ -776,4 +778,5 @@ BUILD_NAME_TABLE
 there:	
 .FILL 16*1024
 .ALIGN 4096
+SECTION("dummy")
 _image_end:

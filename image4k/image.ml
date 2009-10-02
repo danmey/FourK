@@ -39,65 +39,75 @@ module Section = struct
     zeroes (e-1)
 
   let next image o =
-    try
-      let rec skip_to_section f i = 
-	if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
-	  i+2
-	else 
-	  begin	  
-	    f image.(i);
-	    skip_to_section f (i+1) 
+    let rec skip_to_section f i = 
+      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
+	i+2
+      else 
+	begin	  
+	  f image.(i);
+	  skip_to_section f (i+1) 
+	end
+    in
+    let i = skip_to_section (fun _ -> ()) o in
+      if i-2 != o then begin
+	i-2, {	offset   = 0;
+		name     = "default"; 
+		image    = Array.sub image 0 (i-2); 
+		len      = i-2;
+		real_len = real_len 0 (i-2) image }
 	  end
-      in
-      let i          = skip_to_section (fun _ -> ()) o in
-      let name       = ref "" in
-      let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
-      let i'         = skip_to_section get_name i
-      in
-	try 
-	  let j = skip_to_section (fun _ -> ()) i' in
-	  let sec_im = Array.sub image i' (j-i'-2) in
-	    j-2, { offset   = i'; 
-		 name     = !name; 
-		 image    = sec_im; 
-		 len      = j-i'-2; 
-		 real_len = real_len i' (j-2) image }
-	with _ -> 
-	  begin
+      else
+	let name       = ref "" in
+	let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
+	  try
+	    let i'         = skip_to_section get_name i
+	    in
+	      try 
+		let j = skip_to_section (fun _ -> ()) i' in
+		let sec_im = Array.sub image (i-2) (j-i) in
+		  j-2, { offset   = i-2; 
+			 name     = !name; 
+			 image    = sec_im; 
+			 len      = j-i; 
+			 real_len = real_len i (j-2) image }
+	      with _ -> 
+		begin
+		  let endo = Array.length image in
+		  let sec_im = Array.sub image i' (endo - i') in
+		    endo, { offset   = i'; 
+			    name     = !name; 
+			    image    = sec_im; 
+			    len      = endo - i';
+			    real_len = real_len i' endo image }
+		end
+	  with _ -> 
 	    let endo = Array.length image in
-	    let sec_im = Array.sub image i' (endo - i) in
-	      endo, { offset   = i'; 
-	              name     = !name; 
-	              image    = sec_im; 
-	              len      = Array.length image - i;
-	              real_len = real_len i' endo image }
-	  end
-    with _ -> 
-      let endo = Array.length image in
-	endo, {	offset   = 0;
-		name     = ""; 
-		image    = image; 
-		len      = Array.length image;
-		real_len = real_len 0 endo image }
+	      endo, {	offset   = i;
+			name     = !name; 
+			image    = image; 
+			len      = Array.length image;
+			real_len = real_len 0 endo image }
 
 (*
-
   let fill_all (s,l,_,im) v = Array.fill im s l v
   let fill (s,l,_,im) v o n = Array.fill im (s+o) n v
 *)
+  let zero {image=im} = Array.fill im 0 (Array.length im) 0
+
+(*
   let take image =
     let endo = Array.length image in
     let rec loop acc = function
       | endo',_ when endo = endo'                -> List.rev acc
       | endo', {offset=o; real_len=l} as section -> loop (section::acc) (next image endo')
     in loop [] (next image 0) 
-
+*)
 (*let copy (s1,l1,_,src_image) (s2,l2,_,target_image) = Array.blit src_image s1 target_image s2 l1 *)
 
 
 let to_string sec = 
   let re = sec.offset + sec.len - sec.real_len  in
-  Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d\n" sec.name sec.offset sec.real_len re
+  Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d" sec.name sec.offset sec.len re
 
 let relocs (s,l,_,image) (s_ref,l_ref,_,image_ref) = 
   let relocs = ref [] in
@@ -148,13 +158,14 @@ module Image = struct
     let module S = Section in
     let file = open_out_bin nm in
     let write_section sec =
-      let pos = pos_out file in
-      let d = sec.S.offset - pos in
-	if d < 0 then begin close_out file; failwith "misplaced section" end
-	else begin 
-	  for i=1 to d do output_byte file 0 done;
-	  Array.iter (fun x -> output_byte file x) sec.S.image;
-	end in
+	let pos = pos_out file in
+	let d = sec.S.offset - pos in
+	  if d < 0 then begin close_out file; failwith (Printf.sprintf "misplaced section (%s %d %d)" sec.S.name d pos) end
+	  else begin 
+	    for i=1 to d do output_byte file 0 done;
+	    Array.iter (fun x -> output_byte file x) sec.S.image;
+	  end
+      in
       List.iter write_section image.sections;
       close_out file
 
@@ -168,12 +179,14 @@ module Image = struct
       close_in file;
       let rva = BinaryArray.get_dword array 0 in
       let rec loop o acc =
-	let o',section = Section.next array o in
-	  if o' < size then loop o' (section::acc)
-	  else List.rev acc in
-	{sections = loop 4 []; rva = rva}
+	if o < size then
+	  let o',section = Section.next array o in
+	    loop o' (section::acc)
+	else List.rev acc in
+	{ sections = loop 0 []; 
+	  rva = rva }
 
-  let find_section image nm = List.find (fun {Section.name=nm'} -> print_endline nm'; nm' = nm) image.sections
+  let find_section image nm = List.find (fun {Section.name=nm'} -> nm' = nm) image.sections
   let print_sections image =
     List.iter (fun x -> print_endline (Section.to_string x)) image.sections
 
@@ -209,7 +222,7 @@ module FourkImage = struct
 	| n::xs   -> word_loop false ((offset,n)::acc) (offset+n) (drop n xs)  
     in
 
-    let sizes = List.rev (List.tl (word_loop false [] 0 word_image)) in
+    let sizes = List.rev (word_loop false [] 0 word_image) in
     let implode lst = 
       let str = String.create (List.length lst) in
       let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
@@ -224,7 +237,7 @@ module FourkImage = struct
 				| _ -> (char_of_int x)::acc) [] (Array.sub name_section.S.image (i*32) 32)))
     in
     let rec names i =
-      if i * 32 < name_section.S.len then
+      if i * 32 + 32 <= name_section.S.len then
 	let n = name i in
 	  if n = "" then names (i+1) else n::(names (i+1))
       else [] 
@@ -235,14 +248,20 @@ module FourkImage = struct
       Printf.printf "sizes len %d\n" (List.length sizes);
     let word_names = List.combine sizes name_list 
     in
-      fst (List.fold_right 
-	(fun  ((offset,len),name) (lst,i) -> 
+      (List.rev (fst (List.fold_left 
+	(fun (lst,i) ((offset,len),name) -> 
 	   { Word.offset = offset; 
 	     Word.len = len; 
 	     Word.name = name;
 	     Word.index = i;
 	     Word.bytecoded = true;
-	   }::lst,i) word_names ([],0))
+	   }::lst,i+1) ([],0) word_names)))
+	
+  let stripped_sections = ["interpret";"name";"dsptch";"semantic";"ala"]
+  let strip image = 
+    List.iter (fun x -> if (List.mem x.Section.name stripped_sections) then Section.zero x) image.Image.sections
+    
+	
 end
 
 type bytecode = Lit of int | Lit4 of int | Branch of int | Branch0 of int | Label
@@ -293,7 +312,14 @@ let options =
 
     "-link", String (fun nm -> link_with := nm), 
     "Link with fourk engine";
-
+    "-strip", String 
+      (fun nm ->
+	 let image = Image.load nm in
+	   FourkImage.strip image;
+	   Image.save image nm
+      ),
+    "Strip sections";
+ 
     "-words", String (fun x -> 
 			let image = Image.load x in     
 			let words = FourkImage.words image in 

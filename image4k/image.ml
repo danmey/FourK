@@ -3,6 +3,8 @@ module Ni = Int32
 
 module BinaryArray = struct
   type t = int array
+
+(* Get the value from byte array as dword *)
 let get_dword arr i = 
   let ni = Ni.of_int in
   let b1 = ni arr.(i+3) in
@@ -194,7 +196,7 @@ module Image = struct
 end
 
 module Words = struct
-  type opcode = Lit of int | Lit4 of int32 | Branch of int | Branch0 of int | Opcode of int
+  type opcode = Prefix32 of int * int32 | Prefix of int * int | Opcode of int
 
   type code = Bytecode of opcode list | Core of int array
 
@@ -204,10 +206,8 @@ module Words = struct
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %b" w.name w.offset w.len w.index w.used
 
     let bytecode_id = function
-      | Lit _     -> 0
-      | Lit4 _    -> 1
-      | Branch _  -> 2
-      | Branch0 _ -> 3
+      | Prefix (id,_) -> id
+      | Prefix32 (id,_) -> id
       | Opcode id -> id
 
   let words (code_sec,name_sec) =
@@ -225,12 +225,10 @@ module Words = struct
     let disassemble_word lst = 
       let rec disassemble_word' =
 	function
-	  | []                    -> []
-	  | 0::i::xs              -> (Lit i)::(disassemble_word' xs)
-	  | 1::b1::b2::b3::b4::xs -> (Lit4 (dword b4 b3 b2 b1))::(disassemble_word' xs)
-	  | 2::i::xs              -> (Branch  i)::(disassemble_word' xs)
-	  | 3::i::xs              -> (Branch0 i)::(disassemble_word' xs)
-	  | c::xs                 -> (Opcode  c)::(disassemble_word' xs)
+	  | []                           -> []
+	  | a::i::xs when a = 0 || a = 2 || a = 3 -> (Prefix (a, i))::(disassemble_word' xs)
+	  | 1::b1::b2::b3::b4::xs                 -> (Prefix32 (1, (dword b4 b3 b2 b1)))::(disassemble_word' xs)
+	  | c::xs                                 -> (Opcode  c)::(disassemble_word' xs)
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)
@@ -329,11 +327,9 @@ module Words = struct
     let rec loop =
       function
 	| []              -> []
-	| (Lit i    )::xs -> (Printf.sprintf "%n" i)           :: (loop xs)
-	| (Lit4 ptr )::xs -> (Printf.sprintf "%lx" ptr)        :: (loop xs)
-	| (Branch  i)::xs -> (Printf.sprintf "branch(%n)" i)   :: (loop xs)
-	| (Branch0 i)::xs -> (Printf.sprintf "branch0(%n)" i)  :: (loop xs)
-	| (Opcode  c)::xs -> word_arr.(c).name                 :: (loop xs) in
+	| (Prefix (i,v)  )::xs -> (Printf.sprintf "%s(%n)"  word_arr.(i).name v) :: (loop xs)
+	| (Prefix32 (i,v))::xs -> (Printf.sprintf "%s(%lx)" word_arr.(i).name v) :: (loop xs)
+	| (Opcode i      )::xs -> word_arr.(i).name                              :: (loop xs) in
       String.concat " " (loop code)
       
   let optimise words_list =
@@ -435,7 +431,6 @@ module Options = struct
       "-words", String (fun x -> 
 			  let image = Image.load x in     
 			  let words = FourkImage.words image in 
-			   let wordsa = Array.of_list words in
 			    List.iter (fun x -> print_endline (Words.to_string x)) words
 		       ),
       "Print list of words";

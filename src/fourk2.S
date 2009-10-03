@@ -800,14 +800,16 @@ DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
 DEF_VAR(there, there)
+
 #ifdef DEBUG
 	.data
 #endif
 
 DEF_VAR(state, 1)
-DEF_VAR(here, here)
+DEF_VAR(here, here-2)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
-
+.BYTE -1
+.BYTE -1
 END_DICT
 BUILD_NAME_TABLE
 

@@ -190,37 +190,73 @@ module Image = struct
 
 end
 
-module Word = struct
-  type t = { name:string; offset:int; index:int; len:int; bytecoded:bool }
-  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
-end
-module FourkImage = struct
-  let words image = 
-    let module S = Section in
-    let name_section = Image.find_section image "name" in
-    let word_section = Image.find_section image "words" in
-    let word_image = Section.to_list word_section in
+module Words = struct
+  type opcode = Lit of int | Lit4 of int32 | Branch of int | Branch0 of int | Opcode of int
+  type code = Bytecode of opcode list | Core
+  type t = { name:string; offset:int; index:int; len:int; code:code }
+
+  let words section =
+
+    let dword b1' b2' b3' b4' =
+      let b1 = Ni.of_int b1' in
+      let b2 = Ni.of_int b2' in
+      let b3 = Ni.of_int b3' in
+      let b4 = Ni.of_int b4' in
+	Ni.logor (Ni.shift_left b1 24) 
+	  (Ni.logor (Ni.shift_left b2 16) 
+	     (Ni.logor (Ni.shift_left b3 8)
+		b4)) in
+
+
+    let rec byte_loop =
+      function
+	| []                    -> [],[]
+	| 255::xs               -> [],xs
+	| 0::i::xs              -> let b,r = (byte_loop xs) in (Lit i)::b,r
+	| 1::b1::b2::b3::b4::xs -> let b,r = (byte_loop xs) in (Lit4 (dword b4 b3 b2 b1))::b,r
+	| 2::i::xs              -> let b,r = (byte_loop xs) in (Branch  i)::b,r
+	| 3::i::xs              -> let b,r = (byte_loop xs) in (Branch0 i)::b,r
+	| c::xs                 -> let b,r = (byte_loop xs) in (Opcode  c)::b,r
+    in
+
+    let word_image = Section.to_list section in
+      
     let rec drop n = function
       | []               -> []
       | x::xs when n > 0 -> drop (n-1) xs
       | xs               -> xs 
     in
-    let rec byte_loop prev acc size offset =
-      function
-	| []                  -> (offset,size)::acc
-	| i::_::xs when i < 4 -> byte_loop prev acc (size+2) offset xs
-	| 255::xs when prev   -> word_loop true ((offset,size)::acc) (offset+size) (255::xs) 
-	| 255::xs             -> word_loop true acc (offset+size) (255::xs) 
-	| _::xs               -> byte_loop prev acc (size+1) offset xs
-    and word_loop prev acc offset =
-      function
-	| []      -> acc 
-	| 0::_    -> acc
-	| 255::xs -> byte_loop prev acc 0 offset xs
-	| n::xs   -> word_loop false ((offset,n)::acc) (offset+n) (drop n xs)  
-    in
+      
+    let rec drop_while f n = function
+      | [] -> [],n
+      | x::xs when f x -> drop_while f (n+1) xs
+      | xs -> xs,n in
+      
+    let rec offsets lst =
+      let next = drop_while (fun x -> x != 255) 0 in
+      let rec offsets' prev offset = function
+	| []                -> [] 
+	| 255::xs when prev -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
+	| 255::xs           -> let xs,n = next xs in                (offsets' true  (offset+n+1) xs)
+	| n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
+	List.rev (List.tl (List.rev (offsets' false 0 lst))) in
+      let ofs = offsets word_image in
+      let word_images = Array.make (List.length ofs) (Array.make 1 0) in
+	ignore (List.fold_left (fun i (o,n) -> word_images.(i) <- Array.sub section.Section.image o n; i+1) 0 ofs);
+	ofs
+      (*Array.to_list word_images*)
+				    
+  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
+end
+module FourkImage = struct
+  
+  
+  let words image = 
+    let module S = Section in
+    let name_section = Image.find_section image "name" in
+    let word_section = Image.find_section image "words" in
 
-    let sizes = List.rev (word_loop false [] 0 word_image) in
+    let sizes = Words.words word_section in
     let implode lst = 
       let str = String.create (List.length lst) in
       let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
@@ -248,11 +284,11 @@ module FourkImage = struct
     in
       (List.rev (fst (List.fold_left 
 	(fun (lst,i) ((offset,len),name) -> 
-	   { Word.offset = offset; 
-	     Word.len = len; 
-	     Word.name = name;
-	     Word.index = i;
-	     Word.bytecoded = true;
+	   { Words.offset = offset; 
+	     Words.len = len; 
+	     Words.name = name;
+	     Words.index = i;
+	     Words.code = Words.Core
 	   }::lst,i+1) ([],0) word_names)))
 	
   let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
@@ -270,7 +306,6 @@ module FourkImage = struct
 		     Section.copy src dst) copied_sections
 end
 
-type bytecode = Lit of int | Lit4 of int | Branch of int | Branch0 of int | Label
 
 (*let disas_word bytecode names =
   let rec byte_loop prev acc size =
@@ -343,7 +378,7 @@ let options =
     "-words", String (fun x -> 
 			let image = Image.load x in     
 			let words = FourkImage.words image in 
-			  List.iter (fun x -> print_endline (Word.to_string x)) words
+			  List.iter (fun x -> print_endline (Words.to_string x)) words
 		     ),
 
     "Print words"

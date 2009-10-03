@@ -96,44 +96,47 @@ module Section = struct
 
   let copy src dst = Array.blit src.image 0 dst.image 0 (if src.len < dst.len then src.len else dst.len) 
 
+  let relocs image image_ref = 
+    let relocs = ref [] in
+    let i1 = ref 0 in
+    let i2 = ref 0 in
+    let l = Array.length image in
+    let l_ref = Array.length image_ref in
+      while !i1 <= l-4 && !i2 <= l_ref-4 do
+	begin
+	  let same = ref true in
+	    if  image.(!i1) != image_ref.(!i2) then
+	      begin
+		let j1 = ref (!i1+1) in
+		let j2 = ref (!i2+1) in
+		  while !same && !j1 < !i1 + 3 do
+		    if image.(!j1) != image_ref.(!j2) then
+		      begin
+			same := false
+		      end;
+		    j1 := !j1+1;
+		    j2 := !j2+1;
+		  done;
+	      end;
+	    let dw1 = BinaryArray.get_dword image !i1 in
+	    let dw2 = BinaryArray.get_dword image_ref !i2 in
+	      if not !same (*&& Ni.add dw2 base = dw1*)  then
+		begin
+		  relocs := (Ni.of_int !i1,Ni.of_int !i2, dw1, dw2, 4,image)::!relocs;
+		  i1 := !i1 + 3;
+		  i2 := !i2 + 3;
+		end
+	end;
+	i1 := !i1 + 1;
+	i2 := !i2 + 1;
+      done;
+      List.rev !relocs
+
 
 let to_string sec = 
   let re = sec.offset + sec.len - sec.real_len  in
   Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d" sec.name sec.offset sec.len re
 
-let relocs (s,l,_,image) (s_ref,l_ref,_,image_ref) = 
-  let relocs = ref [] in
-  let i1 = ref s in
-  let i2 = ref s_ref in
-    while !i1 <= s+l-4 && !i2 <= s_ref+l_ref-4 do
-      begin
-	let same = ref true in
-	  if  image.(!i1) != image_ref.(!i2) then
-	    begin
-	      let j1 = ref (!i1+1) in
-	      let j2 = ref (!i2+1) in
-		while !same && !j1 < !i1 + 3 do
-		  if image.(!j1) != image_ref.(!j2) then
-		    begin
-		      same := false
-		    end;
-		  j1 := !j1+1;
-		  j2 := !j2+1;
-		done;
-	    end;
-	  let dw1 = BinaryArray.get_dword image !i1 in
-	  let dw2 = BinaryArray.get_dword image_ref !i2 in
-	  if not !same (*&& Ni.add dw2 base = dw1*)  then
-	    begin
-	      relocs := (Ni.of_int !i1,Ni.of_int !i2, dw1, dw2, 4,image)::!relocs;
-	      i1 := !i1 + 3;
-	      i2 := !i2 + 3;
-	    end
-      end;
-      i1 := !i1 + 1;
-      i2 := !i2 + 1;
-    done;
-    List.rev !relocs
 
 let to_list sec = 
   Array.fold_right (fun x acc -> x::acc) sec.image []
@@ -193,7 +196,7 @@ end
 module Words = struct
   type opcode = Lit of int | Lit4 of int32 | Branch of int | Branch0 of int | Opcode of int
 
-  type code = Bytecode of opcode list | Core
+  type code = Bytecode of opcode list | Core of int array
 
   type t = { name:string; offset:int; index:int; len:int; code:code }
 
@@ -221,7 +224,7 @@ module Words = struct
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)
-	  | _ -> Core
+	  | _ -> Core (Array.of_list lst)
     in
 
     let word_image = Section.to_list code_sec in
@@ -279,14 +282,27 @@ module Words = struct
 	len=l; 
 	code=disassemble_word code } in
 
-      List.fold_left 
+      List.rev (snd (List.fold_left 
 	(fun (i,acc) ((o,l),name) -> 
 	   let ar = Array.sub code_sec.Section.image o l in
 	   let code = Array.to_list ar in
 	     (i+1), (make_word i (o,l) name code)::acc) 
-	  (0,[]) words_pre
-				    
-  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
+	  (0,[]) words_pre))
+
+  let string_of_bytecode word_arr code =
+    let rec loop =
+      function
+	| []              -> []
+	| (Lit i    )::xs -> (Printf.sprintf "%n" i)           :: (loop xs)
+	| (Lit4 ptr )::xs -> (Printf.sprintf "%lx" ptr)        :: (loop xs)
+	| (Branch  i)::xs -> (Printf.sprintf "branch(%n)" i)   :: (loop xs)
+	| (Branch0 i)::xs -> (Printf.sprintf "branch0(%n)" i)  :: (loop xs)
+	| (Opcode  c)::xs -> word_arr.(c).name                 :: (loop xs) in
+      String.concat " " (loop code)
+
+    let to_string w = 
+      Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
+      
 end
 module FourkImage = struct
   
@@ -295,9 +311,7 @@ module FourkImage = struct
     let module S = Section in
     let name_sec = Image.find_section image "name" in
     let word_sec = Image.find_section image "words" in
-      
-    let words_list = Words.words (word_sec,name_sec) in
-      snd words_list
+      Words.words (word_sec,name_sec)
 	
   let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
   let strip image = 
@@ -314,21 +328,6 @@ module FourkImage = struct
 		     Section.copy src dst) copied_sections
 end
 
-
-(*let disas_word bytecode names =
-  let rec byte_loop prev acc size =
-    function
-	(* prefix words *)
-      |	[] -> []
-      | 0::_::xs | 4::_::xs | 5::_::xs | 6::_::xs ->
-	  byte_loop prev acc (size+2) xs 
-      | 255::xs when prev  -> word_loop true (size::acc) (255::xs)
-      | 255::xs  -> word_loop true acc (255::xs)
-      | _::xs -> byte_loop prev acc (size+1) xs
-*)
-
-
-
 module Options = struct
   let output_file = ref "a.4ki"
   let reference_file = ref None
@@ -339,20 +338,20 @@ module Options = struct
   let verbose = ref false
   let brute_force = ref false
   let link_with = ref ""
-let options = 
-  [
-    "-o", String    (fun nm  -> output_file := nm), 
-    "Output image file name";
+  let options = 
+    [
+      "-o", String    (fun nm  -> output_file := nm), 
+      "Output image file name";
 
-    "relocs", String    (fun nm -> reference_file := Some nm), 
-    "List relocations";
+      "relocs", String    (fun nm -> reference_file := Some nm), 
+      "List relocations";
 
-    "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
-    "Base address of the image";
+      "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
+      "Base address of the image";
 
-    "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
-    "Perform relocation using reference file";
-    "-dump-section", 
+      "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
+      "Perform relocation using reference file";
+      "-dump-section", 
       (let section_name = ref "" in 
 	 Tuple [Set_string section_name; 
 		String (fun name -> 
@@ -360,38 +359,69 @@ let options =
 			  let s = Image.find_section image !section_name in
 			    Array.iter (fun x -> let x' = char_of_int x in Printf.printf "%c" x') s.Section.image)
 	       ]), "Dump given section";
-    "-sections", String (fun nm -> 
-			   let image = Image.load nm in     
-			     Image.print_sections image
-			), 
-    "List sections";
+      "-sections", String (fun nm -> 
+			     let image = Image.load nm in     
+			       Image.print_sections image
+			  ), 
+      "List sections";
 
-    "-link", (let image_name = ref "" in 
-		Tuple [Set_string image_name; 
-		       String (fun core_name -> 
-				 let base_image = Image.load core_name in
-				 let image = Image.load !image_name in
-				 FourkImage.link base_image image;
-				   Image.save base_image core_name true)]
-	     ),
-    "Link with fourk engine";
-    "-strip", String 
-      (fun nm ->
-	 let image = Image.load nm in
-	   FourkImage.strip image;
-	   Image.save image nm false
-      ),
-    "Strip sections";
- 
-    "-words", String (fun x -> 
-			let image = Image.load x in     
-			let words = FourkImage.words image in 
-			  List.iter (fun x -> print_endline (Words.to_string x)) words
-		     ),
-
-    "Print words"
-  ]
-end
+      "-link", (let image_name = ref "" in 
+		  Tuple [Set_string image_name; 
+			 String (fun core_name -> 
+				   let base_image = Image.load core_name in
+				   let image = Image.load !image_name in
+				     FourkImage.link base_image image;
+				     Image.save base_image core_name true)]
+	       ),
+      "Link with fourk engine";
+      "-strip", String 
+	(fun nm ->
+	   let image = Image.load nm in
+	     FourkImage.strip image;
+	     Image.save image nm false
+	),
+      "Strip sections";
+      
+      "-words", String (fun x -> 
+			  let image = Image.load x in     
+			  let words = FourkImage.words image in 
+			    List.iter (fun x -> print_endline (Words.to_string x)) words
+		       ),
+      "Print list of words";
+      "-disass", String (fun x ->
+			   let image = Image.load x in     
+			   let words = FourkImage.words image in 
+			   let wordsa = Array.of_list words in
+			     List.iter (fun x ->
+					  match x.Words.code with
+					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
+					    | _ -> ()) words),
+      "Disassemble user dictionary";
+      "-relocs", 
+      (let ref_name = ref "" in
+	 Tuple [Set_string ref_name; 
+		String (fun x ->
+			  let image = Image.load x in  
+			  let image_ref = Image.load !ref_name in
+			  let words = FourkImage.words image in 
+			  let words_ref = FourkImage.words image_ref in 
+			  let extract_core x acc =
+			    match x.Words.code with 
+			      | Words.Core c -> (x.Words.name,c)::acc
+			      | _ -> acc in
+			  let core_words  = List.fold_right extract_core words [] in
+			  let core_words' = List.fold_right extract_core words_ref [] in
+			  let print_reloc base1 base2 (ofs,_, v1, v2, n, img) =
+			    let b ofs = ofs in
+			      Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx -> %8ld\n" (b ofs) v1 v2 (Ni.sub v2 v1) in
+			  let pre = List.combine core_words core_words' in
+			  let lst = (List.map (fun ((n,o),(_,r)) -> n,Section.relocs r o) pre) in
+			    List.iter (fun (nm,rs) ->
+					 Printf.printf "%s\n" nm; 
+					 List.iter (fun x -> Printf.printf "\t"; (print_reloc 0 0 x)) rs) lst)]),
+      "Show relocations"
+    ]
+    end
 
 let relocate_section (s,e) offs relocs base =
   List.iter 
@@ -408,14 +438,6 @@ let relocate_section (s,e) offs relocs base =
 let relocs_in_section (s,l,_,_) = 
   List.fold_left (fun acc r -> let (i,_,_,_,_) = r in if Ni.to_int i >= s && Ni.to_int i < s+l then r::acc else acc) []
 
-let print_reloc base1 base2 (ofs,_, v1, v2, n, img) =
-  let which = match !Options.which_show with 1 -> base1 | _ -> base2 in
-  let addr = function Some x -> x | None -> Ni.of_int 0 in
-  let b ofs = Ni.add ofs (Ni.add which (addr !Options.base_address)) in
-  if n = 1 then 
-    Printf.printf "\t%.4lx: byte\t%.8lx -> %.8lx -> %8ld\n" (b ofs) v1 v2 (Ni.sub v2 v1)
-  else 
-    Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx -> %8ld\n" (b ofs) v1 v2 (Ni.sub v2 v1)
 (*
 let nop_jump im = 
   let (s,l,n,_) = next_section im 0 in

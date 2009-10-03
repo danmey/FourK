@@ -62,3 +62,4 @@ create : postpone create postpone ] ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
 
+: main a ;

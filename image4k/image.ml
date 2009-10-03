@@ -57,10 +57,10 @@ module Section = struct
 		real_len = real_len 0 (i-2) image }
 	  end
       else
-	let name       = ref "" in
+	let name = ref "" in
 	let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
 	  try
-	    let i'         = skip_to_section get_name i
+	    let i' = skip_to_section get_name i
 	    in
 	      try 
 		let j = skip_to_section (fun _ -> ()) i' in

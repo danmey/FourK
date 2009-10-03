@@ -115,36 +115,11 @@ msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
-ex_bytecode:		.BYTE  0,END_TOKEN
 #ifdef DEBUG
 	.TEXT
 #else
 #endif
 
-################################################################################	
-# Build the dispatch table
-# In:
-# Out:	
-
-build_dispatch:
-	mov	$dsptch, %edi	#load destination table of dwords
-	mov	$_words_start, %esi	#begining of the dictionary
-.loop:
-	xor	%eax,%eax	#clear out eax
-	lodsb
-	mov	%eax,%ecx
-	cmp	$-1,%al		#end of core dictionary?
-	je	.user_dictionary
-	cmp	$0,%al		#end of core dictionary?
-	je	.user_dictionary
-	mov	%esi,%eax	#load pointer to word
-	dec	%eax
-	stosl			#store the pointer to word in %edi
-	add	%ecx,%esi	#advance to next word
-	jmp	.loop
-.user_dictionary:
-	
-	ret
 	
 ################################################################################	
 # Parse literal, string is in token
@@ -301,6 +276,8 @@ entry_point:
 #	call build_dispatch
 	mov	%esp,%ebx
 	sub	$4096,%ebx
+	call 	build_dispatch
+	
 interpret_loop:
 
 	K4_SAFE_CALL(_gettoken)	#get next token
@@ -361,12 +338,69 @@ SECTION("dict")
 BEGIN_DICT
 	
 # The call is nopped in the final image
-	call 	build_dispatch
 	jmp 	entry_point
+	call 	build_dispatch
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	var_current,%eax
 	dec	%eax
+	mov	%al,ex_bytecode
+	movb	$-1,(ex_bytecode+1)
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
+
+################################################################################	
+# Build the dispatch table
+# In:
+# Out:	
+
+build_dispatch:
+	mov	$dsptch, %edi	#load destination table of dwords
+	mov	$_words_start, %esi	#begining of the dictionary
+.loop:
+	xor	%eax,%eax	#clear out eax
+	lodsb
+	mov	%eax,%ecx
+	call	.check_end
+	cmp	$-1,%al		#end of core dictionary?
+	je	.user_dictionary
+	cmp	$0,%al		#end of core dictionary?
+	je	.done
+	mov	%esi,%eax	#load pointer to word
+	dec	%eax
+	stosl			#store the pointer to word in %edi
+	add	%ecx,%esi	#advance to next word
+	jmp	.loop
+.user_dictionary:
+	call	.check_end
+	or	%eax,%eax
+	jz	.done
+	cmp	$-1,%al
+	je	.found_word
+	cmp	$4,%al
+	jb	.cont
+	lodsb
+	jmp	.cont
+.found_word:
+	mov	%esi,%eax
+	dec	%eax
+	stosl
+.cont:
+	lodsb
+	jmp	.user_dictionary
+.check_end:
+	mov	%edi,%edx
+	sub	$dsptch,%edx
+	shr	$2,%edx
+	sub	var_current,%edx
+	jnz	1f
+	xor	%eax,%eax
+1:	
+	ret
+.done:
+	ret
+
+ex_bytecode:		.BYTE  0,END_TOKEN
 
 ################################################################################
 # Main bytecode interpreter loop,
@@ -757,6 +791,7 @@ DEF_CODE(load_image, "load-image")
 	K4_SAFE_CALL(_fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
 	K4_SAFE_CALL(_fclose, %eax)
+	call 	build_dispatch
 	jmp interpret_loop
 END_CODE
 DEF_CODE(exit,"exit")

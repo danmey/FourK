@@ -34,10 +34,10 @@ include(dict.m4)
 	.DATA
 #endif
 
-
 #ifdef REFERENCE
-	.FILL 0x11234
+       .FILL 0x11234
 #endif
+
 
 ################################################################################
 # Get token, separated by whites, and put it in token
@@ -256,9 +256,11 @@ _find_word:
 #there will be no code here in final image
 entry_point:
 #	call build_dispatch
+	mov	var_current,	%ebx
+	call 	build_dispatch
+
 	mov	%esp,%ebx
 	sub	$4096,%ebx
-	call 	build_dispatch
 	
 interpret_loop:
 
@@ -318,6 +320,7 @@ _exit2:
 	.GLOBL main
 	.GLOBL _start
 .ALIGN 4096
+	
 _image_start:
 SECTION("dict")
 	################################################################################
@@ -337,11 +340,14 @@ SECTION("dict")
 #endif
 # The call is nopped in the final image
 	jmp 	entry_point
+# This will be supplied with the last word
+	mov	$79,	%ebx
+	push	%ebx
 	call 	build_dispatch	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	$next_word,%ebp
-	mov	var_current,%eax
+	pop	%eax
 	dec	%eax
 	mov	%al,ex_bytecode
 	movb	$-1,(ex_bytecode+1)
@@ -391,7 +397,7 @@ build_dispatch:
 	mov	%edi,%edx
 	sub	$dsptch,%edx
 	shr	$2,%edx
-	sub	var_current,%edx
+	sub	%ebx,%edx
 	jnz	1f
 	xor	%eax,%eax
 1:	

@@ -323,6 +323,7 @@ module Words = struct
     let last_word = words_ar.(Array.length words_ar-1) in
       traverse words_ar last_word;
       words_list
+
   let string_of_bytecode word_arr code =
     let rec loop =
       function
@@ -332,19 +333,23 @@ module Words = struct
 	| (Opcode i      )::xs -> word_arr.(i).name                              :: (loop xs) in
       String.concat " " (loop code)
       
-  let optimise words_list =
-    let words_ar = Array.of_list words_list in
-      
+  let optimise words_ar =
     let used = Array.fold_left (fun acc w -> if w.used then w::acc else acc) [] words_ar in
     let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
+
+    let replace_opcode new_op = function
+	| Prefix   (_,v) -> Prefix   (new_op,v)
+	| Prefix32 (_,v) -> Prefix32 (new_op,v)
+	| Opcode    _    -> Opcode new_op in
+	
     let rec swap_ids words = 
       let rec loop = function
 	| [] -> []
 	| w::ws -> let id = bytecode_id w in 
 	  let w',i' = List.find (fun (i',w') -> id = w'.index) words in
-	    (Opcode w')::(loop ws) in
+	    (replace_opcode w' w)::(loop ws) in
       let words' = List.map (fun (i,w) -> match w.code with Core _ -> i,w | Bytecode b -> i,{w with code=Bytecode (loop b)}) words in
-      let words' = List.map (fun (i,w) -> w.index <- i; w) words' in
+      let words' = List.map (fun (i,w) -> w.index <- i; words_ar.(i) <- w; w) words' in
 	List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words')) in
 
       (*	List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used; *)
@@ -388,9 +393,6 @@ module Options = struct
     [
       "-o", String    (fun nm  -> output_file := nm), 
       "Output image file name";
-
-      "relocs", String    (fun nm -> reference_file := Some nm), 
-      "List relocations";
 
       "-b", String    (fun hex -> Scanf.sscanf hex "%x" (fun x -> base_address := Some (Ni.of_int x))), 
       "Base address of the image";
@@ -439,11 +441,11 @@ module Options = struct
 			   let words = FourkImage.words image in 
 			   let wordsa = Array.of_list words in
 			     List.iter (fun x ->
-						  match x.Words.code with
+					  match x.Words.code with
 					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
 					    | _ -> ()) words),
       "Disassemble user dictionary";
-      "-relocs", 
+      "-wrelocs", 
       (let ref_name = ref "" in
 	 Tuple [Set_string ref_name; 
 		String (fun x ->
@@ -465,7 +467,31 @@ module Options = struct
 			    List.iter (fun (nm,rs) ->
 					 Printf.printf "%s\n" nm; 
 					 List.iter (fun x -> Printf.printf "\t"; (print_reloc 0 0 x)) rs) lst)]),
-      "Show relocations"
+      "Show section relocations";
+      "-relocs",
+      (let ref_name = ref "" in
+	 Tuple [Set_string ref_name; 
+		String (fun x ->
+			  let image = Image.load x in  
+			  let image_ref = Image.load !ref_name in
+			  let print_reloc base1 base2 (ofs,_, v1, v2, n, img) =
+			    Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx -> %8ld\n" ofs v1 v2 (Ni.sub v2 v1) in
+			  let pre = List.combine image.Image.sections image_ref.Image.sections in
+			  let lst = (List.map (fun (o,r) -> o.Section.name,Section.relocs o.Section.image r.Section.image) pre) in
+			    List.iter (fun (nm,rs) ->
+					 Printf.printf "%s\n" nm; 
+					 List.iter (fun x -> Printf.printf "\t"; (print_reloc 0 0 x)) rs) lst)]),
+      "Show word relocations";
+
+      "-opt", String (fun nm ->  
+		 let image = Image.load nm in  
+		 let words = FourkImage.words image in 
+		 let wordsa = Array.of_list words in
+		   List.iter (fun x ->
+				match x.Words.code with
+				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
+				  | _ -> ()) (Words.optimise wordsa))
+      ,"Show optimised dictionary layout"
     ]
     end
 

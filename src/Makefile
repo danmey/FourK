@@ -25,8 +25,8 @@ $(BIN)/fourk: $(SRC_FILES)
 	mv t.P t.S
 	gcc -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
-#	strip -s -R .comment -R .gnu.version $@
-#	../tools/sstrip $@
+	strip -s -R .comment -R .gnu.version $@
+	../tools/sstrip $@
 
 #	-rm t.*
 	cp $@ $(PREFIX)

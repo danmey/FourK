@@ -67,7 +67,7 @@ module Section = struct
 		let sec_im = Array.sub image i' (j-i'-3) in
 		  j-3, { offset   = i'; 
 			 name     = !name; 
-			 image    = sec_im; 
+			 image    = sec_im;
 			 len      = j-i'-3; 
 			 real_len = real_len i' (j-3) image }
 	      with _ -> 
@@ -84,9 +84,9 @@ module Section = struct
 	    let endo = Array.length image in
 	      endo, {	offset   = i;
 			name     = !name; 
-			image    = image; 
-			len      = Array.length image;
-			real_len = real_len 0 endo image }
+			image    = Array.sub image i (endo - i); 
+			len      = endo - i;
+			real_len = real_len i endo image }
 
 (*
   let fill_all (s,l,_,im) v = Array.fill im s l v
@@ -146,18 +146,24 @@ end
 module Image = struct
   type t = {rva:Int32.t;sections:Section.t list;}
       
-  let save image nm = 
+  let save image nm with_tags = 
     let module S = Section in
     let file = open_out_bin nm in
     let write_section sec =
-	let pos = pos_out file in
-	let d = sec.S.offset - pos in
-	  if d < 0 then begin close_out file; failwith (Printf.sprintf "misplaced section (%s %d %d)" sec.S.name d pos) end
-	  else begin 
-	    for i=1 to d do output_byte file 0 done;
-	    Array.iter (fun x -> output_byte file x) sec.S.image;
-	  end
-      in
+      (* write header *)
+      if with_tags then
+	begin
+	  if not (sec.S.name = "default") then
+	    output_string file ("@@-" ^ sec.S.name ^ "@@-");
+	end;
+      let pos = pos_out file in
+      let d = sec.S.offset - pos in
+	if d < 0 then begin close_out file; failwith (Printf.sprintf "misplaced section (%s %d %d)" sec.S.name d pos) end
+	else begin
+	  for i=1 to d do output_byte file 0 done;
+	  Array.iter (output_byte file) sec.S.image;
+	end
+    in
       List.iter write_section image.sections;
       close_out file
 
@@ -323,14 +329,14 @@ let options =
 				 let base_image = Image.load core_name in
 				 let image = Image.load !image_name in
 				 FourkImage.link base_image image;
-				   Image.save base_image core_name)]
+				   Image.save base_image core_name true)]
 	     ),
     "Link with fourk engine";
     "-strip", String 
       (fun nm ->
 	 let image = Image.load nm in
 	   FourkImage.strip image;
-	   Image.save image nm
+	   Image.save image nm false
       ),
     "Strip sections";
  

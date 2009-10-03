@@ -1,4 +1,4 @@
-create ; immediate postpone [ 
+create ; immediate postpone [ postpone lit -1 c, postpone here postpone @ postpone c!
 create : postpone create postpone ] ;
 
 : here@ here @ ;

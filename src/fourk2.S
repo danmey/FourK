@@ -84,7 +84,7 @@ SECTION("interpret")
 long_tmp: 		.LONG 0
 token:			.FILL	64
 fmt_float: 		.ASCIZ  "%f"
-fmt_hex:		.ASCIZ 	"%x"
+fmt_hex:		.ASCIZ 	"%x\n"
 fmt_dec:		.ASCIZ 	"%d"
 fmt_char:		.ASCIZ 	"%c"
 str_wb:			.ASCIZ 	"wb"
@@ -278,6 +278,7 @@ interpret_loop:
 	movzbl	semantic(%ecx,%eax,2),%eax
 	mov	%al,bytecode
 	mov	$(bytecode-1),%eax
+	movb	$INTERPRET_TOKEN,(bytecode+1)
 	jmp	runbyte
 
 # Here we will parse the literal if word is not found
@@ -369,19 +370,19 @@ build_dispatch:
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .user_dictionary:
-	call	.check_end
-	or	%eax,%eax
-	jz	.done
 	cmp	$-1,%al
 	je	.found_word
 	cmp	$4,%al
-	ja	.cont
+	jae	.cont
 	lodsb
 	jmp	.cont
 .found_word:
 	mov	%esi,%eax
 	dec	%eax
 	stosl
+	call	.check_end
+	or	%eax,%eax
+	jz	.done
 .cont:
 	lodsb
 	jmp	.user_dictionary
@@ -395,6 +396,8 @@ build_dispatch:
 1:	
 	ret
 .done:
+	K4_SAFE_CALL(printf, $fmt_hex, var_here)
+	K4_SAFE_CALL(printf, $fmt_hex, %esi)
 	ret
 
 ex_bytecode:		.BYTE  0,END_TOKEN
@@ -481,8 +484,8 @@ log_op:
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
-	mov	%al,ex_bytecode
-	movb	$-1,(ex_bytecode+1)
+	movb	%al,ex_bytecode
+	movb	$END_TOKEN,(ex_bytecode+1) 
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE

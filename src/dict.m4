@@ -1,7 +1,7 @@
 define([SECTION], 
-[.ASCII "@@"
+[.ASCII "@@-"
  .ASCII $1
- .ASCII "@@"
+ .ASCII "@@-"
 ])
 define([EXECUTE_TOKEN],[5])
 define([COMPILE_TOKEN],[4])

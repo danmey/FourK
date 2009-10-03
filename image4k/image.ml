@@ -40,8 +40,8 @@ module Section = struct
 
   let next image o =
     let rec skip_to_section f i = 
-      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@' then
-	i+2
+      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@'  && image.(i+2) = Char.code '-' then
+	i+3
       else 
 	begin	  
 	  f image.(i);
@@ -49,12 +49,12 @@ module Section = struct
 	end
     in
     let i = skip_to_section (fun _ -> ()) o in
-      if i-2 != o then begin
-	i-2, {	offset   = 0;
+      if i-3 != o then begin
+	i-3, {	offset   = 0;
 		name     = "default"; 
-		image    = Array.sub image 0 (i-2); 
-		len      = i-2;
-		real_len = real_len 0 (i-2) image }
+		image    = Array.sub image 0 (i-3); 
+		len      = i-3;
+		real_len = real_len 0 (i-3) image }
 	  end
       else
 	let name = ref "" in
@@ -64,12 +64,12 @@ module Section = struct
 	    in
 	      try 
 		let j = skip_to_section (fun _ -> ()) i' in
-		let sec_im = Array.sub image i' (j-i'-2) in
-		  j-2, { offset   = i'; 
+		let sec_im = Array.sub image i' (j-i'-3) in
+		  j-3, { offset   = i'; 
 			 name     = !name; 
 			 image    = sec_im; 
-			 len      = j-i'-2; 
-			 real_len = real_len i' (j-2) image }
+			 len      = j-i'-3; 
+			 real_len = real_len i' (j-3) image }
 	      with _ -> 
 		begin
 		  let endo = Array.length image in
@@ -253,7 +253,7 @@ module FourkImage = struct
   let strip image = 
     List.iter (fun x -> if (List.mem x.Section.name stripped_sections) then Section.zero x) image.Image.sections
 
-  let copied_sections = ["words"]
+  let copied_sections = ["words";"name";"semantic"]
 
   let link base_image image = 
     let dict_section = Image.find_section base_image "dict" in
@@ -322,7 +322,7 @@ let options =
 				 let base_image = Image.load core_name in
 				 let image = Image.load !image_name in
 				 FourkImage.link base_image image;
-				   Image.save base_image !image_name)]
+				   Image.save base_image core_name)]
 	     ),
     "Link with fourk engine";
     "-strip", String 

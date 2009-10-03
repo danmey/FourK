@@ -257,6 +257,7 @@ module FourkImage = struct
 
   let link base_image image = 
     let dict_section = Image.find_section base_image "dict" in
+      Array.fill dict_section.Section.image 4 5 0x90;
       List.iter (fun nm -> 
 		   let src = Image.find_section image nm in 
 		   let dst = Image.find_section base_image nm in

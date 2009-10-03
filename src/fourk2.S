@@ -340,6 +340,7 @@ SECTION("dict")
 	call 	build_dispatch	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
+	mov	$next_word,%ebp
 	mov	var_current,%eax
 	dec	%eax
 	mov	%al,ex_bytecode

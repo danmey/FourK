@@ -201,7 +201,14 @@ module Words = struct
   type t = { name:string; offset:int; mutable index:int; len:int; code:code;called_by:t list; mutable used:bool }
 
   let to_string w = 
-      Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %b" w.name w.offset w.len w.index w.used
+      Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %b" w.name w.offset w.len w.index w.used
+
+    let bytecode_id = function
+      | Lit _     -> 0
+      | Lit4 _    -> 1
+      | Branch _  -> 2
+      | Branch0 _ -> 3
+      | Opcode id -> id
 
   let words (code_sec,name_sec) =
 
@@ -298,13 +305,6 @@ module Words = struct
 				      (0,[]) words_pre)) in
     let words_ar = Array.of_list words_list in
 
-    let bytecode_id = function
-      | Lit _     -> 0
-      | Lit4 _    -> 1
-      | Branch _  -> 2
-      | Branch0 _ -> 3
-      | Opcode id -> id in
-
     let traverse words word =
       let rec traverse' words word = 
 	match word.code with
@@ -324,22 +324,7 @@ module Words = struct
 
     let last_word = words_ar.(Array.length words_ar-1) in
       traverse words_ar last_word;
-      
-      let used = Array.fold_left (fun acc w -> if w.used then w::acc else acc) [] words_ar in
-      let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
-      let rec swap_ids words = 
-	let rec loop = function
-	  | [] -> []
-	  | w::ws -> let id = bytecode_id w in 
-	    let w',i' = List.find (fun (i',w') -> id = w'.index) words in
-	      (Opcode w')::(loop ws) in
-	let words' = List.map (fun (i,w) -> match w.code with Core _ -> i,w | Bytecode b -> i,{w with code=Bytecode (loop b)}) words in
-	  List.map (fun (i,w) -> w.index <- i; w) words' in
-
-(*	List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used; *)
-	swap_ids used
-      
-
+      words_list
   let string_of_bytecode word_arr code =
     let rec loop =
       function
@@ -351,6 +336,24 @@ module Words = struct
 	| (Opcode  c)::xs -> word_arr.(c).name                 :: (loop xs) in
       String.concat " " (loop code)
       
+  let optimise words_list =
+    let words_ar = Array.of_list words_list in
+      
+    let used = Array.fold_left (fun acc w -> if w.used then w::acc else acc) [] words_ar in
+    let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
+    let rec swap_ids words = 
+      let rec loop = function
+	| [] -> []
+	| w::ws -> let id = bytecode_id w in 
+	  let w',i' = List.find (fun (i',w') -> id = w'.index) words in
+	    (Opcode w')::(loop ws) in
+      let words' = List.map (fun (i,w) -> match w.code with Core _ -> i,w | Bytecode b -> i,{w with code=Bytecode (loop b)}) words in
+      let words' = List.map (fun (i,w) -> w.index <- i; w) words' in
+	List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words')) in
+
+      (*	List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used; *)
+      swap_ids used
+
 end
 module FourkImage = struct
   
@@ -441,7 +444,7 @@ module Options = struct
 			   let words = FourkImage.words image in 
 			   let wordsa = Array.of_list words in
 			     List.iter (fun x ->
-					  match x.Words.code with
+						  match x.Words.code with
 					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
 					    | _ -> ()) words),
       "Disassemble user dictionary";

@@ -192,10 +192,12 @@ end
 
 module Words = struct
   type opcode = Lit of int | Lit4 of int32 | Branch of int | Branch0 of int | Opcode of int
+
   type code = Bytecode of opcode list | Core
+
   type t = { name:string; offset:int; index:int; len:int; code:code }
 
-  let words section =
+  let words (code_sec,name_sec) =
 
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
@@ -207,19 +209,22 @@ module Words = struct
 	     (Ni.logor (Ni.shift_left b3 8)
 		b4)) in
 
-
-    let rec byte_loop =
-      function
-	| []                    -> [],[]
-	| 255::xs               -> [],xs
-	| 0::i::xs              -> let b,r = (byte_loop xs) in (Lit i)::b,r
-	| 1::b1::b2::b3::b4::xs -> let b,r = (byte_loop xs) in (Lit4 (dword b4 b3 b2 b1))::b,r
-	| 2::i::xs              -> let b,r = (byte_loop xs) in (Branch  i)::b,r
-	| 3::i::xs              -> let b,r = (byte_loop xs) in (Branch0 i)::b,r
-	| c::xs                 -> let b,r = (byte_loop xs) in (Opcode  c)::b,r
+    let disassemble_word lst = 
+      let rec disassemble_word' =
+	function
+	  | []                    -> []
+	  | 0::i::xs              -> (Lit i)::(disassemble_word' xs)
+	  | 1::b1::b2::b3::b4::xs -> (Lit4 (dword b4 b3 b2 b1))::(disassemble_word' xs)
+	  | 2::i::xs              -> (Branch  i)::(disassemble_word' xs)
+	  | 3::i::xs              -> (Branch0 i)::(disassemble_word' xs)
+	  | c::xs                 -> (Opcode  c)::(disassemble_word' xs)
+      in
+	match lst with
+	  | 255::xs -> Bytecode (disassemble_word' xs)
+	  | _ -> Core
     in
 
-    let word_image = Section.to_list section in
+    let word_image = Section.to_list code_sec in
       
     let rec drop n = function
       | []               -> []
@@ -239,24 +244,10 @@ module Words = struct
 	| 255::xs when prev -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
 	| 255::xs           -> let xs,n = next xs in                (offsets' true  (offset+n+1) xs)
 	| n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
+	(* Exclude last element *)
 	List.rev (List.tl (List.rev (offsets' false 0 lst))) in
-      let ofs = offsets word_image in
-      let word_images = Array.make (List.length ofs) (Array.make 1 0) in
-	ignore (List.fold_left (fun i (o,n) -> word_images.(i) <- Array.sub section.Section.image o n; i+1) 0 ofs);
-	ofs
-      (*Array.to_list word_images*)
-				    
-  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
-end
-module FourkImage = struct
-  
-  
-  let words image = 
-    let module S = Section in
-    let name_section = Image.find_section image "name" in
-    let word_section = Image.find_section image "words" in
+    let ofs = offsets word_image in
 
-    let sizes = Words.words word_section in
     let implode lst = 
       let str = String.create (List.length lst) in
       let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
@@ -268,28 +259,45 @@ module FourkImage = struct
 			   (fun acc x -> 
 			      match x with
 				| 0 -> acc 
-				| _ -> (char_of_int x)::acc) [] (Array.sub name_section.S.image (i*32) 32)))
+				| _ -> (char_of_int x)::acc) [] (Array.sub name_sec.Section.image (i*32) 32)))
     in
-    let rec names i =
-      if i * 32 + 32 <= name_section.S.len then
-	let n = name i in
-	  if n = "" then names (i+1) else n::(names (i+1))
-      else [] 
+    let names =
+      let rec names' i = 
+	if i * 32 + 32 <= name_sec.Section.len then
+	  let n = name i in
+	    if n = "" then names' (i+1) else n::(names' (i+1))
+	else [] in
+	names' 0
     in
 
-    let name_list = names 0 in
-      Printf.printf "names len %d\n" (List.length name_list);
-      Printf.printf "sizes len %d\n" (List.length sizes);
-    let word_names = List.combine sizes name_list 
-    in
-      (List.rev (fst (List.fold_left 
-	(fun (lst,i) ((offset,len),name) -> 
-	   { Words.offset = offset; 
-	     Words.len = len; 
-	     Words.name = name;
-	     Words.index = i;
-	     Words.code = Words.Core
-	   }::lst,i+1) ([],0) word_names)))
+    let words_pre = List.combine ofs names in
+
+    let make_word i (o,l) name code = 
+      { name=name; 
+        index=i; 
+	offset=o; 
+	len=l; 
+	code=disassemble_word code } in
+
+      List.fold_left 
+	(fun (i,acc) ((o,l),name) -> 
+	   let ar = Array.sub code_sec.Section.image o l in
+	   let code = Array.to_list ar in
+	     (i+1), (make_word i (o,l) name code)::acc) 
+	  (0,[]) words_pre
+				    
+  let to_string w = Printf.sprintf "Name: %.32s\tOffset: %d\tLen: %d\tIndex: %d" w.name w.offset w.len w.index
+end
+module FourkImage = struct
+  
+  
+  let words image = 
+    let module S = Section in
+    let name_sec = Image.find_section image "name" in
+    let word_sec = Image.find_section image "words" in
+      
+    let words_list = Words.words (word_sec,name_sec) in
+      snd words_list
 	
   let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
   let strip image = 

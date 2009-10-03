@@ -64,12 +64,12 @@ module Section = struct
 	    in
 	      try 
 		let j = skip_to_section (fun _ -> ()) i' in
-		let sec_im = Array.sub image (i-2) (j-i) in
-		  j-2, { offset   = i-2; 
+		let sec_im = Array.sub image i' (j-i'-2) in
+		  j-2, { offset   = i'; 
 			 name     = !name; 
 			 image    = sec_im; 
-			 len      = j-i; 
-			 real_len = real_len i (j-2) image }
+			 len      = j-i'-2; 
+			 real_len = real_len i' (j-2) image }
 	      with _ -> 
 		begin
 		  let endo = Array.length image in
@@ -94,15 +94,7 @@ module Section = struct
 *)
   let zero {image=im} = Array.fill im 0 (Array.length im) 0
 
-(*
-  let take image =
-    let endo = Array.length image in
-    let rec loop acc = function
-      | endo',_ when endo = endo'                -> List.rev acc
-      | endo', {offset=o; real_len=l} as section -> loop (section::acc) (next image endo')
-    in loop [] (next image 0) 
-*)
-(*let copy (s1,l1,_,src_image) (s2,l2,_,target_image) = Array.blit src_image s1 target_image s2 l1 *)
+  let copy src dst = Array.blit src.image 0 dst.image 0 (if src.len < dst.len then src.len else dst.len) 
 
 
 let to_string sec = 
@@ -257,11 +249,18 @@ module FourkImage = struct
 	     Word.bytecoded = true;
 	   }::lst,i+1) ([],0) word_names)))
 	
-  let stripped_sections = ["interpret";"name";"dsptch";"semantic";"ala"]
+  let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
   let strip image = 
     List.iter (fun x -> if (List.mem x.Section.name stripped_sections) then Section.zero x) image.Image.sections
-    
-	
+
+  let copied_sections = ["words"]
+
+  let link base_image image = 
+    let dict_section = Image.find_section base_image "dict" in
+      List.iter (fun nm -> 
+		   let src = Image.find_section image nm in 
+		   let dst = Image.find_section base_image nm in
+		     Section.copy src dst) copied_sections
 end
 
 type bytecode = Lit of int | Lit4 of int | Branch of int | Branch0 of int | Label
@@ -303,14 +302,28 @@ let options =
 
     "-R", String    (fun nm -> reference_file := Some nm; relocate := true), 
     "Perform relocation using reference file";
-
+    "-dump-section", 
+      (let section_name = ref "" in 
+	 Tuple [Set_string section_name; 
+		String (fun name -> 
+			  let image = Image.load name in
+			  let s = Image.find_section image !section_name in
+			    Array.iter (fun x -> let x' = char_of_int x in Printf.printf "%c" x') s.Section.image)
+	       ]), "Dump given section";
     "-sections", String (fun nm -> 
 			   let image = Image.load nm in     
 			     Image.print_sections image
 			), 
     "List sections";
 
-    "-link", String (fun nm -> link_with := nm), 
+    "-link", (let image_name = ref "" in 
+		Tuple [Set_string image_name; 
+		       String (fun core_name -> 
+				 let base_image = Image.load core_name in
+				 let image = Image.load !image_name in
+				 FourkImage.link base_image image;
+				   Image.save base_image !image_name)]
+	     ),
     "Link with fourk engine";
     "-strip", String 
       (fun nm ->

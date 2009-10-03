@@ -70,24 +70,6 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
-################################################################################
-# Our image starts here and will be saved by a save-image word, and load by
-# load-image word
-#
-_image_start:
-	.LONG  _image_start	# at the begining we need the actual memory address
-				# for relocations
-	
-#ifndef DEBUG
-#ifdef PARTY
-	_start:
-#else
-	main:
-#endif
-#else
-	main:				
-#endif
-	jmp _dict_start
 
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
@@ -330,16 +312,31 @@ _exit2:
 	K4_SAFE_CALL(_exit,$ 0)	
 	ret
 
+
+
 	.GLOBL main
 	.GLOBL _start
-
+.ALIGN 4096
+_image_start:
 SECTION("dict")
-	
-BEGIN_DICT
-	
+	################################################################################
+# Our image starts here and will be saved by a save-image word, and load by
+# load-image word
+#
+	.LONG  _image_start	# at the begining we need the actual memory address
+				# for relocations
+#ifndef DEBUG
+#ifdef PARTY
+	_start:
+#else
+	main:
+#endif
+#else
+	main:				
+#endif
 # The call is nopped in the final image
 	jmp 	entry_point
-	call 	build_dispatch
+	call 	build_dispatch	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	var_current,%eax
@@ -378,7 +375,7 @@ build_dispatch:
 	cmp	$-1,%al
 	je	.found_word
 	cmp	$4,%al
-	jb	.cont
+	ja	.cont
 	lodsb
 	jmp	.cont
 .found_word:
@@ -426,6 +423,7 @@ next_word:
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 SECTION("words")
+BEGIN_DICT
 _words_start:
 # Define prefix words here!
 DEF_CODE(lit, "lit")
@@ -813,5 +811,4 @@ BUILD_NAME_TABLE
 there:	
 .FILL 16*1024
 .ALIGN 4096
-SECTION("dummy")
 _image_end:

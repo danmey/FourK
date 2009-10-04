@@ -101,3 +101,7 @@ forgotten:
    - basically should look like that: (replace ^ with something more meaningful)
       0. 1. 2. ^ glVertex3f
    - also second version which drops the result after the call
+* our "timeline"
+  1. We release something based on the engine,
+     we need a good idea for that
+  2. We build some higher experimental engine stuff on it

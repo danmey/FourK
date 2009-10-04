@@ -1,4 +1,4 @@
-create ; immediate postpone [ 
+create ; immediate postpone [ postpone lit -1 c, postpone here postpone @ postpone c!
 create : postpone create postpone ] ;
 
 : here@ here @ ;
@@ -45,7 +45,7 @@ create : postpone create postpone ] ;
 | === a test routine === 
 | : a 0 begin 1 + repeat ;
 
-: a 0 begin 1 + dup . cr repeat ;
+: a begin repeat ;
 | a
 
 | image saver 
@@ -62,3 +62,4 @@ create : postpone create postpone ] ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
 
+: main a ;

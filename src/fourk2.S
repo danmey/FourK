@@ -34,10 +34,10 @@ include(dict.m4)
 	.DATA
 #endif
 
-
 #ifdef REFERENCE
-	.FILL 0x11234
+       .FILL 0x11234
 #endif
+
 
 ################################################################################
 # Get token, separated by whites, and put it in token
@@ -70,24 +70,6 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
-################################################################################
-# Our image starts here and will be saved by a save-image word, and load by
-# load-image word
-#
-_image_start:
-	.LONG  _image_start	# at the begining we need the actual memory address
-				# for relocations
-	
-#ifndef DEBUG
-#ifdef PARTY
-	_start:
-#else
-	main:
-#endif
-#else
-	main:				
-#endif
-	jmp _dict_start
 
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
@@ -102,7 +84,7 @@ SECTION("interpret")
 long_tmp: 		.LONG 0
 token:			.FILL	64
 fmt_float: 		.ASCIZ  "%f"
-fmt_hex:		.ASCIZ 	"%x"
+fmt_hex:		.ASCIZ 	"%x\n"
 fmt_dec:		.ASCIZ 	"%d"
 fmt_char:		.ASCIZ 	"%c"
 str_wb:			.ASCIZ 	"wb"
@@ -115,36 +97,11 @@ msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
-ex_bytecode:		.BYTE  0,END_TOKEN
 #ifdef DEBUG
 	.TEXT
 #else
 #endif
 
-################################################################################	
-# Build the dispatch table
-# In:
-# Out:	
-
-build_dispatch:
-	mov	$dsptch, %edi	#load destination table of dwords
-	mov	$_words_start, %esi	#begining of the dictionary
-.loop:
-	xor	%eax,%eax	#clear out eax
-	lodsb
-	mov	%eax,%ecx
-	cmp	$-1,%al		#end of core dictionary?
-	je	.user_dictionary
-	cmp	$0,%al		#end of core dictionary?
-	je	.user_dictionary
-	mov	%esi,%eax	#load pointer to word
-	dec	%eax
-	stosl			#store the pointer to word in %edi
-	add	%ecx,%esi	#advance to next word
-	jmp	.loop
-.user_dictionary:
-	
-	ret
 	
 ################################################################################	
 # Parse literal, string is in token
@@ -299,8 +256,12 @@ _find_word:
 #there will be no code here in final image
 entry_point:
 #	call build_dispatch
+	mov	var_current,	%ebx
+	call 	build_dispatch
+
 	mov	%esp,%ebx
 	sub	$4096,%ebx
+	
 interpret_loop:
 
 	K4_SAFE_CALL(_gettoken)	#get next token
@@ -319,6 +280,7 @@ interpret_loop:
 	movzbl	semantic(%ecx,%eax,2),%eax
 	mov	%al,bytecode
 	mov	$(bytecode-1),%eax
+	movb	$INTERPRET_TOKEN,(bytecode+1)
 	jmp	runbyte
 
 # Here we will parse the literal if word is not found
@@ -353,20 +315,99 @@ _exit2:
 	K4_SAFE_CALL(_exit,$ 0)	
 	ret
 
+
+
 	.GLOBL main
 	.GLOBL _start
-
+.ALIGN 4096
+	
+_image_start:
 SECTION("dict")
-	
-BEGIN_DICT
-	
+	################################################################################
+# Our image starts here and will be saved by a save-image word, and load by
+# load-image word
+#
+	.LONG  _image_start	# at the begining we need the actual memory address
+				# for relocations
+#ifndef DEBUG
+#ifdef PARTY
+	_start:
+#else
+	main:
+#endif
+#else
+	main:				
+#endif
 # The call is nopped in the final image
-	call 	build_dispatch
 	jmp 	entry_point
+# This will be supplied with the last word
+	mov	$0,	%ebx
+	push	%ebx
+	call 	build_dispatch	
 	mov	%esp,%ebx
 	sub	$4096,%ebx
-	mov	var_current,%eax
+	mov	$next_word,%ebp
+	pop	%eax
 	dec	%eax
+	mov	%al,ex_bytecode
+	movb	$-1,(ex_bytecode+1)
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
+
+################################################################################	
+# Build the dispatch table
+# In:
+# Out:	
+
+build_dispatch:
+	mov	$dsptch, %edi	#load destination table of dwords
+	mov	$_words_start, %esi	#begining of the dictionary
+.loop:
+	xor	%eax,%eax	#clear out eax
+	lodsb
+	mov	%eax,%ecx
+	call	.check_end
+	cmp	$-1,%al		#end of core dictionary?
+	je	.user_dictionary
+	cmp	$0,%al		#end of core dictionary?
+	je	.done
+	mov	%esi,%eax	#load pointer to word
+	dec	%eax
+	stosl			#store the pointer to word in %edi
+	add	%ecx,%esi	#advance to next word
+	jmp	.loop
+.user_dictionary:
+	cmp	$-1,%al
+	je	.found_word
+	cmp	$4,%al
+	jae	.cont
+	lodsb
+	jmp	.cont
+.found_word:
+	mov	%esi,%eax
+	dec	%eax
+	stosl
+	call	.check_end
+	or	%eax,%eax
+	jz	.done
+.cont:
+	lodsb
+	jmp	.user_dictionary
+.check_end:
+	mov	%edi,%edx
+	sub	$dsptch,%edx
+	shr	$2,%edx
+	sub	%ebx,%edx
+	jnz	1f
+	xor	%eax,%eax
+1:	
+	ret
+.done:
+	K4_SAFE_CALL(printf, $fmt_hex, var_here)
+	K4_SAFE_CALL(printf, $fmt_hex, %esi)
+	ret
+
+ex_bytecode:		.BYTE  0,END_TOKEN
 
 ################################################################################
 # Main bytecode interpreter loop,
@@ -392,6 +433,7 @@ next_word:
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 SECTION("words")
+BEGIN_DICT
 _words_start:
 # Define prefix words here!
 DEF_CODE(lit, "lit")
@@ -449,8 +491,8 @@ log_op:
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
-	mov	%al,ex_bytecode
-	movb	$-1,(ex_bytecode+1)
+	movb	%al,ex_bytecode
+	movb	$END_TOKEN,(ex_bytecode+1) 
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE
@@ -757,20 +799,23 @@ DEF_CODE(load_image, "load-image")
 	K4_SAFE_CALL(_fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
 	K4_SAFE_CALL(_fclose, %eax)
+	call 	build_dispatch
 	jmp interpret_loop
 END_CODE
 DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
 DEF_VAR(there, there)
+
 #ifdef DEBUG
 	.data
 #endif
 
 DEF_VAR(state, 1)
-DEF_VAR(here, here)
+DEF_VAR(here, here-2)
 DEF_VAR(current, [EL_COUNT(NAME_TAB)])
-
+.BYTE -1
+.BYTE -1
 END_DICT
 BUILD_NAME_TABLE
 
@@ -778,5 +823,4 @@ BUILD_NAME_TABLE
 there:	
 .FILL 16*1024
 .ALIGN 4096
-SECTION("dummy")
 _image_end:

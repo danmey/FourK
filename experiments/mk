@@ -1,0 +1,3 @@
+#!/bin/sh
+#gcc -Os -fomit-frame-pointer -nostdlib tiny.c -o tiny2
+gcc -Os -fomit-frame-pointer -nostdlib /lib/ld-linux.so.2 /lib/libc.so.6 tiny.c -o tiny2

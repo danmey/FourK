@@ -62,4 +62,7 @@ create : postpone create postpone ] ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
 
-: main a ;
+: test postpone ccall 0 c, ; immediate
+: a 100 test  ;
+a .
+

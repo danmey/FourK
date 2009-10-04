@@ -97,6 +97,10 @@ msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
+_vm_context_reg:	.FILL 32
+_vm_context_ESP:	.FILL  4
+ccall_tab:		.LONG abs,4
+
 #ifdef DEBUG
 	.TEXT
 #else
@@ -340,7 +344,7 @@ SECTION("dict")
 #endif
 # The call is nopped in the final image
 	jmp 	entry_point
-# This will be supplied with the last word
+# This will be supplied with the last word by linker
 	mov	$0,	%ebx
 	push	%ebx
 	call 	build_dispatch	
@@ -805,6 +809,21 @@ END_CODE
 DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
+
+DEF_CODE(ccall,"ccall")
+	xchg	%ebx,%esp
+	xor	%eax,%eax
+	lodsb
+	mov	%eax,%ecx
+	mov	ccall_tab(,%ecx,8),%eax
+	K4_SAVE_CONTEXT()
+	call	*%eax
+	K4_RESTORE_CONTEXT()
+	add	(ccall_tab+4)(,%ecx,8),%esp
+	push	%eax
+	xchg	%ebx,%esp
+END_CODE
+
 DEF_VAR(there, there)
 
 #ifdef DEBUG

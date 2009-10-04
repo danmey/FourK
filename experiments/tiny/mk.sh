@@ -1,3 +1,3 @@
-gcc -c -nostdlib  tiny.s -o tiny.o
-ld --oformat binary -e _start -Ttext 08048000 tiny.o -o tiny
+gcc -c -nostdlib  tiny.S -o tiny.o
+ld --oformat binary -Ttext 08048000 tiny.o -o tiny
 

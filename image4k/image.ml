@@ -255,9 +255,6 @@ module Words = struct
 
   let words (code_sec,name_sec) =
 
-
-
-
     let word_image = Section.to_list code_sec in
       
     let rec drop n = function

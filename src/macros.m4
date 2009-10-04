@@ -37,3 +37,15 @@ define([K4_SAFE_CALL],[pushal dnl
 	movl	%eax,28(%esp)
 	popal])dnl
 dnl
+define([K4_SAVE_CONTEXT],[
+	mov	%esp,_vm_context_ESP
+	mov	$(_vm_context_reg+32),%esp
+	pushal
+	mov	_vm_context_ESP,%esp])dnl
+dnl
+define([K4_RESTORE_CONTEXT],[
+	mov	%eax,(_vm_context_reg+28)
+	mov	$(_vm_context_reg),%esp
+	popal
+	mov	_vm_context_ESP,%esp])dnl
+dnl

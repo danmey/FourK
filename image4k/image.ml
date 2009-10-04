@@ -200,7 +200,15 @@ module Words = struct
 
   type code = Bytecode of opcode list | Core of int array
 
-  type t = { name:string; offset:int; mutable index:int; len:int; code:code;called_by:t list; mutable used:bool }
+  type t =
+      { name:string; 
+	offset:int; 
+	mutable index:int; 
+	len:int; 
+	code:code;
+	called_by:t list; 
+	mutable used:bool; 
+	prefix:bool }
 
   let to_string w = 
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %b" w.name w.offset w.len w.index w.used
@@ -210,8 +218,6 @@ module Words = struct
       | Prefix32 (id,_) -> id
       | Opcode id -> id
 
-  let words (code_sec,name_sec) =
-
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
       let b2 = Ni.of_int b2' in
@@ -220,7 +226,7 @@ module Words = struct
 	Ni.logor (Ni.shift_left b1 24) 
 	  (Ni.logor (Ni.shift_left b2 16) 
 	     (Ni.logor (Ni.shift_left b3 8)
-		b4)) in
+		b4))
 
     let disassemble_word lst = 
       let rec disassemble_word' =
@@ -232,8 +238,25 @@ module Words = struct
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)
-	  | _ -> Core (Array.of_list lst)
-    in
+	  | s::xs -> Core (Array.of_list xs)
+    
+
+    let make_word i (o,l) name code = 
+      { name   =name; 
+        index  = i  ; 
+	offset = o  ; 
+	len    = l  ; 
+	code   = disassemble_word code;
+	used   = false;
+	called_by = [];
+	prefix = i < 4;
+      } 
+
+
+  let words (code_sec,name_sec) =
+
+
+
 
     let word_image = Section.to_list code_sec in
       
@@ -285,16 +308,6 @@ module Words = struct
 
     let words_pre = List.combine ofs names in
 
-    let make_word i (o,l) name code = 
-      { name   =name; 
-        index  = i  ; 
-	offset = o  ; 
-	len    = l  ; 
-	code   = disassemble_word code;
-	used   = false;
-	called_by = [];
-      } in
-
     let words_list = List.rev (snd (List.fold_left 
 				      (fun (i,acc) ((o,l),name) -> 
 					 let ar = Array.sub code_sec.Section.image o l in
@@ -319,7 +332,7 @@ module Words = struct
 	      ) b in
 	word.used <- true;
 	traverse' words word in
-
+      
     let last_word = words_ar.(Array.length words_ar-1) in
       traverse words_ar last_word;
       words_list
@@ -332,8 +345,43 @@ module Words = struct
 	| (Prefix32 (i,v))::xs -> (Printf.sprintf "%s(%lx)" word_arr.(i).name v) :: (loop xs)
 	| (Opcode i      )::xs -> word_arr.(i).name                              :: (loop xs) in
       String.concat " " (loop code)
+
       
-  let optimise words_ar =
+  let emit words section = 
+    let dw dword =
+      let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
+      let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
+      let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 8)  (Ni.of_int 255)) in
+      let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
+	b1::b2::b3::b4::[] in
+
+    let rec emit_bytecode =
+      function
+	| [] -> []
+	| (Prefix   (i,v))::xs -> i::v::(emit_bytecode xs)
+	| (Prefix32 (i,v))::xs -> (i::(dw v))@(emit_bytecode xs)
+	| (Opcode i      )::xs -> i::(emit_bytecode xs) in
+
+    let rec emit_words i =
+      function
+	| [] -> i
+	| x::xs -> 
+	    (match x.code with
+	       | Core im -> section.Section.image.(i) <- (Array.length im);
+		   Array.blit im 0 section.Section.image (i+1) (Array.length im); emit_words (i+1+(Array.length im)) xs
+	       | Bytecode bc -> 
+		   let im = Array.of_list (emit_bytecode bc) in
+		     section.Section.image.(i) <- 255;
+		     Array.blit im 0 section.Section.image (i+1) (Array.length im); emit_words (i+1+(Array.length im)) xs) in
+    let i = emit_words 0 words in
+      Printf.printf "%d\n\n" i;
+      section.Section.image.(i) <- 255;
+      section.Section.image.(i+1) <- 255
+
+
+  
+  let optimise words_list =
+    let words_ar = Array.of_list words_list in
     let used = Array.fold_left (fun acc w -> if w.used then w::acc else acc) [] words_ar in
     let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
 
@@ -345,16 +393,37 @@ module Words = struct
     let rec swap_ids words = 
       let rec loop = function
 	| [] -> []
-	| w::ws -> let id = bytecode_id w in 
-	  let w',i' = List.find (fun (i',w') -> id = w'.index) words in
-	    (replace_opcode w' w)::(loop ws) in
-      let words' = List.map (fun (i,w) -> match w.code with Core _ -> i,w | Bytecode b -> i,{w with code=Bytecode (loop b)}) words in
-      let words' = List.map (fun (i,w) -> w.index <- i; words_ar.(i) <- w; w) words' in
-	List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words')) in
+	| w::ws -> 
+	    let id    = bytecode_id w in 
+	    let w',i' = List.find (fun (i',w') -> id = w'.index) words in
+	      (replace_opcode w' w)::(loop ws) in
 
-      (*	List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used; *)
-      swap_ids used
+      let words' = List.map 
+	(fun (i,w) -> 
+	   match w.code with 
+	     | Core _ -> i,w 
+	     | Bytecode b -> i, { w with code=Bytecode (loop b) }) words in
 
+      let words' = List.map 
+	(fun (i,w) -> 
+	   w.index <- i; 
+	   words_ar.(i) <- w; w) words' in
+	
+	List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words')) 
+    in
+
+    let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
+    let spacer = 
+      let rec loop = function 
+	  i when i < 4 -> (i,{ name=""; index = i; offset=0; len=1; code=Bytecode []; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
+	loop (List.length prefix) 
+      in
+    let ofs = 4-List.length prefix in
+    let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
+    let u = swap_ids used' in
+      List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used';
+	u
+      
 end
 module FourkImage = struct
   
@@ -370,9 +439,10 @@ module FourkImage = struct
 
   let copied_sections = ["words";"name";"semantic"]
 
-  let link base_image image = 
+  let link base_image image word_count = 
     let dict_section = Image.find_section base_image "dict" in
       Array.fill dict_section.Section.image 4 5 0x90;
+      BinaryArray.set_dword dict_section.Section.image 10 word_count;
       List.iter (fun nm -> 
 		   let src = Image.find_section image nm in 
 		   let dst = Image.find_section base_image nm in
@@ -418,7 +488,11 @@ module Options = struct
 			 String (fun core_name -> 
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
-				     FourkImage.link base_image image;
+				   let words = Words.optimise (FourkImage.words image) in 
+				   let sec = Image.find_section image "words" in
+				     Section.zero sec;
+				     Words.emit words sec;
+				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name true)]
 	       ),
       "Link with fourk engine";
@@ -490,7 +564,7 @@ module Options = struct
 		   List.iter (fun x ->
 				match x.Words.code with
 				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
-				  | _ -> ()) (Words.optimise wordsa))
+				  | _ -> ()) (Words.optimise words))
       ,"Show optimised dictionary layout"
     ]
     end

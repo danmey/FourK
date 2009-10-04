@@ -341,7 +341,7 @@ SECTION("dict")
 # The call is nopped in the final image
 	jmp 	entry_point
 # This will be supplied with the last word
-	mov	$79,	%ebx
+	mov	$0,	%ebx
 	push	%ebx
 	call 	build_dispatch	
 	mov	%esp,%ebx

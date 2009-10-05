@@ -453,7 +453,7 @@ DEF_CODE(lit4, "lit4")
 	mov	%eax,(%ebx)
 END_CODE
 DEF_CODE(branch, "branch")
-	lodsb                 # load byte -> %AL
+	movb	(%esi),%al
 	movsbl 	%al,%eax      # clear all the other bytes
 	add	%eax,%esi     # indirect jump ( 8 bit ) 
 END_CODE
@@ -462,9 +462,10 @@ DEF_CODE(branch0, "branch0")
 	add	$4,%ebx       # drop
 	or	%eax,%eax     # refresh flags
 	jnz	1f            # if zero eax=0 
-	lodsb                 # load byte -> %AL
+	movb	(%esi),%al
 	movsbl 	%al,%eax      # clear all the other bytes
 	add	%eax,%esi     # do an indirect jump ( 8 bit )
+	jmp	*%ebp
 1:	
 	inc %esi
 END_CODE
@@ -485,8 +486,7 @@ DEF_CODE(execute, "execute")
 log_op:
 	mov	(%ebx),%eax
 	add	$4,%ebx
- 	cmp	%eax,(%ebx)
-	xor	%edx,%edx
+ 	xor	%edx,%edx
 	mov	%edx,%ecx
 	dec 	%ecx
 	cmp	%eax,(%ebx)
@@ -740,8 +740,8 @@ DEF_CODE(tick, "'")
 END_CODE
 DEF_CODE(key, "key")
 	K4_SAFE_CALL(_get_key)
+	sub	$4,%ebx
 	movl	%eax, (%ebx)
-	add	$4,%eax
 END_CODE
 
 # floating point magic

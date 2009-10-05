@@ -65,4 +65,3 @@ create : postpone create postpone ] ;
 : test postpone ccall 0 c, ; immediate
 : a 100 test  ;
 a .
-

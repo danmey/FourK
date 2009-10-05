@@ -20,6 +20,7 @@ create : postpone create postpone ] ;
 : ( begin key 41 = if exit then repeat ; immediate
 : (* begin key 42 = if key 41 = if exit then then repeat ; immediate
 
+
 | this is a retroforth one line comment
 ( this is a stack comment ) 
 (* this
@@ -66,3 +67,15 @@ create : postpone create postpone ] ;
 : a 100 test  ;
 a .
 
+
+| : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+| strings 
+: " ( -- str c ) here @ >r there @ here ! 0 >r 
+  begin key dup 34 = if drop there @ r> here @ there ! r> here ! exit then 
+  c, r> 1 + >r repeat 
+;
+
+: type ( str c -- ) >r begin r> dup >r 0= if r> drop drop exit then r> 1 - >r dup c@ emit 1 + repeat ; 
+
+5 1 - cr . cr
+" fooo" type 

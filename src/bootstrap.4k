@@ -65,10 +65,6 @@ create : postpone create postpone ] ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
 
-: test postpone ccall 0 c, ; immediate
-: a 100 test  ;
-a .
-
 | : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 | strings 
 : " ( -- str c ) here @ >r there @ here ! 0 >r 
@@ -82,6 +78,19 @@ a .
 
 : type ( str c -- ) >r begin r> dup >r 0= if r> drop drop exit then r> 1 - >r dup c@ emit 1 + repeat ; 
 
-5 1 - cr . cr
+: ccall: create postpone ccall c, postpone exit ;
 
-" fooo" type cr
+0 ccall: dlopen
+1 ccall: dlsym
+
+: >cstr drop 1 + ;
+
+: lib >cstr 1 swap dlopen ;
+: >cstr swap dlsym ;
+
+
+" libc.so.6" lib " printf" dlsym 
+
+
+
+

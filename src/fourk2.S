@@ -99,7 +99,9 @@ whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
 _vm_context_reg:	.FILL 32
 _vm_context_ESP:	.FILL  4
-ccall_tab:		.LONG abs,4
+ccall_tab:
+			.LONG dlopen,8
+			.LONG dlsym,8
 
 #ifdef DEBUG
 	.TEXT

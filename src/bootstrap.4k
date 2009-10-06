@@ -69,7 +69,7 @@ create : postpone create postpone ] ;
 : a 100 test  ;
 a .
 
-| : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 | strings 
 : " ( -- str c ) here @ >r there @ here ! 0 >r 
   begin key dup 34 = if drop there @ r> here @ there ! r> here ! exit then 
@@ -80,8 +80,12 @@ a .
 
 : t 0 >r r> drop ;
 
-: type ( str c -- ) >r begin r> dup >r 0= if r> drop drop exit then r> 1 - >r dup c@ emit 1 + repeat ; 
+: type ( str c -- ) >r begin 
+  r 0= if r> drop drop exit then 
+  r> 1 - >r dup c@ emit 1 + repeat 
+; 
 
 5 1 - cr . cr
 
+1 2 3      .  .  .
 " fooo" type cr

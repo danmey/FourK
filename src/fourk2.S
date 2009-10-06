@@ -65,7 +65,7 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-	K4_SAFE_CALL(_ungetc,%eax, stdin)	# unget char
+#	K4_SAFE_CALL(_ungetc,%eax, stdin) # unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret

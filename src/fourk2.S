@@ -65,7 +65,7 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-	K4_SAFE_CALL(_ungetc,%eax, stdin)	# unget char
+#	K4_SAFE_CALL(_ungetc,%eax, stdin) # unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
@@ -99,9 +99,7 @@ whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
 _vm_context_reg:	.FILL 32
 _vm_context_ESP:	.FILL  4
-ccall_tab:
-			.LONG dlopen,8
-			.LONG dlsym,8
+
 
 #ifdef DEBUG
 	.TEXT
@@ -827,6 +825,7 @@ DEF_CODE(ccall,"ccall")
 END_CODE
 
 DEF_VAR(there, there)
+DEF_VAR(ithere, ccall_tab)
 
 #ifdef DEBUG
 	.data
@@ -841,7 +840,11 @@ END_DICT
 BUILD_NAME_TABLE
 
 # TODO: For real usage maybe we need malloced heap
-there:	
+ccall_tab:
+	.LONG dlopen,8
+	.LONG dlsym,8
+	.FILL 256-8
+there:
 .FILL 16*1024
 .ALIGN 4096
 _image_end:

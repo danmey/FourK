@@ -1,9 +1,9 @@
-create ; immediate postpone [ postpone lit -1 c, postpone c, 
+create ; immediate postpone [ -1 c,  
 create : postpone create postpone ] ;
 
 : here@ here @ ;
 : literal 0 c, c, ;
-: rliteral 4 c, , ;
+: rliteral 1 c, , ;
 
 : begin here@ ; immediate
 : repeat postpone branch here@ - c, ; immediate
@@ -60,37 +60,54 @@ create : postpone create postpone ] ;
 : cells cell * ;
 | ref cells
 : rcell 4 ;
+: rcells rcell * ;
+: rcells+ rcells + ;
 
 : allot there @ + there ! ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
 
-| : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+
 | strings 
 : " ( -- str c ) here @ >r there @ here ! 0 >r 
   begin key dup 34 = if drop there @ r> here @ there ! r> here ! exit then 
   c, r> 1 + >r repeat
-;
+; immediate
 
 : "" begin 1 . repeat ;
 
 : t 0 >r r> drop ;
 
-: type ( str c -- ) >r begin r> dup >r 0= if r> drop drop exit then r> 1 - >r dup c@ emit 1 + repeat ; 
+: type ( str c -- ) >r begin 
+  r 0= if r> drop drop exit then 
+  r> 1 - >r dup c@ emit 1 + repeat 
+; 
 
-: ccall: create postpone ccall c, postpone exit ;
+: ccall: : postpone ccall c, postpone ; ;
 
 0 ccall: dlopen
 1 ccall: dlsym
+2 ccall: printf
 
-: >cstr drop 1 + ;
+: >cstr drop ;
 
 : lib >cstr 1 swap dlopen ;
+: sym >cstr swap dlsym ;
 : >cstr swap dlsym ;
 
 
-" libc.so.6" lib " printf" dlsym 
+" libc.so.6" lib dup " printf" sym
 
+ithere @ 4 rcells+ !
+4 ithere @ 5 rcells+ !
 
+: printf ccall [ 2 c, ] ;
+
+| now instead of calling printf it calls dlsym
+| if you put a break point on code_ccall you will see that we are really in sym word not printf
+| have no bloody idea why it happens (probe from next token 1 intead of two)
+	
+: a " ala ma kota" >cstr printf cr ;
 
 

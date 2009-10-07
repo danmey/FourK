@@ -26,6 +26,8 @@
    http://www.mkssoftware.com/docs/man1/m4.1.asp
    currently the macro collects all the words ptrs and names into separate macros and then at the end unrolls it.
    (please see BUILD_NAME_TABLE). We need to use divertions instead.   
+** TODO using `divert' in M4, this is important
+** TODO we have to many M4 words, get rid ot them and shift it into 
 * Forth Specific
 ** DONE Implement variables
 ** DONE implement comments					       :phon:
@@ -58,6 +60,27 @@
    - for image linker
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
+** TODO put DEF_CODE stuff into its own file
+** TODO hide current word, to allow overriding old implementation
+** TODO printing stack
+** TODO hex mode 
+** TODO including a file
+** TODO float words, debug it
+** TODO arrays support
+** TODO return stack operations
+** TODO scratch pad
+** TODO does> ???
+** TODO prefix word
+** TODO stack boundaries check
+** TODO refactoring bootstrap.4k, means factoring out
+** TODO parsing words, i rely on Phon's ideas here
+** TODO begin while repeat 
+** TODO do loop 
+** TODO unit tests
+** TODO storing imports name table
+** TODO loading imports
+** TODO nice interface to imports
+** TODO *very* simple structures like what? like in C?
 * Linker/Image Specific
 ** TODO Compile and make work tiny example with imports in the experiment directory
 ** TODO Integrate the tiny image example with existing GAS code
@@ -83,6 +106,15 @@
    - Dispatch table section - same sa above
    - Names table section - stripped off
    - Semantic section - stripped off
+** TODO make printing string with printf in standalone-stripped-optimised
+** TODO simple vector implementation
+** TODO vector stack
+** TODO maybe generic stack, holding any type of objects
+** TODO add, neg, sub, cross, dot
+** TODO think about a string framework for generating (!) shaders ( awesome idea )
+** TODO SDL framework
+** TODO OpenGL shaders, how do we get that bastards into the image?
+** TODO Graphics test, opening window, reacting on the Esc
 * Compression Specific
 ** Research the best alorithm for compression
 ** Way of grouping data/code into segments at the Forth level

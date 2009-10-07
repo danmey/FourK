@@ -63,7 +63,7 @@
 ** DONE hide current word, to allow overriding old implementation
 ** TODO printing stack
 ** DONE hex mode 
-** TODO including a file
+** DONE including a file
 ** TODO float words, debug it
 ** TODO arrays support
 ** TODO return stack operations

@@ -73,7 +73,7 @@ create :
 
 
 
-: create create there @ rliteral -1 c, last @ 1 + last ! ; 
+: create create there @ rliteral postpone ;; last @ 1 + last ! ; 
 
 | image saver 
 | save-image image.4ki
@@ -126,8 +126,6 @@ create :
 
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
-
-
 
 
 	

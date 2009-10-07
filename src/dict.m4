@@ -35,60 +35,72 @@ DEF_TAB(SEMANTIC_TAB)])
 define([END_DICT], 
 here: .FILL DICT_SIZE)
 define([NORMAL_SEMANTICS],
-[PUSH_EL(SEMANTIC_TAB, [[[COMPILE_TOKEN, EXECUTE_TOKEN]]])])
+[
+	divert(2)
+	.BYTE COMPILE_TOKEN, EXECUTE_TOKEN
+	divert
+])
 
 define([IMMEDIATE_SEMANTICS],
-[PUSH_EL(SEMANTIC_TAB, [[[EXECUTE_TOKEN, EXECUTE_TOKEN]]])])
+[
+	divert(2)
+	.BYTE EXECUTE_TOKEN, EXECUTE_TOKEN
+	divert
+])
+
 define([NEXT_WORD], [jmp *%ebp])
 define([CORE_COUNT],[0])
 define([_DEF_CODE],
 [
-define([LAST_WORD],$1)
-divert(1)
-define([CORE_COUNT],incr(CORE_COUNT))
-.ASCII $2
-.FILL eval(NTAB_ENTRY_SIZE-len($2)+2)
-divert
-word_$1: 
-.BYTE codeend_$1-code_$1
-code_$1:])
-define([DEF_CODE],[
-_DEF_CODE($1,$2)
-NORMAL_SEMANTICS])
+	define([LAST_WORD], $1)
+	divert(1)
+		define([CORE_COUNT], incr(CORE_COUNT))
+		.ASCII $2
+		.FILL eval(NTAB_ENTRY_SIZE - len($2) + 2)
+	divert
+	word_$1: .BYTE codeend_$1 - code_$1
+	code_$1:
+])
+define([DEF_CODE],
+[
+	_DEF_CODE($1,$2)
+	NORMAL_SEMANTICS
+])
 define([END_CODE],
 [
-NEXT_WORD
-codeend_[]LAST_WORD:
-]
- )
+	NEXT_WORD
+	codeend_[]LAST_WORD:
+])
 define([DEF_VAR],[
-DEF_CODE($1,"$1")
-sub	$ 4,%ebx
-movl	$var_$1,(%ebx)
-NEXT_WORD
-var_$1:	.long $2
-END_CODE
+	DEF_CODE($1,"$1")
+	sub	$ 4,%ebx
+	movl	$var_$1,(%ebx)
+	NEXT_WORD
+	var_$1:	.long $2
+	END_CODE
 ])
-define([DEF_IMM],[
-_DEF_CODE($1,$2)
-IMMEDIATE_SEMANTICS])
+define([DEF_IMM],
+[
+	_DEF_CODE($1,$2)
+	IMMEDIATE_SEMANTICS
+])
 
-define([BUILD_NAME_TABLE],[
-SECTION("name")
-.equ NCORE_WORDS,CORE_COUNT
-ntab: 
-undivert(1)
-ntab_end:
-.FILL NTAB_ENTRY_SIZE*MAX_WORDS
-SECTION("dsptch")
-dsptch:
-.FILL NCORE_WORDS*4
-dsptch_end:
-.FILL 4*MAX_WORDS
-SECTION("semantic")
-semantic:
-FOR_EACH(SEMANTIC_TAB, arg, [.BYTE arg
-])
-semantic_end:
-.FILL 8*MAX_WORDS
+define([BUILD_NAME_TABLE],
+[
+	.equ NCORE_WORDS,CORE_COUNT
+	
+	SECTION("name")
+		ntab: 
+		undivert(1)
+		ntab_end:
+		.FILL NTAB_ENTRY_SIZE*MAX_WORDS
+
+	SECTION("dsptch")
+		dsptch:		.FILL NCORE_WORDS*4
+		dsptch_end: 	.FILL 4*MAX_WORDS
+	SECTION("semantic")
+	semantic:
+		undivert(2)
+	semantic_end:
+	.FILL 8*MAX_WORDS
 ])

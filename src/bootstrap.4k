@@ -92,20 +92,18 @@ create : postpone create postpone ] ;
 
 : >cstr drop ;
 
-: lib >cstr 1 swap dlopen ;
-: sym >cstr swap dlsym ;
-: >cstr swap dlsym ;
+: lib 1 swap dlopen ;
+: sym dlsym ;
 
 
-" libc.so.6" lib dup " printf" sym
+: l lib ;
 
+" libc.so.6" >cstr 1 swap dlopen " printf" >cstr swap dlsym
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
-
-: printf ccall [ 2 c, ] ;
 
 | now instead of calling printf it calls dlsym
 | if you put a break point on code_ccall you will see that we are really in sym word not printf
 | have no bloody idea why it happens (probe from next token 1 intead of two)
 	
-: a " ala ma kota" >cstr printf cr ;
+" FourK interaction started." >cstr printf cr

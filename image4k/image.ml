@@ -249,7 +249,7 @@ module Words = struct
 	code   = disassemble_word code;
 	used   = false;
 	called_by = [];
-	prefix = i < 4;
+	prefix = i < 5;
       } 
 
 

@@ -3,9 +3,9 @@ define([SECTION],
  .ASCII $1
  .ASCII "@@-"
 ])
-define([EXECUTE_TOKEN],[5])
-define([COMPILE_TOKEN],[4])
-define([INTERPRET_TOKEN],[6])
+define([EXECUTE_TOKEN],[6])
+define([COMPILE_TOKEN],[5])
+define([INTERPRET_TOKEN],[7])
 define([END_TOKEN],[-1])
 define([LIT_TOKEN],[0])
 

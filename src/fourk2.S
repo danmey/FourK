@@ -1,6 +1,8 @@
 include(macros.m4)
 include(dict.m4)
 
+#define PREFIX_WORDS_INDEX 5
+
 # Following imports are used and needs to be dereferenced
 # I am not sure if it is needed
 ## _sscanf:	jmp sscanf
@@ -37,6 +39,7 @@ include(dict.m4)
 #ifdef REFERENCE
        .FILL 0x11234
 #endif
+
 
 
 ################################################################################
@@ -384,7 +387,7 @@ build_dispatch:
 .user_dictionary:
 	cmp	$-1,%al
 	je	.found_word
-	cmp	$4,%al
+	cmp	$5,%al
 	jae	.cont
 	lodsb
 	jmp	.cont
@@ -470,10 +473,21 @@ DEF_CODE(branch0, "branch0")
 1:	
 	inc %esi
 END_CODE
-
+DEF_CODE(ccall,"ccall")
+	xchg	%ebx,%esp
+	xor	%eax,%eax
+	lodsb
+	mov	%eax,%ecx
+	mov	ccall_tab(,%ecx,8),%eax
+	K4_SAVE_CONTEXT()
+	call	*%eax
+	K4_RESTORE_CONTEXT()
+	add	(ccall_tab+4)(,%ecx,8),%esp
+	push	%eax
+	xchg	%ebx,%esp
+END_CODE
 # If you move below *three* definitions, you need to update the TOKEN
 # constants in dict.m4
-
 DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
@@ -812,19 +826,6 @@ DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
 
-DEF_CODE(ccall,"ccall")
-	xchg	%ebx,%esp
-	xor	%eax,%eax
-	lodsb
-	mov	%eax,%ecx
-	mov	ccall_tab(,%ecx,8),%eax
-	K4_SAVE_CONTEXT()
-	call	*%eax
-	K4_RESTORE_CONTEXT()
-	add	(ccall_tab+4)(,%ecx,8),%esp
-	push	%eax
-	xchg	%ebx,%esp
-END_CODE
 
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)

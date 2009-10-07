@@ -45,7 +45,7 @@ define([_DEF_CODE],
 [
 define([LAST_WORD],$1)
 divert(1)
-incr([CORE_COUNT])
+define([CORE_COUNT],incr(CORE_COUNT))
 .ASCII $2
 .FILL eval(NTAB_ENTRY_SIZE-len($2)+2)
 divert

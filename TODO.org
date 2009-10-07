@@ -70,7 +70,7 @@
 ** TODO return stack operations
 ** TODO scratch pad
 ** TODO does> ???
-** TODO prefix word
+** DONE ccall prefix word moved to prefix section
 ** TODO stack boundaries check
 ** TODO refactoring bootstrap.4k, means factoring out
 ** TODO parsing words, i rely on Phon's ideas here

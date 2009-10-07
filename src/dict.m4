@@ -8,9 +8,6 @@ define([COMPILE_TOKEN],[5])
 define([INTERPRET_TOKEN],[7])
 define([END_TOKEN],[-1])
 define([LIT_TOKEN],[0])
-
-
-
 define([NTAB_ENTRY_SIZE], 32)
 define([MAX_WORDS],256)
 define([DICT_SIZE], 4*1024)
@@ -43,11 +40,15 @@ define([NORMAL_SEMANTICS],
 define([IMMEDIATE_SEMANTICS],
 [PUSH_EL(SEMANTIC_TAB, [[[EXECUTE_TOKEN, EXECUTE_TOKEN]]])])
 define([NEXT_WORD], [jmp *%ebp])
+define([CORE_COUNT],[0])
 define([_DEF_CODE],
 [
 define([LAST_WORD],$1)
-PUSH_EL(NAME_TAB, $1)[]
-PUSH_EL(FORTH_NAME_TAB, $2)
+divert(1)
+incr([CORE_COUNT])
+.ASCII $2
+.FILL eval(NTAB_ENTRY_SIZE-len($2)+2)
+divert
 word_$1: 
 .BYTE codeend_$1-code_$1
 code_$1:])
@@ -74,11 +75,9 @@ IMMEDIATE_SEMANTICS])
 
 define([BUILD_NAME_TABLE],[
 SECTION("name")
-.equ NCORE_WORDS,EL_COUNT(NAME_TAB)
+.equ NCORE_WORDS,CORE_COUNT
 ntab: 
-FOR_EACH(FORTH_NAME_TAB, arg,[.ASCII arg
-.FILL eval(NTAB_ENTRY_SIZE-len(arg)+2)
-])
+undivert(1)
 ntab_end:
 .FILL NTAB_ENTRY_SIZE*MAX_WORDS
 SECTION("dsptch")

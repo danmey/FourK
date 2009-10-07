@@ -71,7 +71,7 @@ create : postpone create postpone ] ;
 
 | strings 
 : " ( -- str c ) here @ >r there @ here ! 0 >r 
-  begin key dup 34 = if drop there @ r> here @ there ! r> here ! exit then 
+  begin key dup 34 = if 0 c, drop there @ r> here @ there ! r> here ! exit then 
   c, r> 1 + >r repeat
 ; immediate
 
@@ -109,5 +109,3 @@ ithere @ 4 rcells+ !
 | have no bloody idea why it happens (probe from next token 1 intead of two)
 	
 : a " ala ma kota" >cstr printf cr ;
-
-

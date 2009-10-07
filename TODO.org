@@ -59,10 +59,10 @@
    - for image linker
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
-** TODO put DEF_CODE stuff into its own file
+** DONE put DEF_CODE stuff into its own file
 ** DONE hide current word, to allow overriding old implementation
 ** TODO printing stack
-** TODO hex mode 
+** DONE hex mode 
 ** TODO including a file
 ** TODO float words, debug it
 ** TODO arrays support

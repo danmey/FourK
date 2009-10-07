@@ -383,7 +383,9 @@ END_CODE
 DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
-
+DEF_CODE(bye, "bye")
+	call _exit2
+END_CODE
 
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)

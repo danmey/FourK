@@ -102,9 +102,5 @@ create : postpone create postpone ] ;
 
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
-
-| now instead of calling printf it calls dlsym
-| if you put a break point on code_ccall you will see that we are really in sym word not printf
-| have no bloody idea why it happens (probe from next token 1 intead of two)
 	
 " FourK interaction started." >cstr printf cr

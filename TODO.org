@@ -47,7 +47,7 @@
    Dictionary as a stream of bytes.
    Get rid of the leading address for each word.
 
-** TODO Dynamic backpatch
+** DONE Dynamic backpatch
 ** TODO Allow nesting of block comments
 ** TODO Different flavours of literals
    Byte signed, unsigned, dword. float?. Resolved at compile time.
@@ -61,7 +61,7 @@
 * Linker/Image Specific
 ** TODO Compile and make work tiny example with imports in the experiment directory
 ** TODO Integrate the tiny image example with existing GAS code
-** TODO Dictionary optimiser, need first an improvement for dictionary layout.
+** DONE Dictionary optimiser, need first an improvement for dictionary layout.
 ** DONE Make preprocesor (linker) for images
    Basic functionality is there, although stripping zeroes and relocating the dict section is not implemented yet.
    (relocating the dispatch table works now, this proves that the method for finding relocations is correct)

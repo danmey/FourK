@@ -1,39 +1,18 @@
-define([SECTION], 
-[.ASCII "@@-"
- .ASCII $1
- .ASCII "@@-"
-])
-define([EXECUTE_TOKEN],[6])
-define([COMPILE_TOKEN],[5])
-define([INTERPRET_TOKEN],[7])
-define([END_TOKEN],[-1])
-define([LIT_TOKEN],[0])
-define([NTAB_ENTRY_SIZE], 32)
-define([MAX_WORDS],256)
-define([DICT_SIZE], 4*1024)
+dnl Section defintion
+define([SECTION], [.ASCII "@@-", $1, "@@-"])dnl
+define([EXECUTE_TOKEN],[6])dnl
+define([COMPILE_TOKEN],[5])dnl
+define([INTERPRET_TOKEN],[7])dnl
+define([END_TOKEN],[-1])dnl
+define([LIT_TOKEN],[0])dnl
+define([NTAB_ENTRY_SIZE], 32)dnl
+define([MAX_WORDS],256)dnl
+define([DICT_SIZE], 4*1024)dnl
+define([NEXT_WORD], [jmp *%ebp])dnl
+define([CORE_COUNT],[0])dnl
 dnl
-define([DEF_TAB],[define($1_COUNT, 0)])dnl
-define([PUSH_EL],[define($1_AT[]$1_COUNT,$2)][define([$1_COUNT],incr($1_COUNT))])dnl
-define([EL_COUNT], [$1_COUNT]) dnl
-define([EL_AT], [indir($1_AT[]$2)])  dnl
-define([K4_FORLOOP],
- 	[ifelse(eval([($3) >= ($2)]),[1],
- 		[pushdef([$1],eval([$2]))_K4_FORLOOP([$1],
- 		eval([$3]),[$4])popdef([$1])])])dnl
+define([BEGIN_DICT])dnl
 dnl
-define([_K4_FORLOOP],
- 	[$3[]ifelse(indir([$1]),[$2],[],
-   		[define([$1],incr(indir([$1])))$0($@)])])dnl
-dnl
-define([FOR_EACH], [K4_FORLOOP($2_i, 0, decr(EL_COUNT($1)),[pushdef([$2], EL_AT($1,$2_i))$3[]popdef([$2])])])dnl
-dnl
-define([BEGIN_DICT],[
-DEF_TAB(NAME_TAB)[]
-DEF_TAB(DISPATCH_TAB)[]
-DEF_TAB(FORTH_NAME_TAB)[]
-DEF_TAB(SEMANTIC_TAB)])
-define([END_DICT], 
-here: .FILL DICT_SIZE)
 define([NORMAL_SEMANTICS],
 [
 	divert(2)
@@ -48,8 +27,6 @@ define([IMMEDIATE_SEMANTICS],
 	divert
 ])
 
-define([NEXT_WORD], [jmp *%ebp])
-define([CORE_COUNT],[0])
 define([_DEF_CODE],
 [
 	define([LAST_WORD], $1)
@@ -85,8 +62,9 @@ define([DEF_IMM],
 	IMMEDIATE_SEMANTICS
 ])
 
-define([BUILD_NAME_TABLE],
+define([END_DICT],
 [
+	here: .FILL DICT_SIZE
 	.equ NCORE_WORDS,CORE_COUNT
 	
 	SECTION("name")
@@ -103,4 +81,5 @@ define([BUILD_NAME_TABLE],
 		undivert(2)
 	semantic_end:
 	.FILL 8*MAX_WORDS
+
 ])

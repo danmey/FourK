@@ -394,6 +394,7 @@ DEF_VAR(ithere, ccall_tab)
 	.data
 #endif
 
+DEF_VAR(base,10)
 DEF_VAR(state, 1)
 DEF_VAR(here, here-2)
 DEF_VAR(current, [NCORE_WORDS+1])

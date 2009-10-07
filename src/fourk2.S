@@ -92,7 +92,6 @@ fmt_dec:		.ASCIZ 	"%d"
 fmt_char:		.ASCIZ 	"%c"
 str_wb:			.ASCIZ 	"wb"
 str_rb:			.ASCIZ 	"rb"
-var_base:		.LONG 	10
 msg:			.ASCIZ "%s\n"
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_test1:		.ASCIZ "Test1\n"
@@ -141,9 +140,17 @@ _parse_literal:
 	clc
 	ret
 1:
+	mov	$token,%edi
+	cmpb	$'$',(%edi)
+	jz	.base16
+
 	cmpb	$10,var_base
 	jz	2f
-	K4_SAFE_CALL(_sscanf,$token,$fmt_hex,$long_tmp)
+	mov	$token,%edi
+	dec	%edi
+.base16:
+	inc	%edi
+	K4_SAFE_CALL(_sscanf,%edi,$fmt_hex,$long_tmp)
 	cmp	$0,%eax
 	jz	2f
 	mov 	long_tmp,%eax

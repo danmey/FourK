@@ -7,7 +7,15 @@ create ;
        postpone + 
        postpone current 
        postpone ! 
+
+       postpone lit
+       -1 c,
+       postpone here 
+       postpone @
+       postpone c!
+
        -1 c, 
+       
 immediate
 
 current @ 1 + current ! 
@@ -127,3 +135,5 @@ ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
 	
 " FourK interaction started." >cstr printf cr
+-1 c,
+-1 c,

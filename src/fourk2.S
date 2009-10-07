@@ -101,13 +101,22 @@ whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
 _vm_context_reg:	.FILL 32
 _vm_context_ESP:	.FILL  4
-
-
+fh_stack:		.FILL 32*4
+fh_stack_index:		.LONG	0
 #ifdef DEBUG
 	.TEXT
 #else
 #endif
 
+
+	.macro ld_fh reg
+		mov	fh_stack_index,%edx
+		mov	fh_stack(%edx),\reg
+	.endm
+################################################################################
+# Load 
+# 
+#
 	
 ################################################################################	
 # Parse literal, string is in token
@@ -132,7 +141,7 @@ _parse_literal:
 	repnz 	scasb
 	jnz	1f	# real
 
-	K4_SAFE_CALL(_sscanf,$token,$fmt_float,$long_tmp)
+	K4_SAFE_CALL(sscanf,$token,$fmt_float,$long_tmp)
 	cmp	$0,%eax
 	jz	1f
 	mov 	long_tmp,%eax
@@ -150,7 +159,7 @@ _parse_literal:
 	dec	%edi
 .base16:
 	inc	%edi
-	K4_SAFE_CALL(_sscanf,%edi,$fmt_hex,$long_tmp)
+	K4_SAFE_CALL(sscanf,%edi,$fmt_hex,$long_tmp)
 	cmp	$0,%eax
 	jz	2f
 	mov 	long_tmp,%eax
@@ -159,7 +168,7 @@ _parse_literal:
 	ret
 2:	
 # Use cheap sscanf
-	K4_SAFE_CALL(_sscanf,$token,$fmt_dec,$long_tmp)
+	K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
 3:	
 	cmp	$0,%eax
 	jz 	4f
@@ -210,7 +219,8 @@ _is_white:
 # al - an ASCII code of character
 # token - a token
 _get_key:
-	K4_SAFE_CALL(_getchar)
+	ld_fh	%edx
+	K4_SAFE_CALL(fgetc,%edx)
 	cmp 	$-1,%eax        # if EOF?
 	je 	_exit2          # exit the forth
 	cmpb	$10,%al         # if a newline 
@@ -270,6 +280,8 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
+	pushl	stdin
+	popl	fh_stack
 #	call build_dispatch
 	mov	var_current,	%ebx
 	call 	build_dispatch
@@ -355,6 +367,8 @@ SECTION("dict")
 #endif
 # The call is nopped in the final image
 	jmp 	entry_point
+	pushl	stdin
+	popl	fh_stack
 # This will be supplied with the last word by linker
 	mov	$0,	%ebx
 	push	%ebx

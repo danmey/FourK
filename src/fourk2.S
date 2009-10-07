@@ -94,6 +94,7 @@ str_wb:			.ASCIZ 	"wb"
 str_rb:			.ASCIZ 	"rb"
 msg:			.ASCIZ "%s\n"
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
+msg_file_not_found:	.ASCIZ "File '%s' not found.\n"
 msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
@@ -125,9 +126,15 @@ f_rt:	.ASCIZ "rt"
 	
 file_nest:
 	K4_SAFE_CALL(fopen, %edi, $f_rt)
+	or	%eax,%eax
+	jnz	1f
+	stc
+	ret
+1:	
 	incl	fh_stack_index
 	mov	fh_stack_index,%ecx
 	mov	%eax,fh_stack(,%ecx,4)
+	clc
 	ret
 
 file_unnest:
@@ -135,7 +142,6 @@ file_unnest:
 	cmp	$0,%ecx
 	jz	_exit2
 	mov	fh_stack(,%ecx,4),%eax
-	K4_SAFE_CALL(fclose,%eax)
 	decl	fh_stack_index
 	ret
 	
@@ -243,7 +249,10 @@ _get_key:
 	ld_fh	%edx
 	K4_SAFE_CALL(fgetc,%edx)
 	cmp 	$-1,%eax        # if EOF?
-	je 	file_unnest     # exit the forth
+	jne 	2f     # exit the forth
+	call	file_unnest
+	ret
+2:	
 	cmpb	$10,%al         # if a newline 
 	jne 1f
 1:	ret

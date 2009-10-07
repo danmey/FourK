@@ -1,6 +1,6 @@
 SRC = fourk2.S
 FOURKC = fourkc
-SRC_FILES = macros.m4 dict.m4 $(SRC)
+SRC_FILES = macros.m4 dict.m4 prim.S $(SRC)
 BIN = bin
 BASIC_FILES = $(BIN)/fourk $(BIN)/fourk-ref 
 DEBUG_FILES = $(BIN)/fourk-debug

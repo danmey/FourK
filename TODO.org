@@ -61,7 +61,7 @@
 ** TODO Loading imports
    Please see the design section. (What we don't know yet)
 ** TODO put DEF_CODE stuff into its own file
-** TODO hide current word, to allow overriding old implementation
+** DONE hide current word, to allow overriding old implementation
 ** TODO printing stack
 ** TODO hex mode 
 ** TODO including a file

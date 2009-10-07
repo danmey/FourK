@@ -111,12 +111,33 @@ fh_stack_index:		.LONG	0
 
 	.macro ld_fh reg
 		mov	fh_stack_index,%edx
-		mov	fh_stack(%edx),\reg
+		mov	fh_stack(,%edx,4),\reg
 	.endm
+
+	
 ################################################################################
-# Load 
-# 
-#
+# Nest into next file stream
+# In:
+# edi - file name
+# Out:
+
+f_rt:	.ASCIZ "rt"
+	
+file_nest:
+	K4_SAFE_CALL(fopen, %edi, $f_rt)
+	incl	fh_stack_index
+	mov	fh_stack_index,%ecx
+	mov	%eax,fh_stack(,%ecx,4)
+	ret
+
+file_unnest:
+	mov	fh_stack_index,%ecx
+	cmp	$0,%ecx
+	jz	_exit2
+	mov	fh_stack(,%ecx,4),%eax
+	K4_SAFE_CALL(fclose,%eax)
+	decl	fh_stack_index
+	ret
 	
 ################################################################################	
 # Parse literal, string is in token
@@ -222,7 +243,7 @@ _get_key:
 	ld_fh	%edx
 	K4_SAFE_CALL(fgetc,%edx)
 	cmp 	$-1,%eax        # if EOF?
-	je 	_exit2          # exit the forth
+	je 	file_unnest     # exit the forth
 	cmpb	$10,%al         # if a newline 
 	jne 1f
 1:	ret
@@ -241,7 +262,6 @@ _get_key:
 _find_word:
 	mov 	$ntab,%edx		# set up a pointer past the end
 	mov	var_current,%eax
-	inc	%eax
 	shl	$5,%eax	
 	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one

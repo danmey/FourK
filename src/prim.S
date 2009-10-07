@@ -380,11 +380,16 @@ DEF_CODE(load_image, "load-image")
 	call 	build_dispatch
 	jmp interpret_loop
 END_CODE
+DEF_CODE(include,"include")
+	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	mov	$token,%edi
+	call	file_nest
+END_CODE
 DEF_CODE(exit,"exit")
 	pop	%esi
 END_CODE
 DEF_CODE(bye, "bye")
-	call _exit2
+	jmp _exit2
 END_CODE
 
 DEF_VAR(there, there)

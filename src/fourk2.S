@@ -261,7 +261,7 @@ _get_key:
 # eax - rets word index, C - set if no word found
 _find_word:
 	mov 	$ntab,%edx		# set up a pointer past the end
-	mov	var_current,%eax
+	mov	var_last,%eax
 	shl	$5,%eax	
 	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
@@ -303,7 +303,7 @@ entry_point:
 	pushl	stdin
 	popl	fh_stack
 #	call build_dispatch
-	mov	var_current,	%ebx
+	mov	var_last,	%ebx
 	call 	build_dispatch
 
 	mov	%esp,%ebx

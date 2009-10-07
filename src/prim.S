@@ -151,14 +151,14 @@ DEF_CODE(create,"create")
 	xchg	%esp,%ebx	
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	$token,	%esi		#load token into esi
-	movl	var_current,%eax 	#current words index
+	movl	var_last,%eax 	#current words index
 	shl	$2, %eax	 	#multiply by 4
 	movl	$ntab,%edi		#load ntab beg
 	lea	(%edi,%eax,8),%edi 	#ntab + index * 4*8
 	mov	$NTAB_ENTRY_SIZE, %ecx #length of the word
 	rep	movsb		       	#copy the token
 	
-	movl	var_current,%eax       	#load index (unneeded?)
+	movl	var_last,%eax       	#load index (unneeded?)
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$COMPILE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
@@ -178,7 +178,7 @@ END_CODE
 ## 	movl	$0, var_state	#alias for ]
 ## END_CODE
 DEF_IMM(immediate,"immediate")
-	movl	var_current,%eax
+	movl	var_last,%eax
 	cmp	$0, dsptch(,%eax,4) #dirty hack allow `immediate' word to be inside the word definition
 	jnz	1f
 	dec	%eax
@@ -385,7 +385,7 @@ DEF_CODE(include,"include")
 	mov	$token,%edi
 	call	file_nest
 END_CODE
-DEF_CODE(exit,"exit")
+DEF_CODE(exit,";;")
 	pop	%esi
 END_CODE
 DEF_CODE(bye, "bye")
@@ -402,7 +402,7 @@ DEF_VAR(ithere, ccall_tab)
 DEF_VAR(base,10)
 DEF_VAR(state, 1)
 DEF_VAR(here, here-2)
-DEF_VAR(current, [NCORE_WORDS+1])
+DEF_VAR(last, [NCORE_WORDS+1])
 .BYTE -1
 .BYTE -1
 END_DICT

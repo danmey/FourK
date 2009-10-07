@@ -383,7 +383,10 @@ END_CODE
 DEF_CODE(include,"include")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	$token,%edi
-	call	file_nest
+	K4_SAFE_CALL(file_nest)
+	jnc 	1f
+	K4_SAFE_CALL(printf,$msg_file_not_found,$token)
+1:	
 END_CODE
 DEF_CODE(exit,"exit")
 	pop	%esi

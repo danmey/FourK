@@ -221,7 +221,8 @@ _get_key:
 _find_word:
 	mov 	$ntab,%edx		# set up a pointer past the end
 	mov	var_current,%eax
-	shl	$5,%eax
+	inc	%eax
+	shl	$5,%eax	
 	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
 1:	
@@ -594,21 +595,22 @@ DEF_CODE(create,"create")
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
 	movb	$-1,	(%eax)		#store token indictating that we deal with bytecode
-	
 	incl	var_here
-	incl	var_current		#increment current word
 	xchg	%esp,%ebx
 	pop	%esi
 END_CODE
-DEF_CODE(lb, "lb")		#alias for [
-	movl	$1, var_state
-END_CODE
-DEF_CODE(rb, "rb")
-	movl	$0, var_state	#alias for ]
-END_CODE
+## DEF_CODE(lb, "lb")		#alias for [
+## 	movl	$1, var_state
+## END_CODE
+## DEF_CODE(rb, "rb")
+## 	movl	$0, var_state	#alias for ]
+## END_CODE
 DEF_IMM(immediate,"immediate")
 	movl	var_current,%eax
+	cmp	$0, dsptch(,%eax,4) #dirty hack allow `immediate' word to be inside the word definition
+	jnz	1f
 	dec	%eax
+1:	
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$EXECUTE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
@@ -833,7 +835,7 @@ DEF_VAR(ithere, ccall_tab)
 
 DEF_VAR(state, 1)
 DEF_VAR(here, here-2)
-DEF_VAR(current, [EL_COUNT(NAME_TAB)])
+DEF_VAR(current, [EL_COUNT(NAME_TAB)+1])
 .BYTE -1
 .BYTE -1
 END_DICT

@@ -1,12 +1,19 @@
-create ; immediate postpone [ -1 c,  
-create : postpone create postpone ] ;
+create ; 
+       postpone lit 1 c, postpone state postpone !
+       postpone current postpone @ postpone lit 1 c, postpone + postpone current postpone ! -1 c,
+current @ 1 + current ! immediate 
+create : postpone create postpone lit 0 c, postpone state postpone ! ;
+
+: [ 1 state ! ; immediate
+: ] 0 state ! ;
+
 
 : here@ here @ ;
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
 
 : begin here@ ; immediate
-: repeat postpone branch here@ - c, ; immediate
+: repeat postpone branch here@ - c, immediate ;
 
 : a begin 1 . 10 emit repeat ;
 

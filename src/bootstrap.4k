@@ -156,6 +156,7 @@ create #str
 
 : ." postpone " state @ 0 = if postpone type ;; then type ; immediate 
 
+
 " foo" inline there @ 1- c@ emit cr     
 " lulu" inline there @ 1- c@ emit cr . cr  
 
@@ -165,12 +166,22 @@ create #str
 1 ccall: dlsym
 2 ccall: printf
 
-: >cstr inline type drop ;
+: >cstr drop ;
 
 : lib >cstr 1 swap dlopen ;
-: sym >cstr swap dlsym ;
 
-: l lib ;
+| Crashes here after trying to inline the string
+
+: sym " printf" ;
+
+
+" libc.so.6" lib sym
+
+
+
+
+
+| " FourK interaction started." >cstr printf cr
 
 -1 c,
 -1 c,

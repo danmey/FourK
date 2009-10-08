@@ -404,9 +404,7 @@ DEF_VAR(ithere, ccall_tab)
 
 DEF_VAR(base,10)
 DEF_VAR(state, 1)
-DEF_VAR(here, here-2)
+DEF_VAR(here, here)
 DEF_VAR(last, [NCORE_WORDS+1])
-.BYTE -1
-.BYTE -1
 END_DICT
 

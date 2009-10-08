@@ -253,86 +253,89 @@ module Words = struct
       } 
 
 
-  let words (code_sec,name_sec) =
+    let words (code_sec,name_sec) =
 
-    let word_image = Section.to_list code_sec in
-      
-    let rec drop n = function
-      | []               -> []
-      | x::xs when n > 0 -> drop (n-1) xs
-      | xs               -> xs 
-    in
-      
-    let rec drop_while f n = function
-      | [] -> [],n
-      | x::xs when f x -> drop_while f (n+1) xs
-      | xs -> xs,n in
-      
-    let rec offsets lst =
-      let next = drop_while (fun x -> x != 255) 0 in
-      let rec offsets' prev offset = function
-	| []                -> [] 
-	| 255::xs when prev -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
-	| 255::xs           -> let xs,n = next xs in                (offsets' true  (offset+n+1) xs)
-	| n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
-	(* Exclude last element *)
-	List.rev (List.tl (List.rev (offsets' false 0 lst))) in
-    let ofs = offsets word_image in
-
-    let implode lst = 
-      let str = String.create (List.length lst) in
-      let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
+      let word_image = Section.to_list code_sec in
+	
+      let rec drop n = function
+	| []               -> []
+	| x::xs when n > 0 -> drop (n-1) xs
+	| xs               -> xs 
       in
-	loop 0 lst 
-    in 
+	
+      let rec offsets lst =
+	
+	let rec drop_bytecode n = function
+	  | [] -> [],n
+	  | x::_::_::_::_::xs when x = 1 -> drop_bytecode (n+6) xs
+	  | x::_::xs          when x < 5 -> drop_bytecode (n+3) xs
+	  | 255::xs as l                 -> l,n
+	  | x::xs                        -> drop_bytecode (n+1) xs in
+	let next = drop_bytecode 0 in
+	let rec offsets' prev offset = function
+	  | []                -> [] 
+	  | 255::xs when prev -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
+	  | 255::xs           -> let xs,n = next xs in                (offsets' true  (offset+n+1) xs)
+	  | n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
+	  (* Exclude last element *)
+	  (offsets' false 0 lst) in
+      let ofs = offsets word_image in
 
-    let name i =  
-      implode (List.rev (Array.fold_left 
-			   (fun acc x -> 
-			      match x with
-				| 0 -> acc 
-				| _ -> (char_of_int x)::acc) [] (Array.sub name_sec.Section.image (i*32) 32)))
-    in
+      let implode lst = 
+	let str = String.create (List.length lst) in
+	let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs 
+	in
+	  loop 0 lst 
+      in 
 
-    let names =
-      let rec names' i = 
-	if i * 32 + 32 <= name_sec.Section.len then
-	  let n = name i in
-	    if n = "" then names' (i+1) else n::(names' (i+1))
-	else [] in
-	names' 0
-    in
+      let name i =  
+	implode (List.rev (Array.fold_left 
+			     (fun acc x -> 
+				match x with
+				  | 0 -> acc 
+				  | _ -> (char_of_int x)::acc) [] (Array.sub name_sec.Section.image (i*32) 32)))
+      in
 
-    let words_pre = List.combine ofs names in
+      let names =
+	let rec names' i = 
+	  if i * 32 + 32 <= name_sec.Section.len then
+	    let n = name i in
+	      if n = "" then names' (i+1) else n::(names' (i+1))
+	  else [] in
+	  names' 0
+      in
+	
+	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names);
+	let words_pre = List.combine ofs names in
 
-    let words_list = List.rev (snd (List.fold_left 
-				      (fun (i,acc) ((o,l),name) -> 
-					 let ar = Array.sub code_sec.Section.image o l in
-					 let code = Array.to_list ar in
-					   (i+1), (make_word i (o,l) name code)::acc) 
-				      (0,[]) words_pre)) in
-    let words_ar = Array.of_list words_list in
+	let words_list = List.rev (snd (List.fold_left 
+					  (fun (i,acc) ((o,l),name) -> 
+					     let ar = Array.sub code_sec.Section.image o l in
+					     let code = Array.to_list ar in
+					       (i+1), (make_word i (o,l) name code)::acc) 
+					  (0,[]) words_pre)) in
+	let words_ar = Array.of_list words_list in
 
-    let traverse words word =
-      let rec traverse' words word = 
-	match word.code with
-	  | Core a -> word.used <- true
-	  | Bytecode b -> List.iter
-	      (function x ->
-		 let id = bytecode_id x in
-		 let word' = words.(id) in
-		   if not word'.used then
-		     begin
-		       word'.used <- true;
-		       traverse' words word'
-		     end
-	      ) b in
-	word.used <- true;
-	traverse' words word in
-      
-    let last_word = words_ar.(Array.length words_ar-1) in
-      traverse words_ar last_word;
-      words_list
+	let traverse words word =
+	  let rec traverse' words word = 
+	    match word.code with
+	      | Core a -> word.used <- true
+	      | Bytecode b -> List.iter
+		  (function x ->
+		     let id = bytecode_id x in
+		     let word' = words.(id) in
+		       if not word'.used then
+			 begin
+			   word'.used <- true;
+			   traverse' words word'
+			 end
+		  ) b in
+	    word.used <- true;
+	    traverse' words word in
+	  
+	let last_word = words_ar.(Array.length words_ar-1) in
+	  traverse words_ar last_word;
+	  words_list
 
   let string_of_bytecode word_arr code =
     let rec loop =

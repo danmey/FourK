@@ -69,11 +69,16 @@ comment
 : 0<> 0= invert ;
 : <= > invert ;
 : >= < invert ;
+: +! swap >r dup @ r> + swap ! ;
+: 1+! 1 swap +! ;
 
+: data: here there @ here@ there ! swap ! ;
+: data; data: ;
 
 | output words
 : cr 10 emit ;
 
+: unhide last 1+! ;
 
 | === a test routine === 
 | : a 0 begin 1 + repeat ;
@@ -84,7 +89,8 @@ comment
 : 1+ 1 + ; 
 : 1- 1 - ; 
 
-: create create there @ rliteral -1 c, last @ 1 + last ! ; 
+
+: create create there @ rliteral postpone ;; unhide ; 
 
 | image saver 
 | save-image image.4ki
@@ -101,6 +107,7 @@ comment
 : allot there @ + there ! ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
+
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
@@ -159,9 +166,9 @@ create #str
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
 
+create ab data: 123 c, data;
 
+ab c@ .
 
-	
 " FourK interaction started." >cstr printf cr
--1 c,
--1 c,
+

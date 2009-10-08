@@ -139,7 +139,7 @@ create #str
  
 
 : " ( -- str c ) here @ >r #str here !
-  begin key dup c: " = if #str here @ #str - 0 c, r> here ! ;; then 
+  begin key c: " = if #str here @ #str - 0 c, r> here ! ;; then 
   c, repeat
 ; immediate
 

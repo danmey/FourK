@@ -195,6 +195,7 @@ ithere @ 4 rcells+ !
 
 variable b
 
-: a begin 1 . 10 emit repeat ;
+: a begin 1 . cr key repeat ;
 
-
+"   aA" . cr . cr . cr
+"   aA" . cr . cr . cr

@@ -197,5 +197,4 @@ variable b
 
 : a begin 1 . cr key repeat ;
 
-"   aA" . cr . cr . cr
-"   aA" . cr . cr . cr
+" ala ma kota" . cr . cr

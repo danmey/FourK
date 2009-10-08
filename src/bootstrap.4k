@@ -139,7 +139,7 @@ create #str
  
 
 : " ( -- str c ) here @ >r #str here !
-  begin key c: " = if #str here @ #str - 0 c, r> here ! ;; then 
+  begin key dup c: " = if drop #str here @ #str - 0 c, r> here ! ;; then 
   c, repeat
 ; immediate
 
@@ -153,11 +153,10 @@ create #str
 : t 0 >r r> drop ;
 
 : type ( str c -- ) >r begin 
-  r 0= if r> drop drop ;; then 
-  r> 1 - >r dup c@ emit 1 + repeat 
+  r 0 = if r> drop drop ;; then 
+  r> 1 - >r dup c@ emit 1+ repeat 
 ; 
 
-5 . cr  " shit " type cr 
 
 | pimped ", it now compiles the string to there @compile time
 : " postpone " state @ 0 = if inline there @ dup 0 swap c! 1+ there ! 
@@ -166,9 +165,6 @@ create #str
 
 : ." postpone " state @ 0 = if postpone type ;; then type ; immediate 
 
-
-" foo" inline there @ 1- c@ emit cr     
-" lulu" inline there @ 1- c@ emit cr . cr  
 
 : ccall: : postpone ccall c, postpone ; ;
 
@@ -182,16 +178,12 @@ create #str
 
 | Crashes here after trying to inline the string
 
-
-
 1 " printf" >cstr . cr . cr
 
 
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
 
-| " ala ma kota
-| " >cstr printf
 
 variable b
 

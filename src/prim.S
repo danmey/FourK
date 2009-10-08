@@ -89,6 +89,16 @@ DEF_CODE(swap,"swap")
 	xchg %eax,(%ebx)
 	mov  %eax,4(%ebx)
 END_CODE
+
+DEF_CODE(rot,"rot")
+	movl (%ebx),%eax
+	xchg %eax,8(%ebx)
+	movl %eax,(%ebx)
+	mov 4(%ebx),%eax
+	xchg %eax,8(%ebx)
+	movl %eax,4(%ebx)
+END_CODE
+
 DEF_CODE(drop,"drop")
 	add	$4,%ebx
 END_CODE

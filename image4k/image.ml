@@ -267,18 +267,19 @@ module Words = struct
 	
 	let rec drop_bytecode n = function
 	  | [] -> [],n
-	  | x::_::_::_::_::xs when x = 1 -> drop_bytecode (n+6) xs
-	  | x::_::xs          when x < 5 -> drop_bytecode (n+3) xs
+	  | 255::255::_                  -> [],n
+	  | x::_::_::_::_::xs when x = 1 -> drop_bytecode (n+5) xs
+	  | x::_::xs          when x < 5 -> drop_bytecode (n+2) xs
 	  | 255::xs as l                 -> l,n
 	  | x::xs                        -> drop_bytecode (n+1) xs in
 	let next = drop_bytecode 0 in
 	let rec offsets' prev offset = function
-	  | []                -> [] 
-	  | 255::xs when prev -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
-	  | 255::xs           -> let xs,n = next xs in                (offsets' true  (offset+n+1) xs)
+	  | []                -> []
+	  | 255::255::_       -> []
+          | 255::xs           -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
 	  | n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
 	  (* Exclude last element *)
-	  (offsets' false 0 lst) in
+	  offsets' false 0 lst in
       let ofs = offsets word_image in
 
       let implode lst = 
@@ -310,9 +311,13 @@ module Words = struct
 
 	let words_list = List.rev (snd (List.fold_left 
 					  (fun (i,acc) ((o,l),name) -> 
-					     let ar = Array.sub code_sec.Section.image o l in
-					     let code = Array.to_list ar in
-					       (i+1), (make_word i (o,l) name code)::acc) 
+					     if l != 0 then
+					       let ar = Array.sub code_sec.Section.image o l in
+					       let code = Array.to_list ar in
+						 (i+1), (make_word i (o,l) name code)::acc
+					     else
+					       i,acc
+					  ) 
 					  (0,[]) words_pre)) in
 	let words_ar = Array.of_list words_list in
 

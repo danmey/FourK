@@ -8,12 +8,6 @@ create ;
        postpone last 
        postpone ! 
 
-       postpone lit
-       -1 c,
-       postpone here 
-       postpone @
-       postpone c!
-
        -1 c, 
        
 immediate
@@ -58,7 +52,9 @@ create :
 
 : a [char] A . ;
 
-
+| Not sure if we need nested stack comments, the multiline would be much better
+| although there are much harder to implement
+    
 : ( 1
     begin
 	[char] ) key dup rot = if swap 1- dup 0= if drop drop ;; then swap then
@@ -151,3 +147,5 @@ ithere @ 4 rcells+ !
 
 
 " FourK interaction started." >cstr printf cr
+-1 c,
+-1 c,

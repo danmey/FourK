@@ -398,6 +398,12 @@ DEF_CODE(include,"include")
 	K4_SAFE_CALL(printf,$msg_file_not_found,$token)
 1:	
 END_CODE
+DEF_CODE(eval,"eval")
+	mov	(%ebx),%ecx
+	mov	4(%ebx),%edi
+	add	$8,%ebx
+	call	memo_nest
+END_CODE
 DEF_CODE(exit,";;")
 	pop	%esi
 END_CODE

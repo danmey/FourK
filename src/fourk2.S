@@ -126,9 +126,13 @@ fh_stack_index:		.LONG	0
 # Out:
 
 f_rt:	.ASCIZ "rt"
-	
+
+memo_nest:
+	K4_SAFE_CALL(fmemopen, %edi, %ecx, $f_rt)
+	jmp 	file_nest_ch
 file_nest:
 	K4_SAFE_CALL(fopen, %edi, $f_rt)
+file_nest_ch:	
 	or	%eax,%eax
 	jnz	1f
 	stc

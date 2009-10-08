@@ -133,7 +133,6 @@ create #str
   c, repeat
 ; immediate
 
-: "" begin 1 . repeat ;
 
 | inlines a counted list of bytes to there 
 : inline ( str c -- str c ) here @ >r there @ here ! here @ + >r
@@ -147,6 +146,7 @@ create #str
   r 0= if r> drop drop ;; then 
   r> 1 - >r dup c@ emit 1 + repeat 
 ; 
+
 5 . cr  " shit " type cr 
 
 | pimped ", it now compiles the string to there @compile time

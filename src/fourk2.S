@@ -100,8 +100,11 @@ msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
-_vm_context_reg:	.FILL 32
+			.LONG 0
+_vm_context_reg:	.FILL 36
 _vm_context_ESP:	.FILL  4
+_vm_context_EBP:	.fill  4
+
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
 #ifdef DEBUG

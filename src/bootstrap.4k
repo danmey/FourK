@@ -6,7 +6,10 @@ create ;
        1 c, 
        postpone + 
        postpone last 
-       postpone ! 
+postpone !
+postpone lit
+-1 c,
+postpone c,
 
        -1 c, 
        
@@ -101,7 +104,7 @@ comment
 : 1- 1 - ; 
 
 
-: create create there @ rliteral postpone ;; unhide ; 
+: create create there @ rliteral postpone ; ; 
 
 | image saver 
 | save-image image.4ki
@@ -172,16 +175,19 @@ create #str
 
 | Crashes here after trying to inline the string
 
-: sym " printf" ;
 
 
-" libc.so.6" lib sym
+" libc.so.6" lib  " printf" >cstr swap drop swap dlsym
 
+ithere @ 4 rcells+ !
+4 ithere @ 5 rcells+ !
 
+" ala ma kota
+" >cstr printf
 
-
-
-| " FourK interaction started." >cstr printf cr
 
 -1 c,
--1 c,
+
+
+
+

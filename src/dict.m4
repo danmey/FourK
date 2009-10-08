@@ -81,5 +81,5 @@ define([END_DICT],
 	semantic:
 		undivert(2)
 	semantic_end:
-	.FILL 8*MAX_WORDS
+	.FILL 8*MAX_WORDS*4
 ])

@@ -427,11 +427,8 @@ build_dispatch:
 	xor	%eax,%eax	#clear out eax
 	lodsb
 	mov	%eax,%ecx
-	call	.check_end
 	cmp	$-1,%al		#end of core dictionary?
 	je	.user_dictionary
-	cmp	$0,%al		#end of core dictionary?
-	je	.done
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
@@ -445,27 +442,24 @@ build_dispatch:
 	lodsb
 	jmp	.cont
 .found_word:
+	cmpb	$-1,(%esi)
+	jz	.done
 	mov	%esi,%eax
 	dec	%eax
 	stosl
-	call	.check_end
-	or	%eax,%eax
-	jz	.done
+	jmp	.user_dictionary
 .cont:
+	cmp	$1,%al
+	jz	.lit4
 	lodsb
 	jmp	.user_dictionary
-.check_end:
-	mov	%edi,%edx
-	sub	$dsptch,%edx
-	shr	$2,%edx
-	sub	%ebx,%edx
-	jnz	1f
-	xor	%eax,%eax
-1:	
-	ret
+.lit4:
+	lodsl
+	jmp	.user_dictionary
+	
 .done:
-#	K4_SAFE_CALL(printf, $fmt_hex, var_here)
-#	K4_SAFE_CALL(printf, $fmt_hex, %esi)
+	K4_SAFE_CALL(printf, $fmt_hex, var_here)
+	K4_SAFE_CALL(printf, $fmt_hex, %esi)
 	ret
 
 ex_bytecode:		.BYTE  0,END_TOKEN

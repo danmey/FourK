@@ -496,7 +496,7 @@ include(prim.S)
 ccall_tab:
 	.LONG dlopen,8
 	.LONG dlsym,8
-	.FILL 256-8
+	.FILL 256-16
 there:
 .FILL 16*1024
 .ALIGN 4096

@@ -62,7 +62,9 @@ define([DEF_IMM],
 
 define([END_DICT],
 [
-	here: .FILL DICT_SIZE
+	here: 
+	.BYTE -1
+	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
 	
 	SECTION("name")

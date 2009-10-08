@@ -34,6 +34,7 @@ create :
 : here@ here @ ;
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
+: sliteral swap rliteral literal ; 
 
 : begin here@ ; immediate
 : repeat postpone branch here@ - c, immediate ;
@@ -43,15 +44,24 @@ create :
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap c! ; immediate 
 
+
 : | begin key 10 = if ;; then repeat ; immediate
+
+
+: c: key state @ 0 = if literal then ; immediate
 
 | TODO:
 | we need to stay with line comments and shift below for later
 | to make nesting possible with some loops
 
-: ( begin key 41 = if ;; then repeat ; immediate
-: (* begin key 42 = if key 41 = if ;; then then repeat ; immediate
+: ( begin key c: ) = if ;; then repeat ; immediate
+: (* begin key c: * = if key c: ) = if ;; then then repeat ; immediate
+(* 
+a multi
+line 
+comment
 
+*)
 
 | comparison words
 : <> = invert ;
@@ -71,7 +81,8 @@ create :
 : a begin repeat ;
 | a
 
-
+: 1+ 1 + ; 
+: 1- 1 - ; 
 
 : create create there @ rliteral -1 c, last @ 1 + last ! ; 
 
@@ -93,13 +104,24 @@ create :
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
-| strings 
-: " ( -- str c ) here @ >r there @ here ! 0 >r 
-  begin key dup 34 = if 0 c, drop there @ r> here @ there ! r> here ! ;; then 
-  c, r> 1 + >r repeat
+| strings
+
+create #str
+256 allot
+ 
+
+: " ( -- str c ) here @ >r #str here !
+  begin key dup c: " = if #str here @ #str - 0 c, r> here ! ;; then 
+  c, repeat
 ; immediate
 
 : "" begin 1 . repeat ;
+
+| inlines a counted list of bytes to there 
+: inline ( str c -- str c ) here @ >r there @ here ! here @ + >r
+  begin r here @ = if there @ r> there @ - here @ there ! r> here ! ;; then 
+  dup c@ c, 1+ repeat 
+;
 
 : t 0 >r r> drop ;
 
@@ -107,6 +129,17 @@ create :
   r 0= if r> drop drop ;; then 
   r> 1 - >r dup c@ emit 1 + repeat 
 ; 
+5 . cr  " shit " type cr 
+
+| pimped ", it now compiles the string to there @compile time
+: " postpone " state @ 0 = if inline there @ dup 0 swap c! 1+ there ! 
+   sliteral then 
+; immediate 
+
+: ." postpone " state @ 0 = if postpone type ;; then type ; immediate 
+
+" foo" inline there @ 1- c@ emit cr     
+" lulu" inline there @ 1- c@ emit cr . cr  
 
 : ccall: : postpone ccall c, postpone ; ;
 
@@ -114,19 +147,17 @@ create :
 1 ccall: dlsym
 2 ccall: printf
 
-: >cstr drop ;
+: >cstr inline type drop ;
 
 : lib >cstr 1 swap dlopen ;
 : sym >cstr swap dlsym ;
 
-
+10 . cr 
 : l lib ;
 
-" libc.so.6" lib " printf" sym
-
+" libc.so.6"  lib dup . cr  " printf" sym 
 ithere @ 4 rcells+ !
 4 ithere @ 5 rcells+ !
-
 
 
 

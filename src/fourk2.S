@@ -399,10 +399,10 @@ SECTION("dict")
 #endif
 # The call is nopped in the final image
 	jmp 	entry_point
+	mov	$0,	%ebx
 	pushl	stdin
 	popl	fh_stack
 # This will be supplied with the last word by linker
-	mov	$0,	%ebx
 	push	%ebx
 	call 	build_dispatch	
 	mov	%esp,%ebx
@@ -434,28 +434,29 @@ build_dispatch:
 	stosl			#store the pointer to word in %edi
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
+.loop2:
+	lodsb
 .user_dictionary:
 	cmp	$-1,%al
 	je	.found_word
-	cmp	$5,%al
-	jae	.cont
-	lodsb
-	jmp	.cont
+	cmp	$4,%al
+	jbe	.cont
+	jmp	.loop2
 .found_word:
 	cmpb	$-1,(%esi)
 	jz	.done
 	mov	%esi,%eax
 	dec	%eax
 	stosl
-	jmp	.user_dictionary
+	jmp	.loop2
 .cont:
 	cmp	$1,%al
 	jz	.lit4
 	lodsb
-	jmp	.user_dictionary
+	jmp	.loop2
 .lit4:
 	lodsl
-	jmp	.user_dictionary
+	jmp	.loop2
 	
 .done:
 #	K4_SAFE_CALL(printf, $fmt_hex, var_here)

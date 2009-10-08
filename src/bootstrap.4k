@@ -51,8 +51,6 @@ create :
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap c! ; immediate 
 
-: [char] key literal ; immediate
-
 : | begin key 10 = if ;; then repeat ; immediate
 
 
@@ -66,7 +64,6 @@ create :
 : 1- 1 - ;
 : 0= 0 = ;
 
-: a [char] A . ;
 
 | Not sure if we need nested stack comments, the multiline would be much better
 | although there are much harder to implement
@@ -195,5 +192,9 @@ ithere @ 4 rcells+ !
 
 | " ala ma kota
 | " >cstr printf
+
+variable b
+
+: a begin 1 . 10 emit repeat ;
 
 

@@ -493,7 +493,8 @@ module Options = struct
 			 String (fun core_name -> 
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
-				   let words = Words.optimise (FourkImage.words image) in 
+(*				   let words = Words.optimise (FourkImage.words image) in *)
+				   let words = FourkImage.words image in
 				   let sec = Image.find_section image "words" in
 				    (* Section.zero sec;
 				     Words.emit words sec; *)

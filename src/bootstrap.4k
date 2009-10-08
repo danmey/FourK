@@ -7,11 +7,22 @@ postpone lit
 postpone + 
 postpone last 
 postpone !
+
 postpone lit
 -1 c,
-postpone c,
--1 c, 
-       
+postpone here
+postpone @
+postpone c!
+
+postpone lit
+-1 c,
+postpone here
+postpone @
+postpone lit
+1 c,
+postpone +
+postpone c!
+
 immediate
 
 last @ 1 + last ! 
@@ -170,7 +181,7 @@ create #str
 
 : >cstr drop ;
 
-: lib >cstr 1 swap dlopen ;
+: lib >cstr 1 swap dlopen ; 
 
 | Crashes here after trying to inline the string
 
@@ -184,11 +195,5 @@ ithere @ 4 rcells+ !
 
 | " ala ma kota
 | " >cstr printf
-
-
--1 c,
--1 c,
-
-
 
 

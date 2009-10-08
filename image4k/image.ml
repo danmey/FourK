@@ -276,8 +276,8 @@ module Words = struct
 	let rec offsets' prev offset = function
 	  | []                -> []
 	  | 255::255::_       -> []
-          | 255::xs           -> let xs,n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs)
-	  | n::xs             ->                       (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
+          | 255::xs           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
+	  | n::xs             ->                        (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
 	  (* Exclude last element *)
 	  offsets' false 0 lst in
       let ofs = offsets word_image in
@@ -495,8 +495,8 @@ module Options = struct
 				   let image = Image.load !image_name in
 				   let words = Words.optimise (FourkImage.words image) in 
 				   let sec = Image.find_section image "words" in
-				     Section.zero sec;
-				     Words.emit words sec;
+				    (* Section.zero sec;
+				     Words.emit words sec; *)
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name true)]
 	       ),

@@ -458,8 +458,8 @@ build_dispatch:
 	jmp	.user_dictionary
 	
 .done:
-	K4_SAFE_CALL(printf, $fmt_hex, var_here)
-	K4_SAFE_CALL(printf, $fmt_hex, %esi)
+#	K4_SAFE_CALL(printf, $fmt_hex, var_here)
+#	K4_SAFE_CALL(printf, $fmt_hex, %esi)
 	ret
 
 ex_bytecode:		.BYTE  0,END_TOKEN

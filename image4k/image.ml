@@ -307,16 +307,15 @@ module Words = struct
       in
 	
 	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names);
+	let names = List.rev (drop (List.length names - List.length ofs) (List.rev names)) in
+	 
 	let words_pre = List.combine ofs names in
 
 	let words_list = List.rev (snd (List.fold_left 
 					  (fun (i,acc) ((o,l),name) -> 
-					     if l != 0 then
 					       let ar = Array.sub code_sec.Section.image o l in
 					       let code = Array.to_list ar in
 						 (i+1), (make_word i (o,l) name code)::acc
-					     else
-					       i,acc
 					  ) 
 					  (0,[]) words_pre)) in
 	let words_ar = Array.of_list words_list in
@@ -328,6 +327,7 @@ module Words = struct
 	      | Bytecode b -> List.iter
 		  (function x ->
 		     let id = bytecode_id x in
+		       Printf.printf "id:%d\n" id;
 		     let word' = words.(id) in
 		       if not word'.used then
 			 begin
@@ -337,7 +337,7 @@ module Words = struct
 		  ) b in
 	    word.used <- true;
 	    traverse' words word in
-	  
+
 	let last_word = words_ar.(Array.length words_ar-1) in
 	  traverse words_ar last_word;
 	  words_list
@@ -373,11 +373,13 @@ module Words = struct
 	| x::xs -> 
 	    (match x.code with
 	       | Core im -> section.Section.image.(i) <- (Array.length im);
-		   Array.blit im 0 section.Section.image (i+1) (Array.length im); emit_words (i+1+(Array.length im)) xs
+		   Array.blit im 0 section.Section.image (i+1) (Array.length im); 
+		   emit_words (i+1+(Array.length im)) xs
 	       | Bytecode bc -> 
 		   let im = Array.of_list (emit_bytecode bc) in
 		     section.Section.image.(i) <- 255;
-		     Array.blit im 0 section.Section.image (i+1) (Array.length im); emit_words (i+1+(Array.length im)) xs) in
+		     Array.blit im 0 section.Section.image (i+1) (Array.length im); 
+		     emit_words (i+1+(Array.length im)) xs) in
     let i = emit_words 0 words in
       Printf.printf "%d\n\n" i;
       section.Section.image.(i) <- 255;
@@ -420,7 +422,7 @@ module Words = struct
     let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
     let spacer = 
       let rec loop = function 
-	  i when i < 4 -> (i,{ name=""; index = i; offset=0; len=1; code=Bytecode []; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
+	  i when i < 5 -> (i,{ name=""; index = i; offset=0; len=1; code=Core [||]; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
 	loop (List.length prefix) 
       in
     let ofs = 4-List.length prefix in
@@ -493,11 +495,11 @@ module Options = struct
 			 String (fun core_name -> 
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
-(*				   let words = Words.optimise (FourkImage.words image) in *)
-				   let words = FourkImage.words image in
+				   let words = Words.optimise (FourkImage.words image) in
+(*				   let words = FourkImage.words image in *)
 				   let sec = Image.find_section image "words" in
-				    (* Section.zero sec;
-				     Words.emit words sec; *)
+				     Section.zero sec;
+				     Words.emit words sec;
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name true)]
 	       ),

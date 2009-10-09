@@ -184,4 +184,10 @@ create #str
     postpone drop
 ; immediate
 
-: a 15 0 do r . cr loop ;
+
+: type' 1- 0 do dup r + c@ emit loop ;
+
+: a last @ begin repeat ;
+
+
+

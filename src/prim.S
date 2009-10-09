@@ -421,6 +421,6 @@ DEF_VAR(ithere, ccall_tab)
 DEF_VAR(base,10)
 DEF_VAR(state, 1)
 DEF_VAR(here, here)
-DEF_VAR(last, [NCORE_WORDS+1])
+DEF_VAR(last, [NCORE_WORDS])
 END_DICT
 

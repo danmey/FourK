@@ -232,14 +232,14 @@ module Words = struct
       let rec disassemble_word' =
 	function
 	  | []                           -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 -> (Prefix (a, i))::(disassemble_word' xs)
-	  | 1::b1::b2::b3::b4::xs                 -> (Prefix32 (1, (dword b4 b3 b2 b1)))::(disassemble_word' xs)
-	  | c::xs                                 -> (Opcode  c)::(disassemble_word' xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> (Prefix (a, i))::(disassemble_word' xs)
+	  | 1::b1::b2::b3::b4::xs                          -> (Prefix32 (1, (dword b4 b3 b2 b1)))::(disassemble_word' xs)
+	  | c::xs                                          -> (Opcode c)::(disassemble_word' xs)
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)
 	  | s::xs -> Core (Array.of_list xs)
-    
+	  | [] -> Core (Array.make 0 0)
 
     let make_word i (o,l) name code = 
       { name   =name; 
@@ -308,14 +308,14 @@ module Words = struct
 	
 	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names);
 	let names = List.rev (drop (List.length names - List.length ofs) (List.rev names)) in
-	 
+	  
 	let words_pre = List.combine ofs names in
 
 	let words_list = List.rev (snd (List.fold_left 
 					  (fun (i,acc) ((o,l),name) -> 
-					       let ar = Array.sub code_sec.Section.image o l in
-					       let code = Array.to_list ar in
-						 (i+1), (make_word i (o,l) name code)::acc
+					     let ar = Array.sub code_sec.Section.image o l in
+					     let code = Array.to_list ar in
+					       (i+1), (make_word i (o,l) name code)::acc
 					  ) 
 					  (0,[]) words_pre)) in
 	let words_ar = Array.of_list words_list in
@@ -327,7 +327,6 @@ module Words = struct
 	      | Bytecode b -> List.iter
 		  (function x ->
 		     let id = bytecode_id x in
-		       Printf.printf "id:%d\n" id;
 		     let word' = words.(id) in
 		       if not word'.used then
 			 begin
@@ -352,13 +351,28 @@ module Words = struct
       String.concat " " (loop code)
 
       
-  let emit words section = 
+  let emit words name_section section = 
     let dw dword =
       let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
       let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
       let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 8)  (Ni.of_int 255)) in
       let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
 	b1::b2::b3::b4::[] in
+
+    let emit_names w sec = 
+      let explode str =
+	let rec loop i acc =
+	  if i < 0 then acc else
+	    loop (i-1) ((String.get str i)::acc) in
+	  loop ((String.length str)-1) [] 
+      in
+	ignore(List.fold_left 
+	  (fun i w -> 
+	     let str = explode w.name in
+	     let arr = Array.make 32 0 in
+	       ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
+	       Array.blit arr 0 sec.Section.image (32*w.index) 32; i+1) 0 w)
+	  in
 
     let rec emit_bytecode =
       function
@@ -381,6 +395,7 @@ module Words = struct
 		     Array.blit im 0 section.Section.image (i+1) (Array.length im); 
 		     emit_words (i+1+(Array.length im)) xs) in
     let i = emit_words 0 words in
+      emit_names words name_section;
       Printf.printf "%d\n\n" i;
       section.Section.image.(i) <- 255;
       section.Section.image.(i+1) <- 255
@@ -498,8 +513,9 @@ module Options = struct
 				   let words = Words.optimise (FourkImage.words image) in
 (*				   let words = FourkImage.words image in *)
 				   let sec = Image.find_section image "words" in
+				   let nsec = Image.find_section image "name" in
 				     Section.zero sec;
-				     Words.emit words sec;
+				     Words.emit words nsec sec;
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name true)]
 	       ),

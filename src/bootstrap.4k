@@ -39,6 +39,9 @@ create :
 : ] 0 state ! ;
 
 : here@ here @ ;
+: begin1 create ; immediate
+: begin here@ ; immediate
+
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
 : sliteral swap rliteral literal ; 
@@ -49,7 +52,6 @@ create :
 : 1- 1 - ;
 : 0= 0 = ;
 
-: begin here@ ; immediate
 : repeat postpone branch here@ - c, immediate ;
 
 : a begin 1 . 10 emit repeat ;
@@ -88,8 +90,6 @@ comment
 
 | output words
 : cr 10 emit ;
-
-: unhide last @ 1+ last ! ;
 
 : create create there @ rliteral postpone ; ; 
 
@@ -187,7 +187,4 @@ create #str
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
-: a last begin repeat ;
-
-
-
+: a " ala ma kota" type cr begin repeat ;

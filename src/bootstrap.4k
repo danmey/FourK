@@ -92,6 +92,10 @@ comment
 
 | output words
 : cr 10 emit ;
+: space 32 emit ; 
+: # . ; 
+: . . space ; 
+
 
 : create create there @ rliteral postpone ; ; 
 
@@ -194,7 +198,6 @@ create #str
     postpone drop
     postpone drop
 ; immediate
-
 
 : type' 1- 0 do dup r + c@ emit loop ;
 

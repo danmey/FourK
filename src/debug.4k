@@ -1,0 +1,24 @@
+create s-stack
+32 rcells allot 
+
+variable #ptr
+
+
+variable bytecode
+: times ( byetecode num -- ) 
+  >r bytecode ! begin r 0= if r> drop ;; then 
+  bytecode @ execute r> 1- >r repeat 
+;
+
+: push ( e -- ) s-stack #ptr @ rcells + ! #ptr @ 1+ 31 and #ptr ! ; 
+: pop ( -- e ) #ptr @ 1- 31 and #ptr ! s-stack #ptr @ rcells + @ ; 
+
+| pushes the given number of elements
+: pushnum ( num -- ) >r [ ' push literal ] r> times ; 
+: popnum ( num -- ) >r [ ' pop literal ] r> times ;
+
+: tos ( n -- n ) dup . ;
+: .pop ( -- ) pop tos ;
+: .s ( -- ) 8 pushnum [ ' .pop literal ] 8 times ;
+
+

@@ -155,6 +155,15 @@ create #str
 
 : lib >cstr 1 swap dlopen ; 
 
+: sym >cstr swap dlsym ;
+
+: load-printf
+  " libc.so.6" lib " printf" sym 
+  ithere @ 4 rcells+ !
+  4 ithere @ 5 rcells+ !
+;
+
+
 | do loops
 
 : do
@@ -189,4 +198,8 @@ create #str
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
-: a " ala ma kota" begin repeat ;
+: main
+  load-printf
+  " hello world!!
+  " >cstr printf begin repeat ;
+

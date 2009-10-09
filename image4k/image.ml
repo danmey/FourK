@@ -425,7 +425,7 @@ module Words = struct
 	  i when i < 5 -> (i,{ name=""; index = i; offset=0; len=1; code=Core [||]; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
 	loop (List.length prefix) 
       in
-    let ofs = 4-List.length prefix in
+    let ofs = 5-List.length prefix in
     let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
     let u = swap_ids used' in
       List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used';

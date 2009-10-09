@@ -50,8 +50,9 @@ define([DEF_VAR],[
 	DEF_CODE($1,"$1")dnl
 	sub	$ 4,%ebx
 	movl	$var_$1,(%ebx)
-	NEXT_WORD
+	divert(3)
 	var_$1:	.long $2
+	divert
 	END_CODE dnl
 ])
 define([DEF_IMM],
@@ -82,4 +83,9 @@ define([END_DICT],
 		undivert(2)
 	semantic_end:
 	.FILL 8*MAX_WORDS*4
+
+	undivert(3)
+	there:
+	.FILL 16*1024
+
 ])

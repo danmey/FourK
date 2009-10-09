@@ -18,14 +18,6 @@ BITS 32
 
 %define	iobuf_size	96
 
-STRUC data
-factor:		resd	2		; number being tested for factorhood
-getchar_rel:	resd	1		; pointer to getchar() function
-write_rel:	resd	1		; pointer to write() function
-buf:		resd	3		; general-purpose numerical buffer
-exit_rel:	resd	1		; pointer to _exit() function
-iobuf:		resb	iobuf_size	; buffer for I/O
-ENDSTRUC
 
 
 		org	0x08048000

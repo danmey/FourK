@@ -199,6 +199,8 @@ dynstr:
 .byte 0
 .equ dynstrsz, 	. - dynstr
 
+include(import.m4)
+K4_IMPORT(printf)
 // dnlinclude(fourk2.S)
 _start:
 	
@@ -214,25 +216,32 @@ _start:
 	push	$1
 	push	$libc
 	call	*dlopen_rel(%ebx)
-	push	$printf_s
-	push	%eax
-	call	*dlsym_rel(%ebx)
-	mov	%eax,printf
+	add	$8,%esp
+	mov	%eax,libc_handle
+	pushl	dlsym_rel(%ebx)
+	popl	dlsym_
+	call	init_imports
+	
 	push	$msg
-	mov	printf,%eax
-	call	*%eax
+	call	printf
 	
 	movl 	$1,%eax
 	xor 	%ebx,%ebx
 	int 	$128
 
-	
+K4_INIT_IMPORTS(init_imports)	
 
 libc:	.asciz "libc.so.6"
 printf_s: .asciz "printf"
 msg:	.asciz "Hello world!\n"
-printf:	.long 0
+
+dlsym:	
+.byte 0xff,0x25
+.LONG dlsym_
+libc_handle:	 .LONG 0
 	
+dlsym_:	
+.LONG 0
 .byte 	
 .ascii "Finds the prime factors of args/input"
 .byte 10

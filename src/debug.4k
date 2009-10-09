@@ -26,4 +26,3 @@ variable bytecode
 : .pop ( -- ) pop tos ;
 : .s ( -- ) 8 pushnum 8 times .pop ;
 
-1 2 3 4 5 6 7 8 .s

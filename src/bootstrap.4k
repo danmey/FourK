@@ -205,3 +205,4 @@ create #str
   load-printf
   " hello world!!
   " >cstr printf begin repeat ;
+

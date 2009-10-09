@@ -39,8 +39,8 @@ create :
 : ] 0 state ! ;
 
 : here@ here @ ;
-: begin1 create ; immediate
-: begin here@ ; immediate
+
+
 
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
@@ -51,6 +51,8 @@ create :
 : 1+ 1 + ;
 : 1- 1 - ;
 : 0= 0 = ;
+
+: begin here@ ; immediate
 
 : repeat postpone branch here@ - c, immediate ;
 

@@ -437,7 +437,7 @@ module Words = struct
     let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
     let spacer = 
       let rec loop = function 
-	  i when i < 5 -> (i,{ name=""; index = i; offset=0; len=1; code=Core [||]; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
+	  i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; len=0; code=Core [||]; used=true; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
 	loop (List.length prefix) 
       in
     let ofs = 5-List.length prefix in
@@ -515,6 +515,7 @@ module Options = struct
 				   let sec = Image.find_section image "words" in
 				   let nsec = Image.find_section image "name" in
 				     Section.zero sec;
+				     Section.zero nsec;
 				     Words.emit words nsec sec;
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name true)]

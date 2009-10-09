@@ -4,6 +4,7 @@ include(dict.m4)
 #define PREFIX_WORDS_INDEX 5
 
 #ifndef TINY
+	
 #endif
 
 # Following imports are used and needs to be dereferenced
@@ -81,6 +82,12 @@ _gettoken:
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION("interpret")
 
+#ifdef TINY
+	K4_INIT_IMPORTS(init_imports)	
+
+#endif
+
+	
 #ifdef DEBUG
 	.DATA
 #else

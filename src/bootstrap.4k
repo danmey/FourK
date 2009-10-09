@@ -189,4 +189,4 @@ create #str
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
-: a " ala ma kota" type cr begin repeat ;
+: a " ala ma kota" begin repeat ;

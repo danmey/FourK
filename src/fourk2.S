@@ -439,6 +439,7 @@ build_dispatch:
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .loop2:
+	xor	%eax,%eax
 	lodsb
 .user_dictionary:
 	cmp	$-1,%al

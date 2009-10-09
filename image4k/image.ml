@@ -398,13 +398,14 @@ module Words = struct
       emit_names words name_section;
       Printf.printf "%d\n\n" i;
       section.Section.image.(i) <- 255;
-      section.Section.image.(i+1) <- 255
+      section.Section.image.(i+1) <- 255;
+      section.Section.image.(i+2) <- 255
 
 
   
   let optimise words_list =
     let words_ar = Array.of_list words_list in
-    let used = Array.fold_left (fun acc w -> if w.used then w::acc else acc) [] words_ar in
+    let used = Array.fold_left (fun acc w -> if w.used || w.index < 5 then w::acc else acc) [] words_ar in
     let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
 
     let replace_opcode new_op = function
@@ -417,8 +418,8 @@ module Words = struct
 	| [] -> []
 	| w::ws -> 
 	    let id    = bytecode_id w in 
-	    let w',i' = List.find (fun (i',w') -> id = w'.index) words in
-	      (replace_opcode w' w)::(loop ws) in
+	    let i,w' = List.find (fun (i',w') -> id = w'.index) words in
+	      (replace_opcode i w)::(loop ws) in
 
       let words' = List.map 
 	(fun (i,w) -> 

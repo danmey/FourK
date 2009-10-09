@@ -3,6 +3,9 @@ include(dict.m4)
 
 #define PREFIX_WORDS_INDEX 5
 
+#ifndef TINY
+#endif
+
 # Following imports are used and needs to be dereferenced
 # I am not sure if it is needed
 ## _sscanf:	jmp sscanf
@@ -317,9 +320,17 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
+#ifdef TINY
+
+	movl	stdin_,%eax
+	pushl	(%eax)
+#else
 	pushl	stdin
+#endif
 	popl	fh_stack
 #	call build_dispatch
+
+
 	mov	var_last,	%ebx
 	call 	build_dispatch
 
@@ -327,8 +338,8 @@ entry_point:
 	sub	$4096,%ebx
 	
 interpret_loop:
-
 	K4_SAFE_CALL(_gettoken)	#get next token
+
 	mov	$next_word,%ebp
 	movl	$token,	%edi
 	call	_find_word	#find word
@@ -392,21 +403,33 @@ SECTION("dict")
 # load-image word
 #
 	.LONG  _image_start	# at the begining we need the actual memory address
+
 				# for relocations
-#ifndef DEBUG
+msg2:	.asciz "Hello world!\n"
+
+#ifdef TINY
+__start:
+#endif
+	
+#ifdef DEBUG
+main:
+#endif
+	
 #ifdef PARTY
 	_start:
-#else
-	main:
 #endif
-#else
-	main:				
-#endif
+	
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	$0,	%ebx
+#ifdef TINY
+	movl	stdin_,%eax
+	pushl	(%eax)
+#else
 	pushl	stdin
+#endif
 	popl	fh_stack
+
 # This will be supplied with the last word by linker
 	push	%ebx
 	call 	build_dispatch	

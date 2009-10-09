@@ -29,7 +29,8 @@ include(dict.m4)
 
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there
-	
+
+#ifndef TINY
 #ifdef DEBUG
 	.TEXT
 #else
@@ -39,7 +40,7 @@ include(dict.m4)
 #ifdef REFERENCE
        .FILL 0x11234
 #endif
-
+#endif
 
 
 ################################################################################

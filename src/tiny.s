@@ -20,8 +20,8 @@
 
 	
 .equ factor,		0
-.equ getchar_rel,	8
-.equ write_rel,		12
+.equ dlopen_rel,	8
+.equ dlsym_rel,		12
 .equ buf,		16
 .equ exit_rel,		28
 .equ iobuf,		32
@@ -144,11 +144,11 @@ dynsym:
 /* # from libc are stored in the program's data area. */
 
 reltext:
-		.long 	dataorg + write_rel
+		.long 	dataorg + dlopen_rel
 		.byte 	1			# R_386_32
 		.byte 	write_sym
 		.word 	0
-		.long 	dataorg + getchar_rel
+		.long 	dataorg + dlsym_rel
 		.byte 	1			# R_386_32
 		.byte 	getchar_sym
 		.word 	0
@@ -175,7 +175,7 @@ dynstr:
 .equ libc_name, 	. - dynstr
 
 .byte 	
-.ascii "libc.so.6"
+.ascii "libdl.so.2"
 .byte 0
 .equ dynamic_name, 	. - dynstr
 
@@ -185,12 +185,12 @@ dynstr:
 .equ exit_name, 	. - dynstr
 
 .byte 	
-.ascii "_exit"
+.ascii "dlopen"
 .byte 0
 .equ getchar_name, 	. - dynstr
 
 .byte 	
-.ascii "getchar"
+.ascii "dlsym"
 .byte 0
 .equ write_name, 	. - dynstr
 
@@ -199,9 +199,9 @@ dynstr:
 .byte 0
 .equ dynstrsz, 	. - dynstr
 
-
+// dnlinclude(fourk2.S)
 _start:
-
+	
 /* # argc and argv[0] are removed from the stack and discarded. ebx is */
 /* # initialized to point to the data. */
 
@@ -211,11 +211,28 @@ _start:
 
 
 .mainexit:
+	push	$1
+	push	$libc
+	call	*dlopen_rel(%ebx)
+	push	$printf_s
 	push	%eax
-	call	*exit_rel(%ebx)
+	call	*dlsym_rel(%ebx)
+	mov	%eax,printf
+	push	$msg
+	mov	printf,%eax
+	call	*%eax
+	
+	movl 	$1,%eax
+	xor 	%ebx,%ebx
+	int 	$128
 
+	
 
-
+libc:	.asciz "libc.so.6"
+printf_s: .asciz "printf"
+msg:	.asciz "Hello world!\n"
+printf:	.long 0
+	
 .byte 	
 .ascii "Finds the prime factors of args/input"
 .byte 10

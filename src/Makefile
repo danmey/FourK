@@ -13,6 +13,7 @@ debug: $(DEBUG_FILES)
 boot: $(BOOT_FILES)
 compiler: $(FOURKC)
 tiny: $(BIN)/tiny
+
 .PHONY: compress 
 compress: 
 	cp unpack.header 4k
@@ -20,7 +21,10 @@ compress:
 	chmod +x 4k
 
 $(BIN)/tiny: tiny.s
-	gcc -c -nostdlib tiny.s -o tiny.o
+	m4 -s tiny.s > t.S 
+	./m4patch.pl > t.P
+	mv t.P t.S
+	gcc -c -nostdlib -DTINY t.S -o tiny.o
 	ld --oformat binary -Ttext 08048000 tiny.o -o $(BIN)/tiny
 	cp $@ $(PREFIX)
 

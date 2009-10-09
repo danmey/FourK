@@ -5,7 +5,7 @@ BIN := $(PREFIX)
 
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all: basic debug boot linker compiler
+all: basic debug boot linker compiler tiny
 
 
 compress:
@@ -13,6 +13,9 @@ compress:
 	cp unpack.header $(BIN)/4k
 	gzip -cn9 $(BIN)/fourk >> $(BIN)/4k
 	chmod +x $(BIN)/4k
+
+tiny:
+	$(MAKE) -C src tiny
 
 basic: 
 	$(MAKE) -C src basic

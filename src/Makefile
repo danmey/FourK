@@ -12,12 +12,17 @@ basic: $(BASIC_FILES)
 debug: $(DEBUG_FILES)
 boot: $(BOOT_FILES)
 compiler: $(FOURKC)
-
+tiny: $(BIN)/tiny
 .PHONY: compress 
 compress: 
 	cp unpack.header 4k
 	gzip -cn9 fourk >> 4k
 	chmod +x 4k
+
+$(BIN)/tiny: tiny.s
+	gcc -c -nostdlib tiny.s -o tiny.o
+	ld --oformat binary -Ttext 08048000 tiny.o -o $(BIN)/tiny
+	cp $@ $(PREFIX)
 
 $(BIN)/fourk: $(SRC_FILES)
 	m4 -s $(SRC) > t.S 
@@ -25,8 +30,8 @@ $(BIN)/fourk: $(SRC_FILES)
 	mv t.P t.S
 	gcc -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
 	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
-#	strip -s -R .comment -R .gnu.version $@
-#	../tools/sstrip $@
+	strip -s -R .comment -R .gnu.version $@
+	../tools/sstrip $@
 
 #	-rm t.*
 	cp $@ $(PREFIX)

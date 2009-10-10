@@ -13,11 +13,11 @@ int _start()
   glDisable(GL_CULL_FACE);
 
   SDL_Event event;
-  robots_init();
+/*  robots_init(); */
   do
     {
       glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);      
-      draw_scene();
+/*      draw_scene(); */
       SDL_GL_SwapBuffers();
       SDL_PollEvent(&event);
       if (event.type==SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE ) break;

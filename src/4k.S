@@ -422,7 +422,6 @@ _exit2:
 	ret
 
 
-
 	.GLOBL main
 	.GLOBL _start
 .ALIGN 4096
@@ -449,16 +448,24 @@ main:
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	$0,	%ebx
-#ifdef TINY
-	movl	stdin_,%eax
-	pushl	(%eax)
-#else
-	pushl	stdin
-#endif
-	popl	fh_stack
+
+# #ifdef TINY
+#	movl	stdin_,%eax
+#	pushl	(%eax)
+# #else
+#	pushl	stdin
+# #endif
+#	popl	fh_stack
 
 # This will be supplied with the last word by linker
 	push	%ebx
+#	call	init_imports
+	movl	$dataorg,%ebx
+	pushl	dlsym_rel(%ebx)
+	popl	dlsym_
+	pushl	dlopen_rel(%ebx)
+	popl	dlopen_
+
 	call 	build_dispatch	
 	mov	%esp,%ebx
 	sub	$4096,%ebx

@@ -121,10 +121,13 @@ create #str
 256 allot
  
 
-: " ( -- str c ) here @ >r #str here !
-  begin key dup c: " = if drop #str here @ #str - 0 c, r> here ! ;; then 
+: parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
+  begin key dup [ there @ rliteral ] c@ = if drop #str here @ #str - 0 c, r> here ! ;; then 
   c, repeat
-; immediate
+; 
+1 allot 
+
+: " c: " parse ; immediate
 
 
 | inlines a counted list of bytes to there 
@@ -154,6 +157,7 @@ create #str
 0 ccall: dlopen
 1 ccall: dlsym
 2 ccall: printf
+3 ccall: video
 
 : >cstr drop ;
 
@@ -161,12 +165,25 @@ create #str
 
 : sym >cstr swap dlsym ;
 
+variable #ithere
+6 #ithere !
+
+: add-handle ( handle stackfix -- ) 
+  ithere @ 1 #ithere @ + rcells+ !
+  ithere @ #ithere @ rcells+ !
+  #ithere @ 2 + #ithere !
+;
+
 : load-printf
   " libc.so.6" lib " printf" sym 
   ithere @ 4 rcells+ !
   4 ithere @ 5 rcells+ !
 ;
 
+: sdl-init ( -- )
+  " libSDL.so" lib " SDL_SetVideoMode" sym
+   4 rcells add-handle
+;
 
 | do loops
 
@@ -201,8 +218,13 @@ create #str
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
+: yeah ( -- )
+sdl-init
+2 0 600 800 video
+begin repeat
+; 
+
 : main
   load-printf
   " hello world!!
   " >cstr printf begin repeat ;
-

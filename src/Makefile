@@ -2,7 +2,7 @@ BIN = bin
 SRC = tiny.S
 FOURKC = fourkc
 REF_SUFFIX = -ref
-SRC_FILES = import.m4 macros.m4 dict.m4 prim.S $(SRC)
+SRC_FILES = 4k.S import.m4 macros.m4 dict.m4 prim.S $(SRC)
 BOOT_FILES = $(BIN)/boot.4ki $(BIN)/boot$(REF_SUFFIX).4ki
 PROGRAM = $(BIN)/4k
 BASIC_FILES = $(PROGRAM) $(PROGRAM)$(REF_SUFFIX)
@@ -33,8 +33,8 @@ $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)
 	m4 -s $(SRC) > $(BIN)/t.S 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -c -nostdlib -DREFERENCE -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
-	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
+	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
+	ld --oformat binary -Ttext 05037000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
 $(BIN)/boot.4ki: $(BASIC_FILES) bootstrap.4k

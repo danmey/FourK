@@ -1,5 +1,5 @@
-define(`K4_IMPORT',
-`
+define([K4_IMPORT],
+[
 	divert(1)
 	pushl	$ $1_name
 	pushl	libc_handle
@@ -14,12 +14,12 @@ $1:
 $1_ptr:	      .LONG 0
 $1_name:      .ASCIZ	"$1"
 	divert
-')
+])
 
-define(`K4_INIT_IMPORTS',
-`
+define([K4_INIT_IMPORTS],
+[
 $1:
 	undivert(1)
 	ret
 	undivert(2)
-')
+])

@@ -55,8 +55,18 @@ _gettoken:
 
 
 #ifdef TINY
-	K4_INIT_IMPORTS(init_imports)	
-
+include(import.m4)
+K4_IMPORT(printf)
+K4_IMPORT(fopen)
+K4_IMPORT(fmemopen)
+K4_IMPORT(sscanf)
+K4_IMPORT(fgetc)
+K4_IMPORT(_exit)
+K4_IMPORT(fwrite)
+K4_IMPORT(fclose)
+K4_IMPORT(mprotect)
+K4_IMPORT(fread)
+K4_INIT_IMPORTS(init_imports)	
 #endif
 
 	
@@ -91,6 +101,26 @@ _vm_context_EBP:	.fill  4
 
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
+
+
+libc:	.asciz "libc.so.6"
+printf_s: .asciz "printf"
+
+dlsym:	
+.byte 0xff,0x25
+.LONG dlsym_
+dlsym_:	
+.LONG 0
+
+dlopen:	
+.byte 0xff,0x25
+.LONG dlopen_
+dlopen_:	
+.LONG 0
+
+stdin_:	.LONG 0
+stdin_name:	.asciz "stdin"
+libc_handle:	 .LONG 0
 
 
 
@@ -304,6 +334,26 @@ _find_word:
 #there will be no code here in final image
 entry_point:
 #ifdef TINY
+	
+	movl	$dataorg,%ebx
+
+	pushl	dlsym_rel(%ebx)
+	popl	dlsym_
+	pushl	dlopen_rel(%ebx)
+	popl	dlopen_
+
+	push	$1
+	push	$libc
+	call	dlopen
+	add	$8,%esp
+	mov	%eax,libc_handle
+	call	init_imports
+
+	pushl	$stdin_name
+	pushl	libc_handle	
+	call 	dlsym
+	add	$8,%esp		
+	mov	%eax,stdin_
 
 	movl	stdin_,%eax
 	pushl	(%eax)
@@ -311,8 +361,6 @@ entry_point:
 	pushl	stdin
 #endif
 	popl	fh_stack
-#	call build_dispatch
-
 
 	mov	var_last,	%ebx
 	call 	build_dispatch
@@ -370,7 +418,7 @@ interpret_loop:
 	jmp	interpret_loop
 	
 _exit2:
-	K4_SAFE_CALL(exit,$ 0)	
+	K4_SAFE_CALL(_exit,$ 0)	
 	ret
 
 
@@ -389,11 +437,8 @@ _image_start:
 	.LONG  _image_start	# at the begining we need the actual memory address
 				# for relocations
 
-msg2:	.asciz "Hello world!\n"
 
 #ifdef TINY
-__start:
-#else
 _start:	
 #endif
 	

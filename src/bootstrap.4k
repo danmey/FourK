@@ -40,8 +40,6 @@ create :
 
 : here@ here @ ;
 
-
-
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
 : sliteral swap rliteral literal ; 
@@ -157,7 +155,8 @@ create #str
 0 ccall: dlopen
 1 ccall: dlsym
 2 ccall: printf
-3 ccall: video
+3 ccall: exit
+4 ccall: video
 
 : >cstr drop ;
 
@@ -166,7 +165,7 @@ create #str
 : sym >cstr swap dlsym ;
 
 variable #ithere
-6 #ithere !
+4 #ithere !
 
 : add-handle ( handle stackfix -- ) 
   ithere @ 1 #ithere @ + rcells+ !
@@ -174,10 +173,11 @@ variable #ithere
   #ithere @ 2 + #ithere !
 ;
 
-: load-printf
+: load-libc
   " libc.so.6" lib " printf" sym 
-  ithere @ 4 rcells+ !
-  4 ithere @ 5 rcells+ !
+  rcell add-handle
+  " libc.so.6" lib " _exit" sym 
+  rcell add-handle
 ;
 
 : sdl-init ( -- )
@@ -221,12 +221,11 @@ variable #ithere
 : yeah ( -- )
 sdl-init
 2 0 600 800 video
-begin repeat
 ; 
 
+
 : main
-  load-printf
-  yeah
+  load-libc
   " hello world!!
-  " >cstr printf begin repeat ;
+  " >cstr printf 0 exit ;
 

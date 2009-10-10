@@ -1,18 +1,19 @@
-SRC = fourk2.S
-FOURKC = fourkc
-SRC_FILES = macros.m4 dict.m4 prim.S $(SRC)
 BIN = bin
-BASIC_FILES = $(BIN)/fourk $(BIN)/fourk-ref 
-DEBUG_FILES = $(BIN)/fourk-debug
-BOOT_FILES = $(BIN)/boot.4ki $(BIN)/boot-ref.4ki $(BIN)/boot-tiny.4ki
+SRC = tiny.S
+FOURKC = fourkc
+REF_SUFFIX = -ref
+SRC_FILES = import.m4 macros.m4 dict.m4 prim.S $(SRC)
+BOOT_FILES = $(BIN)/boot.4ki $(BIN)/boot$(REF_SUFFIX).4ki
+PROGRAM = $(BIN)/4k
+BASIC_FILES = $(PROGRAM) $(PROGRAM)$(REF_SUFFIX)
+
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all: basic debug boot tiny
+all: basic boot
+
 basic: $(BASIC_FILES)
-debug: $(DEBUG_FILES)
 boot: $(BOOT_FILES)
 compiler: $(FOURKC)
-tiny: $(BIN)/tiny
 
 .PHONY: compress 
 compress: 
@@ -20,65 +21,33 @@ compress:
 	gzip -cn9 fourk >> 4k
 	chmod +x 4k
 
-$(BIN)/tiny: tiny.S
-	m4 -s tiny.S > t.S 
-	./m4patch.pl > t.P
-	mv t.P t.S
-	gcc -c -nostdlib -DTINY t.S -o tiny.o
-	ld --oformat binary -Ttext 08048000 tiny.o -o $@
+$(PROGRAM): $(SRC_FILES)
+	m4 -s $(SRC) > $(BIN)/t.S 
+	./m4patch.pl > $(BIN)/t.P
+	mv $(BIN)/t.P $(BIN)/t.S
+	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
+	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
-$(BIN)/fourk: $(SRC_FILES)
-	m4 -s $(SRC) > t.S 
-	./m4patch.pl > t.P
-	mv t.P t.S
-	gcc -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
-	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
-#	strip -s -R .comment -R .gnu.version $@
-#	../tools/sstrip $@
-
-#	-rm t.*
+$(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)
+	m4 -s $(SRC) > $(BIN)/t.S 
+	./m4patch.pl > $(BIN)/t.P
+	mv $(BIN)/t.P $(BIN)/t.S
+	gcc -c -nostdlib -DREFERENCE -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
+	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
-
-$(BIN)/fourk-ref: $(SRC_FILES)
-	m4 -s $(SRC) > t.S 
-	./m4patch.pl > t.P
-	mv t.P t.S
-	gcc  -DREFERENCE -O1 -nostdlib -ffast-math -fomit-frame-pointer -DPARTY -c t.S -o t.o
-	ld -dynamic-linker  /lib/ld-linux.so.2 /usr/lib/libdl.so t.o  -o $@
-	strip -s -R .comment -R .gnu.version $@
-	../tools/sstrip $@
-	cp $@ $(PREFIX)
-#	-rm -f t.*
-
-$(BIN)/fourk-debug: $(SRC_FILES)
-	m4 -s $(SRC) > t.S 
-	./m4patch.pl > t.P
-	mv t.P t.S
-	gcc -g3 -ldl -DDEBUG t.S -o $@
-	cp $@ $(PREFIX)
-#	-rm -f t.*
 
 $(BIN)/boot.4ki: $(BASIC_FILES) bootstrap.4k
-	cat bootstrap.4k > boot.4k
-	echo "save-image $(BIN)/boot.4ki" >> boot.4k
-	cat boot.4k | $(BIN)/fourk
+	cp bootstrap.4k $(BIN)/boot.4k
+	echo "save-image $(BIN)/boot.4ki" >> $(BIN)/boot.4k
+	$(PROGRAM) < $(BIN)/boot.4k
 	cp $@ $(PREFIX)
-#	-rm -f boot.4k
 
-$(BIN)/boot-ref.4ki: $(BASIC_FILES) bootstrap.4k
-	cat bootstrap.4k > boot.4k
-	echo "save-image $(BIN)/boot-ref.4ki" >> boot.4k
-	cat boot.4k | $(BIN)/fourk-ref
+$(BIN)/boot$(REF_SUFFIX).4ki: $(BASIC_FILES) bootstrap.4k
+	cp bootstrap.4k $(BIN)/boot.4k
+	echo "save-image $(BIN)/boot$(REF_SUFFIX).4ki" >> $(BIN)/boot.4k
+	$(PROGRAM)$(REF_SUFFIX) < $(BIN)/boot.4k
 	cp $@ $(PREFIX)
- #      -rm -f boot.4k
-
-$(BIN)/boot-tiny.4ki: $(BIN)/tiny bootstrap.4k
-	cat bootstrap.4k > boot.4k
-	echo "save-image $(BIN)/boot-tiny.4ki" >> boot.4k
-	cat boot.4k | $(BIN)/tiny
-	cp $@ $(PREFIX)
-#	-rm -f boot.4k
 
 $(FOURKC): basic boot
 
@@ -86,8 +55,5 @@ $(FOURKC): basic boot
 
 clean:
 	-rm -f $(BIN)/*
-	-rm t.S
-	-rm tiny.o
-	-rm t.o
 
 

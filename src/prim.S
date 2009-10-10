@@ -370,23 +370,23 @@ END_CODE
 
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	K4_SAFE_CALL(_fopen, $token,$str_wb)
+	K4_SAFE_CALL(fopen, $token,$str_wb)
 	push	%eax
-	K4_SAFE_CALL(_fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
-	K4_SAFE_CALL(_fclose, %eax)
+	K4_SAFE_CALL(fclose, %eax)
 END_CODE
 DEF_CODE(load_image, "load-image")
 #define PROT_READ	0x1		/* Page can be read.  */
 #define PROT_WRITE	0x2		/* Page can be written.  */
 #define PROT_EXEC	0x4		/* Page can be executed.  */
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	K4_SAFE_CALL(_mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-	K4_SAFE_CALL(_fopen, $token,$str_rb)
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+	K4_SAFE_CALL(fopen, $token,$str_rb)
 	push	%eax
-	K4_SAFE_CALL(_fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	K4_SAFE_CALL(fread, $_image_start, $ 1, $(_image_end-_image_start), %eax)
 	pop	%eax
-	K4_SAFE_CALL(_fclose, %eax)
+	K4_SAFE_CALL(fclose, %eax)
 	call 	build_dispatch
 	jmp interpret_loop
 END_CODE

@@ -3,34 +3,6 @@ include(dict.m4)
 
 #define PREFIX_WORDS_INDEX 5
 
-#ifndef TINY
-	
-#endif
-
-# Following imports are used and needs to be dereferenced
-# I am not sure if it is needed
-## _sscanf:	jmp sscanf
-## _ungetc:	jmp ungetc
-## _getchar:	jmp getchar
-## _printf:	jmp printf
-## _exit:		jmp exit
-## _fopen:		jmp fopen
-## _fwrite:	jmp fwrite
-## _mprotect:	jmp mprotect
-## _fread:		jmp fread
-## _fclose:	jmp fclose
-
-#define _sscanf 	sscanf
-#define _ungetc		ungetc
-#define _getchar	getchar
-#define _printf		printf
-#define _exit		exit
-#define _fopen		fopen
-#define _fwrite		fwrite
-#define _mprotect	mprotect
-#define _fread		fread
-#define _fclose		fclose
-
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there
 
@@ -40,13 +12,14 @@ include(dict.m4)
 #else
 	.DATA
 #endif
-
-#ifdef REFERENCE
-       .FILL 0x11234
-#endif
 #endif
 
 
+
+	
+# Our iterpreting section, we can easily get rid of that and relocate rest
+SECTION("interpret")
+	
 ################################################################################
 # Get token, separated by whites, and put it in token
 # TODO: Make it case insesitive (lowercase everything)
@@ -73,14 +46,13 @@ _gettoken:
 	call _get_key			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
-#	K4_SAFE_CALL(_ungetc,%eax, stdin) # unget char
+#	K4_SAFE_CALL(ungetc,%eax, stdin) # unget char
 	xor 	%eax,%eax		# clear status (not needed?)
 	rep 	stosb			# Fill rest of token
 	ret
 
+	
 
-# Our iterpreting section, we can easily get rid of that and relocate rest
-SECTION("interpret")
 
 #ifdef TINY
 	K4_INIT_IMPORTS(init_imports)	
@@ -88,13 +60,14 @@ SECTION("interpret")
 #endif
 
 	
+	
 #ifdef DEBUG
 	.DATA
-#else
 #endif
 
 	
-	# Our data, it will be stripped off so store it in intepret section
+
+# Our data, it will be stripped off so store it in intepret section
 long_tmp: 		.LONG 0
 token:			.FILL	64
 fmt_float: 		.ASCIZ  "%f"
@@ -118,9 +91,12 @@ _vm_context_EBP:	.fill  4
 
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
+
+
+
+
 #ifdef DEBUG
 	.TEXT
-#else
 #endif
 
 
@@ -369,7 +345,7 @@ interpret_loop:
 2:
 	call	_parse_literal
 	jnc 	3f		#if literal cannot be parsed give a proper message and loop
-	K4_SAFE_CALL(_printf,$msg_not_defined)
+	K4_SAFE_CALL(printf,$msg_not_defined)
 	jmp 	interpret_loop
 	
 # Literal could be parsed here
@@ -394,7 +370,7 @@ interpret_loop:
 	jmp	interpret_loop
 	
 _exit2:
-	K4_SAFE_CALL(_exit,$ 0)	
+	K4_SAFE_CALL(exit,$ 0)	
 	ret
 
 
@@ -402,30 +378,29 @@ _exit2:
 	.GLOBL main
 	.GLOBL _start
 .ALIGN 4096
-	
-_image_start:
+
 SECTION("dict")
-	################################################################################
+
+################################################################################
 # Our image starts here and will be saved by a save-image word, and load by
 # load-image word
 #
+_image_start:
 	.LONG  _image_start	# at the begining we need the actual memory address
-
 				# for relocations
+
 msg2:	.asciz "Hello world!\n"
 
 #ifdef TINY
 __start:
+#else
+_start:	
 #endif
 	
 #ifdef DEBUG
 main:
 #endif
-	
-#ifdef PARTY
-	_start:
-#endif
-	
+
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	$0,	%ebx
@@ -524,7 +499,11 @@ runbyte:
 next_word:	
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
+
+# Our core words
 include(prim.S)
+
+
 
 # TODO: For real usage maybe we need malloced heap
 ccall_tab:

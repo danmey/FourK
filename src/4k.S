@@ -154,8 +154,8 @@ file_unnest:
 	mov	fh_stack_index,%ecx
 	cmp	$0,%ecx
 	jz	_exit2
-	mov	fh_stack(,%ecx,4),%eax
 	decl	fh_stack_index
+	mov	fh_stack(,%ecx,4),%eax
 	ret
 	
 ################################################################################	
@@ -264,10 +264,10 @@ _get_key:
 	cmp 	$-1,%eax        # if EOF?
 	jne 	2f     # exit the forth
 	call	file_unnest
+	ld_fh	%edx
+	K4_SAFE_CALL(fgetc,%edx)
 	ret
 2:	
-	cmpb	$10,%al         # if a newline 
-	jne 1f
 1:	ret
 
 ################################################################################	

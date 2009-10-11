@@ -141,11 +141,11 @@ dynsym:
 /* # from libc are stored in the program's data area. */
 
 reltext:
-		.long 	dataorg + dlopen_rel
+		.long 	dlopen_
 		.byte 	1			# R_386_32
 		.byte 	write_sym
 		.word 	0
-		.long 	dataorg + dlsym_rel
+		.long 	dlsym_
 		.byte 	1			# R_386_32
 		.byte 	getchar_sym
 		.word 	0

@@ -326,10 +326,10 @@ entry_point:
 	
 	movl	$dataorg,%ebx
 
-	pushl	dlsym_rel(%ebx)
-	popl	dlsym_
-	pushl	dlopen_rel(%ebx)
-	popl	dlopen_
+#	pushl	dlsym_rel(%ebx)
+#	popl	dlsym_
+#	pushl	dlopen_rel(%ebx)
+#	popl	dlopen_
 
 	push	$1
 	push	$libc
@@ -465,11 +465,11 @@ main:
 # This will be supplied with the last word by linker
 	push	%ebx
 #	call	init_imports
-	movl	$dataorg,%ebx
-	pushl	dlsym_rel(%ebx)
-	popl	dlsym_
-	pushl	dlopen_rel(%ebx)
-	popl	dlopen_
+#	movl	$dataorg,%ebx
+#	pushl	dlsym_rel(%ebx)
+#	popl	dlsym_
+#	pushl	dlopen_rel(%ebx)
+#	popl	dlopen_
 	call 	build_dispatch	
 
 	mov	%esp,%ebx

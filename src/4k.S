@@ -390,6 +390,11 @@ interpret_loop:
 	cmp	$0, var_state	#code dependent on the state
 	jnz	4f		#if we are compiling (0) then compile the literal
 # Here we compile literal TODO: the state variable has inverted meaning; do something with that
+	cmp	$127,%eax	# if the literal fits in one byte
+	jg	.dword_lit
+	cmp	$-128,%eax	# if the literal fits in one byte
+	jl	.dword_lit
+
 	mov	var_here,%ecx
 	movb	$0,(%ecx)	# token for literal
 	incl	%ecx		# increment here
@@ -397,7 +402,18 @@ interpret_loop:
 				# TODO: allow different sizes of literals
 	incl	%ecx
 	mov	%ecx,var_here	#store the pointer and loop
-	jmp 	interpret_loop	
+	jmp 	interpret_loop
+	
+.dword_lit:
+	mov	var_here,%ecx
+	movb	$1,(%ecx)	# token for literal
+	incl	%ecx		# increment here
+	movl	%eax,(%ecx)	# store the actual literal (only byte literals allowed)
+				# TODO: allow different sizes of literals
+	add	$4,%ecx
+	mov	%ecx,var_here	#store the pointer and loop
+	jmp 	interpret_loop
+	
 
 # Here we are pushing the literal on the stack as we are in interpreting mode
 4:	

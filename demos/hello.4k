@@ -1,0 +1,17 @@
+include src/bootstrap.4k
+
+2 ccall: printf
+3 ccall: exit
+
+: load-libc
+  " libc.so.6" lib " printf" sym 
+  rcell add-handle
+  " libc.so.6" lib " _exit" sym 
+  rcell add-handle
+;
+
+
+: main
+  load-libc
+  " hello world!!
+  " >cstr printf 0 exit ;

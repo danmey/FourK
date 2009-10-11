@@ -1,0 +1,18 @@
+include src/bootstrap.4k
+
+2 ccall: video
+3 ccall: exit
+
+: sdl-init ( -- )
+  " libSDL.so" lib " SDL_SetVideoMode" sym
+   4 rcells add-handle
+  " libc.so" lib " _exit" sym
+  rcell add-handle
+;
+
+: yeah ( -- )
+  sdl-init
+   0 exit
+; 
+
+yeah

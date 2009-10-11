@@ -154,7 +154,6 @@ create #str
 
 0 ccall: dlopen
 1 ccall: dlsym
-2 ccall: video
 
 : >cstr drop ;
 
@@ -172,10 +171,6 @@ variable #ithere
 ;
 
 
-: sdl-init ( -- )
-  " libSDL.so" lib " SDL_SetVideoMode" sym
-   4 rcells add-handle
-;
 
 | do loops
 
@@ -210,8 +205,4 @@ variable #ithere
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
-: yeah ( -- )
-sdl-init
-2 0 600 800 video
-; 
 

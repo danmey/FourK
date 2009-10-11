@@ -401,6 +401,9 @@ END_CODE
 DEF_CODE(eval,"eval")
 	mov	(%ebx),%ecx
 	mov	4(%ebx),%edi
+	## append space character at the end
+	movb	$' ', (%edi,%ecx)
+	movb	$0, 1(%edi,%ecx)
 	add	$8,%ebx
 	call	memo_nest
 END_CODE

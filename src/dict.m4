@@ -68,7 +68,15 @@ define([END_DICT],
 	.BYTE -1
 	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
-	
+	SECTION("there")
+	there:
+       .FILL 8*MAX_WORDS*4
+	undivert(3)
+	ccall_tab:
+	.LONG dlopen,8
+	.LONG dlsym,8
+	.FILL 256-16
+
 	SECTION("name")
 		ntab: 
 		undivert(1) dnl
@@ -81,11 +89,7 @@ define([END_DICT],
 	SECTION("semantic")
 	semantic:
 		undivert(2)
-	semantic_end:
-	.FILL 8*MAX_WORDS*4
-
-	undivert(3)
-	there:
-	.FILL 16*1024
-
+       semantic_end:
+       .FILL 8*MAX_WORDS*4
 ])
+

@@ -457,10 +457,17 @@ module FourkImage = struct
       Words.words (word_sec,name_sec)
 	
   let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
+  let removed_sections = ["name";"dsptch";"semantic"]
+(* 92 *) 
   let strip image = 
-    List.iter (fun x -> if (List.mem x.Section.name stripped_sections) then Section.zero x) image.Image.sections
+  (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Section.name)) acc) image.Image.sections removed_sections in *)
+    List.iter (fun x -> if (List.mem x.Section.name stripped_sections) then Section.zero x) image.Image.sections;
+      image
+(*
+      { image with Image.sections = secs }
+*)
 
-  let copied_sections = ["words";"name";"semantic"]
+  let copied_sections = ["words";"name";"semantic";"there"]
 
   let link base_image image word_count = 
     let dict_section = Image.find_section base_image "dict" in
@@ -525,8 +532,8 @@ module Options = struct
       "-strip", String 
 	(fun nm ->
 	   let image = Image.load nm in
-	     FourkImage.strip image;
-	     Image.save image nm false
+	   let image2 = FourkImage.strip image in
+	     Image.save image2 nm false
 	),
       "Strip sections";
       

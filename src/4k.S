@@ -106,17 +106,6 @@ fh_stack_index:		.LONG	0
 libc:	.asciz "libc.so.6"
 printf_s: .asciz "printf"
 
-dlsym:	
-.byte 0xff,0x25
-.LONG dlsym_
-dlsym_:	
-.LONG 0
-
-dlopen:	
-.byte 0xff,0x25
-.LONG dlopen_
-dlopen_:	
-.LONG 0
 
 stdin_:	.LONG 0
 stdin_name:	.asciz "stdin"
@@ -465,8 +454,8 @@ main:
 	popl	dlsym_
 	pushl	dlopen_rel(%ebx)
 	popl	dlopen_
-
 	call 	build_dispatch	
+
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	$next_word,%ebp
@@ -528,6 +517,18 @@ build_dispatch:
 
 ex_bytecode:		.BYTE  0,END_TOKEN
 
+dlsym:	
+.byte 0xff,0x25
+.LONG dlsym_
+dlsym_:	
+.LONG 0
+
+dlopen:	
+.byte 0xff,0x25
+.LONG dlopen_
+dlopen_:	
+.LONG 0
+
 ################################################################################
 # Main bytecode interpreter loop,
 # Function escapes to main text interpreter loop throuh `interpret' token
@@ -558,10 +559,6 @@ include(prim.S)
 
 
 # TODO: For real usage maybe we need malloced heap
-ccall_tab:
-	.LONG dlopen,8
-	.LONG dlsym,8
-	.FILL 256-16
 	.ALIGN 4096
 
 _image_end:

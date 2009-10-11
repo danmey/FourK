@@ -16,13 +16,6 @@
 .equ	iobuf_size, 96
 
 	
-.equ factor,		0
-.equ dlopen_rel,	8
-.equ dlsym_rel,		12
-.equ buf,		16
-.equ exit_rel,		28
-.equ iobuf,		32
-.equ data_size,		iobuf_size+iobuf
 
 beg:	
 
@@ -118,11 +111,11 @@ dynsym:
 		.long 	0
 		.word 	0x11			# STB_GLOBAL, STT_OBJECT
 		.word 	0xFFF1			# SHN_ABS
-.equ exit_sym, 	2
-		.long 	exit_name
+.equ dlopen_sym, 	4
+		.long 	dlopen_name
 		.long 	0
 		.long 	0
-		.word 	0x12			# STB_GLOBAL, STT_FUNC
+		.word 	0x22			# STB_GLOBAL, STT_FUNC
 		.word 	0
 .equ getchar_sym, 	3
 		.long 	getchar_name
@@ -130,7 +123,7 @@ dynsym:
 		.long 	0
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
-.equ write_sym, 	4
+.equ write_sym, 	2
 		.long 	write_name
 		.long 	0
 		.long 	0
@@ -143,16 +136,13 @@ dynsym:
 reltext:
 		.long 	dlopen_
 		.byte 	1			# R_386_32
-		.byte 	write_sym
+		.byte 	dlopen_sym
 		.word 	0
 		.long 	dlsym_
 		.byte 	1			# R_386_32
 		.byte 	getchar_sym
 		.word 	0
-		.long 	dataorg + exit_rel
-		.byte 	1			# R_386_32
-		.byte 	exit_sym
-		.word 	0
+
 .equ reltextsz, 	. - reltext
 
 /* # The interpreter pathname. The final NUL byte appears in the next */
@@ -171,37 +161,27 @@ dynstr:
 		.byte 	0
 .equ libc_name, 	. - dynstr
 
-.byte 	
-.ascii "libdl.so"
-.byte 0
+.asciz "libdl.so"
 .equ dynamic_name, 	. - dynstr
 
-.byte 	
-.ascii "_DYNAMIC"
-.byte 0
-.equ exit_name, 	. - dynstr
+.asciz "_DYNAMIC"
+.equ dlopen_name, 	. - dynstr
 
-.byte 	
-.ascii "dlopen"
-.byte 0
+.asciz "dlopen"
 .equ getchar_name, 	. - dynstr
 
-.byte 	
-.ascii "dlsym"
-.byte 0
+.asciz "dlsym"
 .equ write_name, 	. - dynstr
 
-.byte 	
-.ascii "write"
-.byte 0
+.asciz "write"
 .equ dynstrsz, 	. - dynstr
 
 include(4k.S)
-
+exit_:	.long 0
 /* # End of file image. */
 
 .equ filesz, 	. - beg
 
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
-.equ memsz, 	dataorg + data_size - beg
+.equ memsz, 	dataorg - beg

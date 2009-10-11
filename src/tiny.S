@@ -105,25 +105,29 @@ dynsym:
 		.long 	0
 		.word 	0
 		.word 	0
+
 .equ dynamic_sym, 	1
 		.long 	dynamic_name
 		.long 	dynamic
 		.long 	0
 		.word 	0x11			# STB_GLOBAL, STT_OBJECT
 		.word 	0xFFF1			# SHN_ABS
-.equ dlopen_sym, 	4
+
+.equ dlopen_sym, 	2
 		.long 	dlopen_name
 		.long 	0
 		.long 	0
 		.word 	0x22			# STB_GLOBAL, STT_FUNC
 		.word 	0
+
 .equ dlsym_sym, 	3
 		.long 	dlsym_name
 		.long 	0
 		.long 	0
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
-.equ write_sym, 	5
+
+.equ write_sym, 	4
 		.long 	write_name
 		.long 	0
 		.long 	0
@@ -162,18 +166,20 @@ dynstr:
 		.byte 	0
 .equ libc_name, 	. - dynstr
 
-.asciz "libdl.so"
+.asciz "libdl.so.2"
 .equ dynamic_name, 	. - dynstr
 
 .asciz "_DYNAMIC"
 .equ dlopen_name, 	. - dynstr
 
+.asciz "__gmon_start__"
+.asciz "_Jv_RegisterClasses"
+	
 .asciz "dlopen"
 .equ dlsym_name, 	. - dynstr
 
 .asciz "dlsym"
 .equ write_name, 	. - dynstr
-
 .asciz "write"
 .equ dynstrsz, 	. - dynstr
 

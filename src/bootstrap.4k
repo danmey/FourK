@@ -157,7 +157,7 @@ create #str
 
 : >cstr drop ;
 
-: lib >cstr $2 $100 or swap dlopen ; 
+: lib >cstr $2 swap dlopen ; 
 
 : sym >cstr swap dlsym ;
 
@@ -205,4 +205,5 @@ variable #ithere
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
+: a begin repeat ;
 

@@ -87,6 +87,8 @@ fmt_char:		.ASCIZ 	"%c"
 str_wb:			.ASCIZ 	"wb"
 str_rb:			.ASCIZ 	"rb"
 msg:			.ASCIZ "%s\n"
+msg2:			.ASCIZ "------\n"
+	
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_file_not_found:	.ASCIZ "File '%s' not found.\n"
 msg_test1:		.ASCIZ "Test1\n"
@@ -323,17 +325,25 @@ _find_word:
 #there will be no code here in final image
 entry_point:
 #ifdef TINY
-	
-	movl	$dataorg,%ebx
+# I don't why following paragraph is needed but certainly is needed
+	push	$dlopen_s
+	push	$ -1
+	call	dlsym
+	add	$8,%esp
+	mov	%eax,dlopen_
+################################################################################
 
-#	pushl	dlsym_rel(%ebx)
-#	popl	dlsym_
-#	pushl	dlopen_rel(%ebx)
-#	popl	dlopen_
+	push	$dlopen_s
+	push	$ -1
+	call	dlsym
+	mov	%eax,dlopen_
 
-	push	$1
-	push	$libc
-	call	dlopen
+	push    $1
+	push    $libc
+	call    dlopen
+        add     $8,%esp
+        mov     %eax,libc_handle
+
 	add	$8,%esp
 	mov	%eax,libc_handle
 	call	init_imports
@@ -453,23 +463,16 @@ main:
 # The call is nopped in the final image
 	jmp 	entry_point
 	mov	$0,	%ebx
-
-# #ifdef TINY
-#	movl	stdin_,%eax
-#	pushl	(%eax)
-# #else
-#	pushl	stdin
-# #endif
-#	popl	fh_stack
-
-# This will be supplied with the last word by linker
 	push	%ebx
-#	call	init_imports
-#	movl	$dataorg,%ebx
-#	pushl	dlsym_rel(%ebx)
-#	popl	dlsym_
-#	pushl	dlopen_rel(%ebx)
-#	popl	dlopen_
+# I don't why following paragraph is needed but certainly is needed
+	push	$dlopen_s
+	push	$ -1
+	call	dlsym
+	add	$8,%esp
+	mov	%eax,dlopen_
+################################################################################
+	
+# This will be supplied with the last word by linker
 	call 	build_dispatch	
 
 	mov	%esp,%ebx
@@ -481,6 +484,7 @@ main:
 	movb	$-1,(ex_bytecode+1)
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
+dlopen_s:	.asciz "dlopen"
 
 ################################################################################	
 # Build the dispatch table

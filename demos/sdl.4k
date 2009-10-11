@@ -3,26 +3,26 @@ include src/debug.4k
 
 2 ccall: exit
 3 ccall: printf
-4 ccall: video
+4 ccall: dlerror
+5 ccall: video
 
 : sdl-init ( -- )
-
     " libc.so" lib " _exit" sym
     rcell add-handle
     
     " libc.so" lib " printf" sym
-    4 rcells add-handle
+    1 rcells add-handle
     
-
-    " libSDL.so" lib .s cr
+    " libdl.so" lib " dlerror" sym 
+    0 rcells add-handle
+    
+    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 
+    4 rcells add-handle
 ;
 
 : yeah ( -- )
-    test . cr
     sdl-init
+    2 0 600 800 video
     0 exit
 ; 
-
-yeah
-
 

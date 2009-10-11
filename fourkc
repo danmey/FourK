@@ -74,5 +74,5 @@ chmod +x ${out_file}
 
 msg $(ls -l temp | awk '{ print "Un-compressed size: " $5}')
 msg $(ls -l ${out_file} | awk '{ print "Compressed size: " $5}')
-rm -f temp
+
 

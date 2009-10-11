@@ -6,9 +6,11 @@ dirty_job=
 verbose=
 small=
 in_file=
-out_file=4k
+out_file=a.out
 self=${0}
 bootstrap=src/bootstrap.4k
+image4k=bin/image4k
+fourk=bin/4k
 
 function usage()
 {
@@ -56,21 +58,21 @@ while getopts "dqo:" opt; do
 done
 
 shift $(( ${OPTIND}-1 ))
-
-cp src/bootstrap.4k boot.4k
 cat $1 >> boot.4k
 echo "save-image boot.4ki" >> boot.4k
-cat boot.4k | bin/fourk
+${fourk} < boot.4k
+rm -f boot.4k
+cp ${fourk} temp
 
-./image4k/image4k -R image.4ki image.4ki
-cp bin/fourk 4k-uncompressed
-./image4k/image4k -link bin/4k-uncompressed image.4ki
+${image4k} -link  boot.4ki temp
+${image4k} -strip temp
 
 # Compress it
-cp unpack.header 4k 
-gzip -cn9 4k-uncompressed >> 4k 
-chmod +x 4k
+cp unpack.header ${out_file}
+gzip -cn9 temp >> ${out_file} 
+chmod +x ${out_file}
 
+msg $(ls -l temp | awk '{ print "Un-compressed size: " $5}')
+msg $(ls -l ${out_file} | awk '{ print "Compressed size: " $5}')
+rm -f temp
 
-msg $(ls -l 4k-uncompressed | awk '{ print "Un-compressed size: " $5}')
-msg $(ls -l 4k | awk '{ print "Compressed size: " $5}')

@@ -1,13 +1,19 @@
 include src/bootstrap.4k
+include src/debug.4k
 
-2 ccall: video
-3 ccall: exit
+4 ccall: video
+2 ccall: exit
+3 ccall: printf
 
 : sdl-init ( -- )
-  " libSDL.so" lib " SDL_SetVideoMode" sym
-   4 rcells add-handle
+123
   " libc.so" lib " _exit" sym
   rcell add-handle
+  " libc.so" lib " printf" sym
+   4 rcells add-handle
+  " libdl.so.2" lib  " printf" sym
+   4 rcells add-handle
+  " libSDL.so" lib .s cr
 ;
 
 : yeah ( -- )

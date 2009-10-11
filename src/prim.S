@@ -413,6 +413,17 @@ END_CODE
 DEF_CODE(bye, "bye")
 	jmp _exit2
 END_CODE
+DEF_CODE(test2,"test")
+	jmp 1f
+lib_sdl:	.ASCIZ "libSDL.so"
+1:
+	xchg	%ebx,%esp
+	push	$ 2
+	push	$ lib_sdl
+	K4_SAFE_CALL(dlopen,$ lib_sdl,$ 2)
+	push	%eax
+	xchg	%ebx,%esp
+END_CODE
 
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)

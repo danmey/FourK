@@ -117,13 +117,13 @@ dynsym:
 		.long 	0
 		.word 	0x22			# STB_GLOBAL, STT_FUNC
 		.word 	0
-.equ getchar_sym, 	3
-		.long 	getchar_name
+.equ dlsym_sym, 	3
+		.long 	dlsym_name
 		.long 	0
 		.long 	0
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
-.equ write_sym, 	2
+.equ write_sym, 	5
 		.long 	write_name
 		.long 	0
 		.long 	0
@@ -138,9 +138,10 @@ reltext:
 		.byte 	1			# R_386_32
 		.byte 	dlopen_sym
 		.word 	0
+
 		.long 	dlsym_
 		.byte 	1			# R_386_32
-		.byte 	getchar_sym
+		.byte 	dlsym_sym
 		.word 	0
 
 .equ reltextsz, 	. - reltext
@@ -168,7 +169,7 @@ dynstr:
 .equ dlopen_name, 	. - dynstr
 
 .asciz "dlopen"
-.equ getchar_name, 	. - dynstr
+.equ dlsym_name, 	. - dynstr
 
 .asciz "dlsym"
 .equ write_name, 	. - dynstr

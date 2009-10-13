@@ -32,8 +32,8 @@ module Section = struct
   type t = { offset:int; 
 	     len:int; 
 	     real_len:int; 
-	     name:string; 
 	     markers: (int*string) list;
+	     name:string; 
 	     image: BinaryArray.t }
   let real_len s e image =
     let rec zeroes i = 
@@ -45,56 +45,77 @@ module Section = struct
     in
     zeroes (e-1)
 
-  let next image o =
-    let rec skip_to_str str f i = 
-      if image.(i) = Char.code str.[0] && image.(i+1) = Char.code str.[1]  && image.(i+2) = Char.code str.[2] then
-	i+3
-      else 
-	begin	  
-	  f image.(i);
-	  skip_to_str str f (i+1) 
-	end
+  let rec skip_to_str str f i image = 
+    if image.(i) = Char.code str.[0] && image.(i+1) = Char.code str.[1]  && image.(i+2) = Char.code str.[2] then
+      i+3
+    else 
+      begin	  
+	f image.(i);
+	skip_to_str str f (i+1) image
+      end
+  
+  let id _ = ()
+  let no_hdr i = i - 3
+    
+  let section_markers section = 
+    let rec loop i =
+      try
+      let i' = skip_to_str "@@!" id i section.image in
+	if i' >= section.len then
+	  []
+	else
+	  let name = ref "" in
+	  let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
+	  let j = skip_to_str "!@@" get_name i' section.image in
+	  ((no_hdr i'), !name)::(loop j) 
+      with Invalid_argument _ -> []
     in
-    let id _ = () in
-    let no_hdr i = i - 3 in
-    let i = skip_to_str "@@-" id o in
+      { section with markers = loop 0 }
+      
+
+  let next_section image o =
+    let i = skip_to_str "@@-" id o image in
       if no_hdr i != o then begin
-	no_hdr i, { offset   = 0;
+	no_hdr i, section_markers { offset   = 0;
 		    name     = "default"; 
 		    image    = Array.sub image 0 (no_hdr i); 
 		    len      = i-3;
+		    markers  = [];
 		    real_len = real_len 0 (no_hdr i) image }
 	  end
       else
 	let name = ref "" in
 	let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
 	  try
-	    let i' = skip_to_str "-@@" get_name i
+	    let i' = skip_to_str "-@@" get_name i image
 	    in
 	      try 
-		let j = skip_to_str "@@-" id i' in
+		let j = skip_to_str "@@-" id i' image in
 		let sec_im = Array.sub image i' (no_hdr (j-i')) in
-		  no_hdr j, { offset   = i'; 
+		  no_hdr j, section_markers { offset   = i'; 
 			 name     = !name; 
 			 image    = sec_im;
 			 len      = no_hdr (j-i'); 
+			 markers  = [];
 			 real_len = real_len i' (no_hdr j) image }
 	      with _ -> 
 		begin
 		  let endo = Array.length image in
 		  let sec_im = Array.sub image i' (endo - i') in
-		    endo, { offset   = i'; 
+		    endo, section_markers { offset   = i'; 
 			    name     = !name; 
 			    image    = sec_im; 
 			    len      = endo - i';
+			    markers  = [];
 			    real_len = real_len i' endo image }
 		end
 	  with _ -> 
 	    let endo = Array.length image in
-	      endo, {	offset   = i;
+	      endo, section_markers {	offset   = i;
 			name     = !name; 
 			image    = Array.sub image i (endo - i); 
 			len      = endo - i;
+			markers  = [];
 			real_len = real_len i endo image }
 
 (*
@@ -144,8 +165,8 @@ module Section = struct
 
 let to_string sec = 
   let re = sec.offset + sec.len - sec.real_len  in
-  Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d" sec.name sec.offset sec.len re
-
+  let markers = List.fold_left (fun acc (nm,ofs) -> acc ^ Printf.sprintf "\nm>offset: %d\tname: %s" nm ofs) "" sec.markers in
+    Printf.sprintf "name: %16s\toffset: %6d\tlen: %6d\tzeros: %6d%s" sec.name sec.offset sec.len re markers
 
 let to_list sec = 
   Array.fold_right (fun x acc -> x::acc) sec.image []
@@ -190,7 +211,7 @@ module Image = struct
       let rva = BinaryArray.get_dword array 0 in
       let rec loop o acc =
 	if o < size then
-	  let o',section = Section.next array o in
+	  let o',section = Section.next_section array o in
 	    loop o' (section::acc)
 	else List.rev acc in
 	{ sections = loop 0 []; 

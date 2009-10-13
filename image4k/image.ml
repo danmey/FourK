@@ -67,7 +67,7 @@ module Section = struct
 	  let name = ref "" in
 	  let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
 	  let j = skip_to_str "!@@" get_name i' section.image in
-	  ((no_hdr i'), !name)::(loop j) 
+	  ((no_hdr i')-2, !name)::(loop j) 
       with Invalid_argument _ -> []
     in
       { section with markers = loop 0 }
@@ -182,20 +182,25 @@ module Image = struct
   let save image nm with_tags = 
     let module S = Section in
     let file = open_out_bin nm in
+    let nm n = "@@-" ^ n ^ "-@@" in
     let write_section sec =
       (* write header *)
       if with_tags then
 	begin
 	  if not (sec.S.name = "default") then
-	    output_string file ("@@-" ^ sec.S.name ^ "-@@");
+	    begin
+	      seek_out file (sec.S.offset - (String.length (nm sec.S.name)));
+	      output_string file (nm sec.S.name);
+	    end
 	end;
-      let pos = pos_out file in
+      seek_out file sec.S.offset;
+(*      let pos = pos_out file in
       let d = sec.S.offset - pos in
 	if d < 0 then begin close_out file; failwith (Printf.sprintf "misplaced section (%s %d %d)" sec.S.name d pos) end
 	else begin
-	  for i=1 to d do output_byte file 0 done;
-	  Array.iter (output_byte file) sec.S.image;
-	end
+
+	  for i=1 to d do output_byte file 0 done; *)
+      Array.iter (output_byte file) sec.S.image;
     in
       List.iter write_section image.sections;
       close_out file
@@ -218,6 +223,16 @@ module Image = struct
 	  rva = rva }
 
   let find_section image nm = List.find (fun {Section.name=nm'} -> nm' = nm) image.sections
+  let find_marker image nm = 
+    let fm = List.find (fun (ofs,nm') -> nm' = nm) in
+	let sec = List.find 
+	  (fun x -> 
+	     try ignore(fm x.Section.markers); true
+	     with Not_found -> false) image.sections in
+    let (ofs,nm) = fm sec.Section.markers in
+      ofs+sec.Section.offset,nm
+
+
   let print_sections image =
     List.iter (fun x -> print_endline (Section.to_string x)) image.sections
 
@@ -505,6 +520,19 @@ module FourkImage = struct
 		   let src = Image.find_section image nm in 
 		   let dst = Image.find_section base_image nm in
 		     Section.copy src dst) copied_sections
+
+(*  let reloc_section image section =
+    
+    let image = Image.load x in  
+    let image_ref = Image.load !ref_name in
+    let print_reloc base1 base2 (ofs,_, v1, v2, n, img) =
+    Printf.printf "\t%.4lx: dword\t%.8lx -> %.8lx -> %8ld\n" ofs v1 v2 (Ni.sub v2 v1) in
+    let pre = List.combine image.Image.sections image_ref.Image.sections in
+    let lst = (List.map (fun (o,r) -> o.Section.name,Section.relocs o.Section.image r.Section.image) pre) in
+      List.iter (fun (nm,rs) ->
+		   Printf.printf "%s\n" nm; 
+		   List.iter (fun x -> Printf.printf "\t"; (print_reloc 0 0 x)) rs) lst)]),
+*)
 end
 
 module Options = struct
@@ -537,6 +565,8 @@ module Options = struct
 	       ]), "Dump given section";
       "-sections", String (fun nm -> 
 			     let image = Image.load nm in     
+			     let (ofs,_) = Image.find_marker image "entry" in
+			       Printf.printf "Entry point at offset: %d\n" ofs;
 			       Image.print_sections image
 			  ), 
       "List sections";

@@ -1,5 +1,3 @@
-include(macros.m4)
-include(dict.m4)
 
 #define PREFIX_WORDS_INDEX 5
 

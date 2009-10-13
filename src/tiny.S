@@ -183,6 +183,9 @@ dynstr:
 .asciz "write"
 .equ dynstrsz, 	. - dynstr
 
+include(macros.m4)
+include(dict.m4)
+MARKER("entry")
 include(4k.S)
 exit_:	.long 0
 /* # End of file image. */

@@ -1,8 +1,9 @@
 dnl Section defintion
 define([SECTION], [.ASCII "@@-", $1, "-@@"])dnl
-define([MARKER)],[
+define([MARKER],[
 	jmp	9f
-	.ASCIZ ""@@!",$1, "!@@"
+	.ASCII "@@!", $1, "!@@"
+9:
 ])
 define([EXECUTE_TOKEN],[6])dnl
 define([COMPILE_TOKEN],[5])dnl

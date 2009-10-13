@@ -29,7 +29,12 @@ let set_dword arr i dword =
 end
 
 module Section = struct
-  type t = { offset:int; len:int; real_len:int; name:string; image: BinaryArray.t}
+  type t = { offset:int; 
+	     len:int; 
+	     real_len:int; 
+	     name:string; 
+	     markers: (int*string) list;
+	     image: BinaryArray.t }
   let real_len s e image =
     let rec zeroes i = 
       if i >= s then
@@ -41,37 +46,39 @@ module Section = struct
     zeroes (e-1)
 
   let next image o =
-    let rec skip_to_section f i = 
-      if image.(i) = Char.code '@' && image.(i+1) = Char.code '@'  && image.(i+2) = Char.code '-' then
+    let rec skip_to_str str f i = 
+      if image.(i) = Char.code str.[0] && image.(i+1) = Char.code str.[1]  && image.(i+2) = Char.code str.[2] then
 	i+3
       else 
 	begin	  
 	  f image.(i);
-	  skip_to_section f (i+1) 
+	  skip_to_str str f (i+1) 
 	end
     in
-    let i = skip_to_section (fun _ -> ()) o in
-      if i-3 != o then begin
-	i-3, {	offset   = 0;
-		name     = "default"; 
-		image    = Array.sub image 0 (i-3); 
-		len      = i-3;
-		real_len = real_len 0 (i-3) image }
+    let id _ = () in
+    let no_hdr i = i - 3 in
+    let i = skip_to_str "@@-" id o in
+      if no_hdr i != o then begin
+	no_hdr i, { offset   = 0;
+		    name     = "default"; 
+		    image    = Array.sub image 0 (no_hdr i); 
+		    len      = i-3;
+		    real_len = real_len 0 (no_hdr i) image }
 	  end
       else
 	let name = ref "" in
 	let get_name c = name := !name ^ Printf.sprintf "%c" (char_of_int c) in
 	  try
-	    let i' = skip_to_section get_name i
+	    let i' = skip_to_str "-@@" get_name i
 	    in
 	      try 
-		let j = skip_to_section (fun _ -> ()) i' in
-		let sec_im = Array.sub image i' (j-i'-3) in
-		  j-3, { offset   = i'; 
+		let j = skip_to_str "@@-" id i' in
+		let sec_im = Array.sub image i' (no_hdr (j-i')) in
+		  no_hdr j, { offset   = i'; 
 			 name     = !name; 
 			 image    = sec_im;
-			 len      = j-i'-3; 
-			 real_len = real_len i' (j-3) image }
+			 len      = no_hdr (j-i'); 
+			 real_len = real_len i' (no_hdr j) image }
 	      with _ -> 
 		begin
 		  let endo = Array.length image in
@@ -159,7 +166,7 @@ module Image = struct
       if with_tags then
 	begin
 	  if not (sec.S.name = "default") then
-	    output_string file ("@@-" ^ sec.S.name ^ "@@-");
+	    output_string file ("@@-" ^ sec.S.name ^ "-@@");
 	end;
       let pos = pos_out file in
       let d = sec.S.offset - pos in

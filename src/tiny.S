@@ -155,7 +155,7 @@ reltext:
 
 interp:
 
-.byte 	
+.byte 
 .ascii "/lib/ld-linux.so.2"
 
 .equ interpsz, 	. - interp + 1

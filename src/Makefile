@@ -34,7 +34,7 @@ $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.S
 	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
-	ld --oformat binary -Ttext 05037000 $(BIN)/tiny.o -o $@
+	ld --oformat binary -Ttext 9149000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
 $(BIN)/boot.4ki: $(BASIC_FILES) bootstrap.4k

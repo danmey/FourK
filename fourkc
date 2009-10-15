@@ -11,6 +11,7 @@ self=${0}
 bootstrap=src/bootstrap.4k
 image4k=bin/image4k
 fourk=bin/4k
+ref_suffix=-ref
 
 function usage()
 {
@@ -58,13 +59,20 @@ while getopts "dqo:" opt; do
 done
 
 shift $(( ${OPTIND}-1 ))
-cat $1 >> boot.4k
-echo "save-image boot.4ki" >> boot.4k
-${fourk} < boot.4k
 rm -f boot.4k
+##rm -f boot${ref_suffix}.4k
+cat $1 >> boot.4k
+##cat $1 >> boot${ref_suffix}.4k
+echo "save-image boot.4ki" >> boot.4k
+##echo "save-image boot${ref_suffix}.4ki" >> boot${ref_suffix}.4k
+${fourk} < boot.4k
+##${fourk}${ref_suffix} < boot${ref_suffix}.4k
 cp ${fourk} temp
 
+##${image4k} -link boot.4ki boot${ref_suffix}.4ki temp
 ${image4k} -link boot.4ki temp
+cp temp ${out_file}
+
 ${image4k} -strip temp
 
 # Compress it

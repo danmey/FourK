@@ -64,7 +64,7 @@ ${fourk} < boot.4k
 rm -f boot.4k
 cp ${fourk} temp
 
-${image4k} -link  boot.4ki temp
+${image4k} -link boot.4ki temp
 ${image4k} -strip temp
 
 # Compress it

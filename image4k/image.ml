@@ -194,12 +194,6 @@ module Image = struct
 	    end
 	end;
       seek_out file sec.S.offset;
-(*      let pos = pos_out file in
-      let d = sec.S.offset - pos in
-	if d < 0 then begin close_out file; failwith (Printf.sprintf "misplaced section (%s %d %d)" sec.S.name d pos) end
-	else begin
-
-	  for i=1 to d do output_byte file 0 done; *)
       Array.iter (output_byte file) sec.S.image;
     in
       List.iter write_section image.sections;
@@ -519,7 +513,11 @@ module FourkImage = struct
       List.iter (fun nm -> 
 		   let src = Image.find_section image nm in 
 		   let dst = Image.find_section base_image nm in
-		     Section.copy src dst) copied_sections
+		     Section.copy src dst) copied_sections;
+    let (ofs,_) = Image.find_marker base_image "entry" in
+      ()
+      
+    
 
 (*  let reloc_section image section =
     

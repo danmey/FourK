@@ -29,12 +29,13 @@ let set_dword arr i dword =
 end
 
 module Section = struct
-  type t = { offset:int; 
-	     len:int; 
-	     real_len:int; 
-	     markers: (int*string) list;
-	     name:string; 
-	     image: BinaryArray.t }
+  type t = { offset   : int; 
+	     len      : int; 
+	     real_len : int; 
+	     markers  : (int*string) list;
+	     name     : string; 
+	     image    : BinaryArray.t }
+
   let real_len s e image =
     let rec zeroes i = 
       if i >= s then
@@ -72,7 +73,6 @@ module Section = struct
     in
       { section with markers = loop 0 }
       
-
   let next_section image o =
     let i = skip_to_str "@@-" id o image in
       if no_hdr i != o then begin

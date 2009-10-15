@@ -69,7 +69,7 @@ ${image4k} -strip temp
 
 # Compress it
 cp unpack.header ${out_file}
-gzip -cn9 temp >> ${out_file} 
+lzma -c9 temp >> ${out_file} 
 chmod +x ${out_file}
 
 msg $(ls -l temp | awk '{ print "Un-compressed size: " $5}')

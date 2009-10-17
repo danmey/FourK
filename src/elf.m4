@@ -1,4 +1,13 @@
+## define([SECTION], [
+## 		  .equ sec_$1,.
+## 		  divert(4)
+## 		  .LONG sec_$1
+## 		  divert
+## ])
+define([STD_DIVERT], [divert(5)])
 define([ELF_HEADER],[
+	STD_DIVERT
+
 /* # factor.asm: Copyright (C) 1999-2001 by Brian Raiter, under the GNU */
 /* # General Public License (version 2 or later). No warranty. */
 /* # */
@@ -13,10 +22,6 @@ define([ELF_HEADER],[
 
 
 /* # The program's data */
-
-.equ	iobuf_size, 96
-
-	
 
 beg:	
 
@@ -179,11 +184,14 @@ dynstr:
 
 /* # End of file image. */
 ])
-define([ELF_END],
+define([ELF_CODE_END],
 [
+	undivert(5)
 .equ filesz, 	. - beg
-
+])
+define([ELF_DATA_END],
+[	
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
-.equ memsz, 	dataorg - beg
+.equ memsz, 	0x1000+dataorg - beg
 ])

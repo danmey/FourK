@@ -22,13 +22,13 @@ define([NORMAL_SEMANTICS],
 [
 	divert(2)
 	.BYTE COMPILE_TOKEN, EXECUTE_TOKEN
-	divert
+	STD_DIVERT
 ])dnl
 define([IMMEDIATE_SEMANTICS],
 [
 	divert(2)
 	.BYTE EXECUTE_TOKEN, EXECUTE_TOKEN
-	divert
+	STD_DIVERT
 ])dnl
 define([_DEF_CODE],
 [
@@ -37,7 +37,7 @@ define([_DEF_CODE],
 		define([CORE_COUNT], incr(CORE_COUNT))dnl
 		.ASCII $2
 		.FILL eval(NTAB_ENTRY_SIZE - len($2) + 2)
-	divert dnl
+	STD_DIVERT
 	word_$1: .BYTE codeend_$1 - code_$1
 	code_$1:
 ])
@@ -57,7 +57,7 @@ define([DEF_VAR],[
 	movl	$var_$1,(%ebx)
 	divert(3)
 	var_$1:	.long $2
-	divert
+	STD_DIVERT
 	END_CODE dnl
 ])
 define([DEF_IMM],
@@ -81,7 +81,6 @@ define([END_DICT],
 	.LONG dlopen,8
 	.LONG dlsym,8
 	.FILL 256-16
-
 	SECTION("name")
 		ntab: 
 		undivert(1) dnl

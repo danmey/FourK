@@ -585,4 +585,5 @@ include(prim.S)
 	.ALIGN 4096
 
 _image_end:
-ELF_END()
+ELF_CODE_END()
+ELF_DATA_END()

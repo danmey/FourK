@@ -13,7 +13,7 @@ $1:
 	.LONG $1_ptr
 $1_ptr:	      .LONG 0
 $1_name:      .ASCIZ	"$1"
-	divert
+	STD_DIVERT
 ])
 
 define([K4_INIT_IMPORTS],

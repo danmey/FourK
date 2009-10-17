@@ -127,13 +127,8 @@ dynsym:
 		.long 	0
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
-
-.equ write_sym, 	4
-		.long 	write_name
+	
 		.long 	0
-		.long 	0
-		.word 	0x22			# STB_WEAK, STT_FUNC
-		.word 	0
 
 /* # The relocation table. The addresses of the three functions imported */
 /* # from libc are stored in the program's data area. */
@@ -180,8 +175,6 @@ dynstr:
 .equ dlsym_name, 	. - dynstr
 
 .asciz "dlsym"
-.equ write_name, 	. - dynstr
-.asciz "write"
 .equ dynstrsz, 	. - dynstr
 
 /* # End of file image. */

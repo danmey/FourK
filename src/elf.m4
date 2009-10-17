@@ -133,7 +133,7 @@ dynsym:
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
 	
-		.long 	0
+		.byte 	0
 
 /* # The relocation table. The addresses of the three functions imported */
 /* # from libc are stored in the program's data area. */

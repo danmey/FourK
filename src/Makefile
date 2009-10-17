@@ -1,5 +1,5 @@
 BIN = bin
-SRC = tiny.S
+SRC = 4k.S
 FOURKC = fourkc
 REF_SUFFIX = -ref
 SRC_FILES = 4k.S import.m4 macros.m4 dict.m4 prim.S $(SRC)

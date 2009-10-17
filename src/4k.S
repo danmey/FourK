@@ -1,4 +1,6 @@
-
+include(macros.m4)
+include(dict.m4)
+include(elf.m4)
 #define PREFIX_WORDS_INDEX 5
 
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
@@ -10,7 +12,10 @@
 #else
 	.DATA
 #endif
+#else
+	ELF_HEADER()
 #endif
+
 
 
 
@@ -580,3 +585,4 @@ include(prim.S)
 	.ALIGN 4096
 
 _image_end:
+ELF_END()

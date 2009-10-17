@@ -1,3 +1,4 @@
+define([ELF_HEADER],[
 /* # factor.asm: Copyright (C) 1999-2001 by Brian Raiter, under the GNU */
 /* # General Public License (version 2 or later). No warranty. */
 /* # */
@@ -183,15 +184,13 @@ dynstr:
 .asciz "write"
 .equ dynstrsz, 	. - dynstr
 
-include(macros.m4)
-include(dict.m4)
-MARKER("entry")
-include(4k.S)
-exit_:	.long 0
 /* # End of file image. */
-
+])
+define([ELF_END],
+[
 .equ filesz, 	. - beg
 
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
 .equ memsz, 	dataorg - beg
+])

@@ -657,95 +657,7 @@ let relocate_section (s,e) offs relocs base =
 let relocs_in_section (s,l,_,_) = 
   List.fold_left (fun acc r -> let (i,_,_,_,_) = r in if Ni.to_int i >= s && Ni.to_int i < s+l then r::acc else acc) []
 
-(*
-let nop_jump im = 
-  let (s,l,n,_) = next_section im 0 in
-    im.(s+10) <- 0x90;
-    im.(s+11) <- 0x90;
-    im.(s+12) <- 0x90;
-    im.(s+13) <- 0x90;
-    im.(s+14) <- 0x90
-*)
-
 let usage_text = "image4k <options> <file>"
-
-(*
-let list_relocs image ref_image relocate =
-  let base1 = BinaryArray.get_dword image. 0 in
-  let base2 = BinaryArray.get_dword ref_image 0 in
-  let delta = Ni.sub base1 base2 in
-    if not relocate then
-
-      let sections = Image.take image in
-      let print_relocs sec = 
-	let _,_,name,_ = sec in List.iter (print_reloc base1 base2) (Image.relocs sec (Image.find ref_image name)) in
-      list_sections image print_relocs
-
-()
-    else 
-      begin
-	Printf.printf "Delta: %lx\n" delta;
-	let sections = Image.take image in 
-	let dict = Image.find_section image "dict" in
-	let dict' = Image.find_section ref_image "dict" in
-	let dsptch = Image.find_section image "dsptch" in
-	let (ds,dl,_,_) = dsptch in
-	let (s,l,nm,im) = dict in 
-	let real_end = Image.real_end dict in
-	let offs = real_end - ds in 
-	let range = ds,ds+dl in
-	  Printf.printf "Offset: %d\n" offs;
-	  relocate_section range offs (Image.relocs dict dict') base1; 
-	  Array.blit image ds image real_end dl;
-	  BinaryFile.write image "image2.4ki" (Array.length image)
-      end
-*)      
-			   
-       
-     
-(*
-	 let l = relocs_in_section (s,s+l) diff in
-	   List.iter (print_reloc base1 base2) l) sections;
-*)  
-(* String of character *)
-
-
-(*
-let process_file file_name =        
-
-  let image = Image.load file_name in
-    (match !Options.reference_file with
-	 Some ref_nm ->
-	   let ref_image = Image.load ref_nm in
-	     list_relocs image ref_image !Options.relocate;
-	     ()
-       | None -> ());
-    if !Options.list_sections then
-      begin
-	list_sections (Image.load file_name) (fun _ -> ())
-      end
-    else
-    if !Options.link_with != "" then
-      begin
-	print_endline !Options.link_with;
-	let target_image = Image.load !Options.link_with in
-	let src_image = image in
-	let copy_same_section im im' nm = Image.copy (Image.find im nm) (Image.find im' nm) in
-	  copy_same_section src_image target_image "dict"; 
-	  (* Fill with nops *)
-	  Image.fill (Image.find target_image "dict") 0x90 0 5;
-	  Image.fill_all (Image.find target_image "name") 0; 
-	  Image.fill_all (Image.find target_image "semantic") 0; 
-	  Image.fill_all (Image.find target_image "interpret") 0;
-	  copy_same_section src_image target_image "dsptch";
-	  (*		  copy_same_section src_image target_image "semantic"; 
-			  copy_same_section src_image target_image "name"; *)
-
-      BinaryFile.write target_image !Options.link_with (Array.length target_image);
-
-  ()
-      end
-*) 
   
   let process_file nm = ()
   let _ = 
@@ -753,16 +665,4 @@ let process_file file_name =
     parse Options.options process_file usage_text
   else usage Options.options usage_text
 ;;
-(*
-      if !Options.relocate then
-      begin
-      let (s,l,n,im) = List.hd sections in
-      let rest_sections = List.tl sections in
-      let delta = s+l-cut_section f2 (s, l) in
-      List.iter (fun (s,l,n,_) -> relocate_section f2 (relocs_in_section (s,s+l) diff) (Ni.of_int (-delta))) rest_sections;
-      let len = Array.length f2 in
-(*		      Printf.printf "Blit: %d %d %d\n" (s+l) (s+l - delta) (len - delta- (s+l - delta)); *)
-      Array.blit f2 (s+l) f2 (s+l-delta) (len - (s+l)); 
-      BinaryFile.write f2 str len;
-*) 
 

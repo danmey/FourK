@@ -54,8 +54,6 @@ create :
 
 : repeat postpone branch here@ - c, immediate ;
 
-: a begin 1 . 10 emit repeat ;
-
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap c! ; immediate
 

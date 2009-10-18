@@ -2,20 +2,12 @@ include src/bootstrap.4k
 include src/debug.4k
 
 2 ccall: exit
-3 ccall: printf
-4 ccall: dlerror
-5 ccall: SDL_SetVideoMode
-6 ccall: SDL_PollEvent
+3 ccall: SDL_SetVideoMode
+4 ccall: SDL_PollEvent
 
 : init ( -- )
     " libc.so" lib " _exit" sym
     rcell add-handle
-    
-    " libc.so" lib " printf" sym
-    1 rcells add-handle
-    
-    " libdl.so" lib " dlerror" sym 
-    0 rcells add-handle
     
     " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 
     4 rcells add-handle
@@ -25,7 +17,7 @@ include src/debug.4k
 ;
 
 : \ postpone | ; immediate
-\ this for making happy my ans-loving Emacs mode :) 
+\ this for making happy my ans-loving Emacs mode ;) 
 
 \ SDL_CreateRGBSurfaceFrom(pixel, IMG_W, IMG_H, 32, 800*4, 0x0, 0x0, 0x0,0x0);
 \  SDL_Surface* screen = SDL_SetVideoMode(IMG_W,IMG_H,32,0);
@@ -55,14 +47,17 @@ variable surface
 create event 20 cells allot
 
 : video 0 bpp height width SDL_SetVideoMode ;
-: render-loop begin event SDL_PollEvent event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+
+: render-loop begin event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+
 : main 
     init
     video surface !
     render-loop
+    0 exit
 ;
 
 
-main
+
 
 

@@ -7,6 +7,15 @@ define([printf2],
 	add	$ 12,%esp
 ])
 
+define([log_op],[
+	mov	(%ebx),%eax
+	add	$ 4,%ebx
+ 	xor	%edx,%edx
+	mov	%edx,%ecx
+	dec 	%ecx
+	cmp	%eax,(%ebx)
+])
+	
 SECTION(words)
 BEGIN_DICT
 _words_start:
@@ -64,16 +73,6 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(execute, "execute")
-	jmp	1f
-log_op:
-	mov	(%ebx),%eax
-	add	$4,%ebx
- 	xor	%edx,%edx
-	mov	%edx,%ecx
-	dec 	%ecx
-	cmp	%eax,(%ebx)
-	ret
-1:
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
@@ -259,19 +258,19 @@ END_CODE
 
 
 DEF_CODE(equals, "=")
-	call 	log_op
+	log_op
 	cmove 	%ecx,%edx
 	mov	%edx,(%ebx)
 END_CODE
 
 DEF_CODE(lower, "<")
-	call 	log_op
+	log_op
 	cmovl 	%ecx,%edx
 	mov	%edx,(%ebx)
 END_CODE
 
 DEF_CODE(greater, ">")
-	call 	log_op
+	log_op
 	cmovg 	%ecx,%edx
 	mov	%edx,(%ebx)
 END_CODE

@@ -17,18 +17,18 @@ END_CODE
 DEF_CODE(branch, "branch")
 	movb	(%esi),%al
 	movsbl 	%al,%eax      # clear all the other bytes
-	add	%eax,%esi     # indirect jump ( 8 bit ) 
+	add	%eax,%esi     # indirect jump ( 8 bit )
 END_CODE
 DEF_CODE(branch0, "branch0")
 	mov	(%ebx),%eax   # TOS -> eax
 	add	$4,%ebx       # drop
 	or	%eax,%eax     # refresh flags
-	jnz	1f            # if zero eax=0 
+	jnz	1f            # if zero eax=0
 	movb	(%esi),%al
 	movsbl 	%al,%eax      # clear all the other bytes
 	add	%eax,%esi     # do an indirect jump ( 8 bit )
 	jmp	*%ebp
-1:	
+1:
 	inc %esi
 END_CODE
 DEF_CODE(ccall,"ccall")
@@ -64,12 +64,12 @@ log_op:
 	dec 	%ecx
 	cmp	%eax,(%ebx)
 	ret
-1:	
+1:
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
 	movb	%al,ex_bytecode
-	movb	$END_TOKEN,(ex_bytecode+1) 
+	movb	$END_TOKEN,(ex_bytecode+1)
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE
@@ -106,7 +106,7 @@ END_CODE
 DEF_CODE(rpush,">r")
 	mov (%ebx), %eax
 	add $4, %ebx
-	push %eax	
+	push %eax
 END_CODE
 
 DEF_CODE(rdrop,"r>")
@@ -134,7 +134,7 @@ DEF_CODE(minus,"-")
 END_CODE
 DEF_CODE(dot, ".")
 	xchg	%esp,%ebx
-	pushl 	$fmt_dec	
+	pushl 	$fmt_dec
 	call 	printf
 	add	$8,%esp
 	xchg	%esp,%ebx
@@ -158,7 +158,7 @@ END_CODE
 
 DEF_CODE(create,"create")
 	push	%esi
-	xchg	%esp,%ebx	
+	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	$token,	%esi		#load token into esi
 	movl	var_last,%eax 	#current words index
@@ -167,12 +167,12 @@ DEF_CODE(create,"create")
 	lea	(%edi,%eax,8),%edi 	#ntab + index * 4*8
 	mov	$NTAB_ENTRY_SIZE, %ecx #length of the word
 	rep	movsb		       	#copy the token
-	
+
 	movl	var_last,%eax       	#load index (unneeded?)
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$COMPILE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
-	
+
 	lea	dsptch(,%eax,4),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
@@ -192,13 +192,13 @@ DEF_IMM(immediate,"immediate")
 	cmp	$0, dsptch(,%eax,4) #dirty hack allow `immediate' word to be inside the word definition
 	jnz	1f
 	dec	%eax
-1:	
+1:
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$EXECUTE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
-END_CODE	
+END_CODE
 DEF_IMM(postpone,"postpone")
-	xchg	%esp,%ebx	
+	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
 	K4_SAFE_CALL(_find_word)
@@ -209,7 +209,7 @@ DEF_IMM(postpone,"postpone")
 	jmp	code_compile		# compile
 	jmp	9f
 
-1:	
+1:
 	mov	var_here,%edi
 	movb	$ 0, (%edi)
 	movb	%al, 1(%edi)
@@ -222,7 +222,7 @@ DEF_IMM(postpone,"postpone")
 	push	%eax
 	xchg	%esp,%ebx
 	jmp	code_compile		# compile
-9:	
+9:
 END_CODE
 DEF_CODE(fetch, "@")
 	movl	(%ebx),%eax
@@ -249,10 +249,10 @@ DEF_CODE(cstore, "c!")
 	add $8, %ebx
 END_CODE
 
-	
+
 DEF_CODE(equals, "=")
 	call 	log_op
-	cmove 	%ecx,%edx 
+	cmove 	%ecx,%edx
 	mov	%edx,(%ebx)
 END_CODE
 
@@ -309,13 +309,13 @@ END_CODE
 
 DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
-	pushl 	$fmt_char	
+	pushl 	$fmt_char
 	call 	printf
 	add	$8,%esp
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(tick, "'")
-	xchg	%esp,%ebx	
+	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
 	K4_SAFE_CALL(_find_word)
@@ -361,7 +361,7 @@ END_CODE
 
 DEF_CODE(dotf, ".f")
 	xchg	%esp,%ebx
-	pushl 	$fmt_float	
+	pushl 	$fmt_float
 	call 	printf
 	add	$8,%esp
 	xchg	%esp,%ebx
@@ -396,7 +396,7 @@ DEF_CODE(include,"include")
 	K4_SAFE_CALL(file_nest)
 	jnc 	1f
 	K4_SAFE_CALL(printf,$msg_file_not_found,$token)
-1:	
+1:
 END_CODE
 DEF_CODE(eval,"eval")
 	mov	(%ebx),%ecx

@@ -25,7 +25,7 @@ define([ELF_HEADER],[
 
 /* # The program's data */
 
-beg:	
+beg:
 
 
 /* # The ELF header and the program header table. The last eight bytes */
@@ -134,7 +134,7 @@ dynsym:
 		.long 	0
 		.word 	0x22			# STB_WEAK, STT_FUNC
 		.word 	0
-	
+
 		.byte 	0
 
 /* # The relocation table. The addresses of the three functions imported */
@@ -158,7 +158,7 @@ reltext:
 
 interp:
 
-.byte 
+.byte
 .ascii "/lib/ld-linux.so.2"
 
 .equ interpsz, 	. - interp + 1
@@ -177,7 +177,7 @@ dynstr:
 
 .asciz "__gmon_start__"
 .asciz "_Jv_RegisterClasses"
-	
+
 .asciz "dlopen"
 .equ dlsym_name, 	. - dynstr
 
@@ -192,7 +192,7 @@ _code_start:
 ])
 define([ELF_SECTION_TAB_OFFSET],[
 	.long _section_tab - _image_start
-])	
+])
 
 define([ELF_CODE_END],
 [
@@ -205,7 +205,7 @@ _section_tab:
 	.equ filesz, 	. - beg
 ])
 define([ELF_DATA_END],
-[	
+[
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
 .equ memsz, 	0x1000+dataorg - beg

@@ -16,13 +16,136 @@ include(elf.m4)
 	ELF_HEADER()
 #endif
 
+_image_start:
+	ELF_SECTION_TAB_OFFSET()
+	SECTION(dict)
+				# for relocations
+#ifdef TINY
+_start:
+#endif
+
+#ifdef DEBUG
+main:
+#endif
+# The call is nopped in the final image
+	jmp 	entry_point
+	mov	$0,	%ebx
+	push	%ebx
+# I don't why following paragraph is needed but certainly is needed
+	push	$dlopen_s
+	push	$ -1
+	call	dlsym
+	add	$8,%esp
+	mov	%eax,dlopen_
+################################################################################
+
+# This will be supplied with the last word by linker
+	call 	build_dispatch
+
+	mov	%esp,%ebx
+	sub	$4096,%ebx
+	mov	$next_word,%ebp
+	pop	%eax
+	dec	%eax
+	mov	%al,ex_bytecode
+	movb	$-1,(ex_bytecode+1)
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
+dlopen_s:	.asciz "dlopen"
+
+################################################################################
+# Build the dispatch table
+# In:
+# Out:
+
+build_dispatch:
+	mov	$dsptch, %edi	#load destination table of dwords
+	mov	$_words_start, %esi	#begining of the dictionary
+.loop:
+	xor	%eax,%eax	#clear out eax
+	lodsb
+	mov	%eax,%ecx
+	cmp	$-1,%al		#end of core dictionary?
+	je	.user_dictionary
+	mov	%esi,%eax	#load pointer to word
+	dec	%eax
+	stosl			#store the pointer to word in %edi
+	add	%ecx,%esi	#advance to next word
+	jmp	.loop
+.loop2:
+	xor	%eax,%eax
+	lodsb
+.user_dictionary:
+	cmp	$-1,%al
+	je	.found_word
+	cmp	$4,%al
+	jbe	.cont
+	jmp	.loop2
+.found_word:
+	cmpb	$-1,(%esi)
+	jz	.done
+	mov	%esi,%eax
+	dec	%eax
+	stosl
+	jmp	.loop2
+.cont:
+	cmp	$1,%al
+	jz	.lit4
+	lodsb
+	jmp	.loop2
+.lit4:
+	lodsl
+	jmp	.loop2
+
+.done:
+#	K4_SAFE_CALL(printf, $fmt_hex, var_here)
+#	K4_SAFE_CALL(printf, $fmt_hex, %esi)
+	ret
+
+ex_bytecode:		.BYTE  0,END_TOKEN
+
+dlsym:
+.byte 0xff,0x25
+.LONG dlsym_
+dlsym_:
+.LONG 0
+
+dlopen:
+.byte 0xff,0x25
+.LONG dlopen_
+dlopen_:
+.LONG 0
+
+################################################################################
+# Main bytecode interpreter loop,
+# Function escapes to main text interpreter loop throuh `interpret' token
+# In: %eax - contains a word pointer
+runbyte:
+	push	%esi		# push the current word address on the return stack
+	lea	1(%eax),%esi	# load the byte code pointer
+.fetchbyte:
+	xor	%eax,%eax	# fetch the byte, first clear up the %eax
+	lodsb			# byte code in %eax
+	cmpb	$-1,%al		# if it is end of word, escape by returning
+	je	.fold		# the previous byte code pointer
+	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
+	je	runbyte		     # if it is byte code then thread again
+	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
+	inc	%ecx		     # asm defined words escape to next_word at the end
+	jmp	*%ecx		     # jump there
+.fold:
+	pop	%esi		# we are threading out
+next_word:
+	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 
 
-	
+
+
 # Our iterpreting section, we can easily get rid of that and relocate rest
 SECTION(interpret)
-	
+
 ################################################################################
 # Get token, separated by whites, and put it in token
 # TODO: Make it case insesitive (lowercase everything)
@@ -54,7 +177,7 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
-	
+
 
 
 #ifdef TINY
@@ -69,16 +192,16 @@ K4_IMPORT(fwrite)
 K4_IMPORT(fclose)
 K4_IMPORT(mprotect)
 K4_IMPORT(fread)
-K4_INIT_IMPORTS(init_imports)	
+K4_INIT_IMPORTS(init_imports)
 #endif
 
-	
-	
+
+
 #ifdef DEBUG
 	.DATA
 #endif
 
-	
+
 
 # Our data, it will be stripped off so store it in intepret section
 long_tmp: 		.LONG 0
@@ -91,7 +214,7 @@ str_wb:			.ASCIZ 	"wb"
 str_rb:			.ASCIZ 	"rb"
 msg:			.ASCIZ "%s\n"
 msg2:			.ASCIZ "------\n"
-	
+
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_file_not_found:	.ASCIZ "File '%s' not found.\n"
 msg_test1:		.ASCIZ "Test1\n"
@@ -129,7 +252,7 @@ libc_handle:	 .LONG 0
 		mov	fh_stack(,%edx,4),\reg
 	.endm
 
-	
+
 ################################################################################
 # Nest into next file stream
 # In:
@@ -143,12 +266,12 @@ memo_nest:
 	jmp 	file_nest_ch
 file_nest:
 	K4_SAFE_CALL(fopen, %edi, $f_rt)
-file_nest_ch:	
+file_nest_ch:
 	or	%eax,%eax
 	jnz	1f
 	stc
 	ret
-1:	
+1:
 	incl	fh_stack_index
 	mov	fh_stack_index,%ecx
 	mov	%eax,fh_stack(,%ecx,4)
@@ -162,11 +285,11 @@ file_unnest:
 	decl	fh_stack_index
 	mov	fh_stack(,%ecx,4),%eax
 	ret
-	
-################################################################################	
+
+################################################################################
 # Parse literal, string is in token
 # In:
-# Out:	
+# Out:
 # eax - integer value
 _parse_literal:
 # Check for dot if dot is present then we have floating point number
@@ -211,10 +334,10 @@ _parse_literal:
 	pop	%edi
 	clc
 	ret
-2:	
+2:
 # Use cheap sscanf
 	K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
-3:	
+3:
 	cmp	$0,%eax
 	jz 	4f
 	mov 	long_tmp,%eax
@@ -226,11 +349,11 @@ _parse_literal:
 	pop	%edi
 	stc
 	ret
-	
-################################################################################	
+
+################################################################################
 # Get key, skipping whites
 # In:
-# Out:	
+# Out:
 # al - an ASCII code of character
 # token - a token
 _get_key_white_skip:
@@ -238,7 +361,7 @@ _get_key_white_skip:
 	call _is_white
 	jz _get_key_white_skip	# loop until we will find something
 	ret
-	
+
 ################################################################################
 # Is white?
 # In:
@@ -256,8 +379,8 @@ _is_white:
 	cmpb	$' ',%al	# SPACE ?
 	je	1f
 1:	ret
-	
-################################################################################	
+
+################################################################################
 # Get char from STDIN, jumps out in case of EOF
 # In:
 # Out:
@@ -272,10 +395,10 @@ _get_key:
 	ld_fh	%edx
 	K4_SAFE_CALL(fgetc,%edx)
 	ret
-2:	
+2:
 1:	ret
 
-################################################################################	
+################################################################################
 # Find the word in dictionary by comparing strings.
 # The dictionary is searched in reverse order, and idden words are skipped.
 #
@@ -284,34 +407,34 @@ _get_key:
 #
 # In:
 # edi - word to find
-# Out:	
+# Out:
 # eax - rets word index, C - set if no word found
 _find_word:
 	mov 	$ntab,%edx		# set up a pointer past the end
 	mov	var_last,%eax
-	shl	$5,%eax	
+	shl	$5,%eax
 	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
-1:	
+1:
 
 # If it's end of list then go and report fail
 	cmp	$(ntab-NTAB_ENTRY_SIZE) ,%edx
 	jz 	3f			# yes? Not found then.
 
 # Prepare for string comparition
-	mov 	%edx,%esi		
+	mov 	%edx,%esi
 	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
-					  	
+
 # Compare it
 	push	%edi			# save edi, because it contains
 	repe 	cmpsb			# the pointer to our value
 	pop	%edi			# restore
 	jz 	2f			# Found word!
-4:	
+4:
 	sub 	$NTAB_ENTRY_SIZE,%edx 	# Nope.. go back one entry
 	jmp 	1b
 2:
-	
+
 # We have found a word go and calculate index
 	sub 	$ntab,%edx
 	shr 	$5,%edx			# divide it by 32
@@ -352,9 +475,9 @@ entry_point:
 	call	init_imports
 
 	pushl	$stdin_name
-	pushl	libc_handle	
+	pushl	libc_handle
 	call 	dlsym
-	add	$8,%esp		
+	add	$8,%esp
 	mov	%eax,stdin_
 
 	movl	stdin_,%eax
@@ -369,7 +492,7 @@ entry_point:
 
 	mov	%esp,%ebx
 	sub	$4096,%ebx
-	
+
 interpret_loop:
 	K4_SAFE_CALL(_gettoken)	#get next token
 
@@ -397,7 +520,7 @@ interpret_loop:
 	jnc 	3f		#if literal cannot be parsed give a proper message and loop
 	K4_SAFE_CALL(printf,$msg_not_defined)
 	jmp 	interpret_loop
-	
+
 # Literal could be parsed here
 3:
 	cmp	$0, var_state	#code dependent on the state
@@ -416,7 +539,7 @@ interpret_loop:
 	incl	%ecx
 	mov	%ecx,var_here	#store the pointer and loop
 	jmp 	interpret_loop
-	
+
 .dword_lit:
 	mov	var_here,%ecx
 	movb	$1,(%ecx)	# token for literal
@@ -426,17 +549,17 @@ interpret_loop:
 	add	$4,%ecx
 	mov	%ecx,var_here	#store the pointer and loop
 	jmp 	interpret_loop
-	
+
 
 # Here we are pushing the literal on the stack as we are in interpreting mode
-4:	
+4:
 	xchg 	%esp,%ebx
 	push	%eax
 	xchg 	%esp,%ebx
 	jmp	interpret_loop
-	
+
 _exit2:
-	K4_SAFE_CALL(_exit,$ 0)	
+	K4_SAFE_CALL(_exit,$ 0)
 	ret
 
 
@@ -449,132 +572,6 @@ _exit2:
 # Our image starts here and will be saved by a save-image word, and load by
 # load-image word
 #
-_image_start:
-	ELF_SECTION_TAB_OFFSET()
-	SECTION(dict)
-				# for relocations
-
-
-#ifdef TINY
-_start:	
-#endif
-	
-#ifdef DEBUG
-main:
-#endif
-# The call is nopped in the final image
-	jmp 	entry_point
-  
-
-	mov	$0,	%ebx
-	push	%ebx
-# I don't why following paragraph is needed but certainly is needed
-	push	$dlopen_s
-	push	$ -1
-	call	dlsym
-	add	$8,%esp
-	mov	%eax,dlopen_
-################################################################################
-	
-# This will be supplied with the last word by linker
-	call 	build_dispatch	
-
-	mov	%esp,%ebx
-	sub	$4096,%ebx
-	mov	$next_word,%ebp
-	pop	%eax
-	dec	%eax
-	mov	%al,ex_bytecode
-	movb	$-1,(ex_bytecode+1)
-	mov	$(ex_bytecode-1),%eax
-	jmp	runbyte
-dlopen_s:	.asciz "dlopen"
-
-################################################################################	
-# Build the dispatch table
-# In:
-# Out:	
-
-build_dispatch:
-	mov	$dsptch, %edi	#load destination table of dwords
-	mov	$_words_start, %esi	#begining of the dictionary
-.loop:
-	xor	%eax,%eax	#clear out eax
-	lodsb
-	mov	%eax,%ecx
-	cmp	$-1,%al		#end of core dictionary?
-	je	.user_dictionary
-	mov	%esi,%eax	#load pointer to word
-	dec	%eax
-	stosl			#store the pointer to word in %edi
-	add	%ecx,%esi	#advance to next word
-	jmp	.loop
-.loop2:
-	xor	%eax,%eax
-	lodsb
-.user_dictionary:
-	cmp	$-1,%al
-	je	.found_word
-	cmp	$4,%al
-	jbe	.cont
-	jmp	.loop2
-.found_word:
-	cmpb	$-1,(%esi)
-	jz	.done
-	mov	%esi,%eax
-	dec	%eax
-	stosl
-	jmp	.loop2
-.cont:
-	cmp	$1,%al
-	jz	.lit4
-	lodsb
-	jmp	.loop2
-.lit4:
-	lodsl
-	jmp	.loop2
-	
-.done:
-#	K4_SAFE_CALL(printf, $fmt_hex, var_here)
-#	K4_SAFE_CALL(printf, $fmt_hex, %esi)
-	ret
-
-ex_bytecode:		.BYTE  0,END_TOKEN
-
-dlsym:	
-.byte 0xff,0x25
-.LONG dlsym_
-dlsym_:	
-.LONG 0
-
-dlopen:	
-.byte 0xff,0x25
-.LONG dlopen_
-dlopen_:	
-.LONG 0
-
-################################################################################
-# Main bytecode interpreter loop,
-# Function escapes to main text interpreter loop throuh `interpret' token
-# In: %eax - contains a word pointer
-runbyte:	
-	push	%esi		# push the current word address on the return stack
-	lea	1(%eax),%esi	# load the byte code pointer
-.fetchbyte:			
-	xor	%eax,%eax	# fetch the byte, first clear up the %eax
-	lodsb			# byte code in %eax
-	cmpb	$-1,%al		# if it is end of word, escape by returning
-	je	.fold		# the previous byte code pointer
-	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
-	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
-	je	runbyte		     # if it is byte code then thread again
-	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
-	inc	%ecx		     # asm defined words escape to next_word at the end
-	jmp	*%ecx		     # jump there
-.fold:	
-	pop	%esi		# we are threading out
-next_word:	
-	jmp 	.fetchbyte	# this is called by every asm word at the end
 
 
 # Our core words

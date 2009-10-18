@@ -134,6 +134,13 @@ DEF_CODE(mult,"*")
 	imul	(%ebx),%eax
 	mov	%eax,(%ebx)
 END_CODE
+DEF_CODE(div,"/")
+	mov	4(%ebx),%eax
+	xor	%edx,%edx
+	idivl	(%ebx)
+	add	$4,%ebx
+	mov	%eax,(%ebx)
+END_CODE
 
 DEF_CODE(minus,"-")
 	mov	(%ebx),%eax

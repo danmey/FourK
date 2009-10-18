@@ -204,5 +204,15 @@ variable #ithere
 
 : type' 1- 0 do dup r + c@ emit loop ;
 
-: a begin repeat ;
+: i postpone r ; immediate
+: j postpone r>
+    postpone r>
+    postpone r> 
+    postpone dup
+    postpone >r
+    postpone swap
+    postpone >r
+    postpone swap
+    postpone >r
+; immediate
 

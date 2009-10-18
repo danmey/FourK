@@ -341,13 +341,13 @@ DEF_CODE(f_init, "finit")
 END_CODE
 
 DEF_CODE(f_push, ">f")
-	fildl (%ebx)
+	flds (%ebx)
 	add $4, %ebx
 END_CODE
 
 DEF_CODE(f_pop, "f>")
 	sub $4, %ebx
-	fistpl (%ebx)
+	fstps (%ebx)
 END_CODE
 
 DEF_CODE(f_add, "f+")
@@ -368,9 +368,12 @@ END_CODE
 
 DEF_CODE(dotf, ".f")
 	xchg	%esp,%ebx
+	flds 	(%esp)
+	push 	%eax
+	fstpl 	(%esp)
 	pushl 	$fmt_float
 	printf2
-	add	$8,%esp
+	add	$12,%esp
 	xchg	%esp,%ebx
 END_CODE
 

@@ -109,6 +109,7 @@ comment
 : allot there @ + there ! ;
 
 : variable : there @ rliteral postpone ; rcell allot  ;
+: const : rliteral postpone ; ;
 
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate

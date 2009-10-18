@@ -1,4 +1,4 @@
-SECTION("words")
+SECTION(words)
 BEGIN_DICT
 _words_start:
 # Define prefix words here!

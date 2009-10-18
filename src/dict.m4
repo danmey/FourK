@@ -1,5 +1,4 @@
 dnl Section defintion
-define([SECTION], [.ASCII "@@-", $1, "-@@"])dnl
 define([MARKER],[
 	jmp	9f
 	.ASCII "@@!", $1, "!@@"
@@ -73,7 +72,7 @@ define([END_DICT],
 	.BYTE -1
 	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
-	SECTION("there")
+	SECTION(there)
 	there:
        .FILL 8*MAX_WORDS*4
 	undivert(3)
@@ -81,16 +80,16 @@ define([END_DICT],
 	.LONG dlopen,8
 	.LONG dlsym,8
 	.FILL 256-16
-	SECTION("name")
+	SECTION(name)
 		ntab: 
 		undivert(1) dnl
 		ntab_end:
 		.FILL NTAB_ENTRY_SIZE*MAX_WORDS
 
-	SECTION("dsptch")
+	SECTION(dsptch)
 		dsptch:		.FILL NCORE_WORDS*4
 		dsptch_end: 	.FILL 4*MAX_WORDS
-	SECTION("semantic")
+	SECTION(semantic)
 	semantic:
 		undivert(2)
        semantic_end:

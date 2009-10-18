@@ -21,7 +21,7 @@ include(elf.m4)
 
 	
 # Our iterpreting section, we can easily get rid of that and relocate rest
-SECTION("interpret")
+SECTION(interpret)
 	
 ################################################################################
 # Get token, separated by whites, and put it in token
@@ -444,14 +444,14 @@ _exit2:
 	.GLOBL _start
 .ALIGN 4096
 
-SECTION("dict")
 
 ################################################################################
 # Our image starts here and will be saved by a save-image word, and load by
 # load-image word
 #
 _image_start:
-	.LONG  _image_start	# at the begining we need the actual memory address
+	ELF_SECTION_TAB_OFFSET()
+	SECTION(dict)
 				# for relocations
 
 
@@ -462,9 +462,10 @@ _start:
 #ifdef DEBUG
 main:
 #endif
-
 # The call is nopped in the final image
 	jmp 	entry_point
+  
+
 	mov	$0,	%ebx
 	push	%ebx
 # I don't why following paragraph is needed but certainly is needed
@@ -584,6 +585,6 @@ include(prim.S)
 # TODO: For real usage maybe we need malloced heap
 	.ALIGN 4096
 
-_image_end:
 ELF_CODE_END()
 ELF_DATA_END()
+_image_end:

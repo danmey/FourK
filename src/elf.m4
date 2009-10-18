@@ -1,12 +1,14 @@
-## define([SECTION], [
-## 		  .equ sec_$1,.
-## 		  divert(4)
-## 		  .LONG sec_$1
-## 		  divert
-## ])
 define([STD_DIVERT], [divert(5)])
+define([SECTION], [
+ 	.equ sec_$1, . - _image_start
+ 	divert(6)
+ 	.LONG sec_$1
+	divert(7)
+	.ASCIZ "$1"
+ 	STD_DIVERT
+])
+
 define([ELF_HEADER],[
-	STD_DIVERT
 
 /* # factor.asm: Copyright (C) 1999-2001 by Brian Raiter, under the GNU */
 /* # General Public License (version 2 or later). No warranty. */
@@ -39,7 +41,7 @@ beg:
 		.byte 	1			# ELFCLASS32
 		.byte 	1			# ELFDATA2LSB
 		.byte 	1			# EV_CURRENT
-	.fill  9
+		.fill  9
 		.word 	2			# ET_EXEC
 		.word 	3			# EM_386
 		.long 	1			# EV_CURRENT
@@ -50,7 +52,7 @@ beg:
 		.word 	0x34			# sizeof(Elf32_Ehdr)
 		.word 	0x20			# sizeof(Elf32_Phdr)
 phdrs:
-	.long 	3			# PT_INTERP
+		.long 	3			# PT_INTERP
 		.long 	interp - beg
 		.long 	interp
 		.long 	interp
@@ -183,11 +185,24 @@ dynstr:
 .equ dynstrsz, 	. - dynstr
 
 /* # End of file image. */
+_code_start:
+	.ASCIZ "start"
+	STD_DIVERT
+
 ])
+define([ELF_SECTION_TAB_OFFSET],[
+	.long _section_tab - _image_start
+])	
+
 define([ELF_CODE_END],
 [
+_section_tab:
+	undivert(6)
+	.long 0x1111
+	undivert(7)
+	.byte 0
 	undivert(5)
-.equ filesz, 	. - beg
+	.equ filesz, 	. - beg
 ])
 define([ELF_DATA_END],
 [	

@@ -21,26 +21,10 @@ include src/debug.4k
     " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym rcell add-handle
 
     " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
-    
 ;
 
 : \ postpone | ; immediate
 \ this for making happy my ans-loving Emacs mode ;) 
-
-\ SDL_CreateRGBSurfaceFrom(pixel, IMG_W, IMG_H, 32, 800*4, 0x0, 0x0, 0x0,0x0);
-\  SDL_Surface* screen = SDL_SetVideoMode(IMG_W,IMG_H,32,0);
-\  SDL_Surface* img = render();
-\  SDL_BlitSurface(img, &screen_rect, screen, &screen_rect);
-\  SDL_Flip(screen);
-\  SDL_Event event;
-\  do
-\    {
-\      SDL_PollEvent(&event);
-\      if (event.type==SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE ) break;
-\    } while (1);
-\  SDL_Quit();
-\  
-\  SDL_Quit();
 
 320 const width
 200 const height
@@ -80,7 +64,7 @@ $00ff00 const green
     0 exit
 ;
 
-main
+
 
 
 

@@ -186,7 +186,6 @@ dynstr:
 
 /* # End of file image. */
 _code_start:
-	.ASCIZ "start"
 	STD_DIVERT
 
 ])

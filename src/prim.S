@@ -1,3 +1,12 @@
+define([printf2],
+[
+	call	printf
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	call	fflush
+	add	$ 12,%esp
+])
+
 SECTION(words)
 BEGIN_DICT
 _words_start:
@@ -135,8 +144,7 @@ END_CODE
 DEF_CODE(dot, ".")
 	xchg	%esp,%ebx
 	pushl 	$fmt_dec
-	call 	printf
-	add	$8,%esp
+	printf2
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(ccomma, ["ccomma"])
@@ -310,8 +318,7 @@ END_CODE
 DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
 	pushl 	$fmt_char
-	call 	printf
-	add	$8,%esp
+	printf2
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(tick, "'")
@@ -362,7 +369,7 @@ END_CODE
 DEF_CODE(dotf, ".f")
 	xchg	%esp,%ebx
 	pushl 	$fmt_float
-	call 	printf
+	printf2
 	add	$8,%esp
 	xchg	%esp,%ebx
 END_CODE

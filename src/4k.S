@@ -183,6 +183,8 @@ _gettoken:
 #ifdef TINY
 include(import.m4)
 K4_IMPORT(printf)
+K4_IMPORT(stdout)
+K4_IMPORT(fflush)
 K4_IMPORT(fopen)
 K4_IMPORT(fmemopen)
 K4_IMPORT(sscanf)

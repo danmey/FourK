@@ -1,0 +1,1 @@
+a=/tmp/I;tail -n+2 $0|lzma -cd>$a;chmod +x $a;$a;rm $a; exit

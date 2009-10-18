@@ -1,0 +1,11 @@
+variable flag
+
+: ch= ( char-adr char-adr -- t/f ) c@ swap c@ = ;
+: inc ( adr -- ) dup @ 1+ swap ! ;
+: dec ( adr -- ) dup @ 1- swap ! ; 
+: 2drop ( n n -- ) drop drop ; 
+
+
+: next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
+
+: str= ( str c str c -- t/f ) ;

@@ -351,6 +351,16 @@ DEF_CODE(f_push, ">f")
 	add $4, %ebx
 END_CODE
 
+DEF_CODE(f_pushi, "i>f")
+	filds (%ebx)
+	add $4, %ebx
+END_CODE
+
+DEF_CODE(f_popi, "f>i")
+	fistp (%ebx)
+	add $4, %ebx
+END_CODE
+
 DEF_CODE(f_pop, "f>")
 	sub $4, %ebx
 	fstps (%ebx)

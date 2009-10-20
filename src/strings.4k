@@ -1,4 +1,3 @@
-
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;
 
@@ -27,5 +26,7 @@ variable flag
 
 | compare two counted strings ( so with size checking ) 
 : str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 0 ;
+
+
 
 

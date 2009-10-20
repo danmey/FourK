@@ -1,11 +1,31 @@
-variable flag
 
-: ch= ( char-adr char-adr -- t/f ) c@ swap c@ = ;
 : inc ( adr -- ) dup @ 1+ swap ! ;
-: dec ( adr -- ) dup @ 1- swap ! ; 
+: dec ( adr -- ) dup @ 1- swap ! ;
+
 : 2drop ( n n -- ) drop drop ; 
+: over ( a b -- a b a ) swap dup >r swap r> ;
+: 2dup ( a b -- a b a b ) over over ;
+
+| exit current word if TOS is zero
+: 0; ( n -- ) postpone = postpone if 
+              postpone ;; postpone then 
+; immediate 
 
 
 : next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
+: ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
 
-: str= ( str c str c -- t/f ) ;
+variable flag
+| compare two zero terminated strings, the strings are assumed to be 
+| of the same size (no size checking ) 
+: compare ( str str -- t/f ) -1 flag ! 
+  begin 
+   2dup ch@ 2dup = invert if 0 flag ! then 
+   and 0 = if 2drop flag @ ;; then next-set 
+  repeat 
+;
+
+| compare two counted strings ( so with size checking ) 
+: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 0 ;
+
+

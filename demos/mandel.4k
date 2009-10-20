@@ -1,5 +1,5 @@
 include src/bootstrap.4k
-include src/debug.4k
+
 
 2 ccall: exit
 3 ccall: SDL_SetVideoMode
@@ -81,10 +81,12 @@ variable cy
   \     loop
    \ loop
 ;
-: a 10 0 do 10 0 do j . loop cr loop ;
-a
+: a 10 0 do 10 0 do i . loop cr loop ;
 
-: render-loop begin event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+
+
+
+\ : render-loop begin event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
 
 : main
     init

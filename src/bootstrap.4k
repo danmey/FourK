@@ -53,6 +53,7 @@ create :
 : begin here@ ; immediate
 
 : repeat postpone branch here@ - c, immediate ;
+: until  postpone branch0 here@ - c, ; immediate
 
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap c! ; immediate
@@ -178,24 +179,18 @@ variable #ithere
     postpone >r
     postpone >r
     postpone begin
-    postpone r>
-    postpone r>
-    postpone 2dup
-    postpone >r
-    postpone >r
-    postpone =
-    postpone invert
-    postpone if
 ; immediate
 
 
 : loop
-    swap
     postpone r>
+    postpone dup
     postpone 1+
+    postpone r
+    postpone swap
     postpone >r
-    postpone repeat
-    postpone then
+    postpone =
+    postpone until
     postpone r>
     postpone r>
     postpone drop
@@ -205,6 +200,7 @@ variable #ithere
 : type' 1- 0 do dup r + c@ emit loop ;
 
 : i postpone r ; immediate
+
 : j postpone r>
     postpone r>
     postpone r> 
@@ -215,4 +211,5 @@ variable #ithere
     postpone swap
     postpone >r
 ; immediate
+
 

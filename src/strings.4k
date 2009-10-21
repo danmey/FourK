@@ -27,6 +27,8 @@ variable flag
 | compare two counted strings ( so with size checking ) 
 : str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 0 ;
 
-
-
+| count the given zero-terminated string
+: count ( str -- c ) 0 >r 
+  begin dup c@ 0 = if drop r> ;; then 1+ r> 1+ >r repeat 
+;
 

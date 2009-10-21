@@ -15,7 +15,7 @@ define([DICT_SIZE], 4*1024)dnl
 define([NEXT_WORD], [jmp *%ebp])dnl
 define([CORE_COUNT],[0])dnl
 dnl
-define([BEGIN_DICT])dnl
+xdefine([BEGIN_DICT])dnl
 dnl
 define([NORMAL_SEMANTICS],
 [

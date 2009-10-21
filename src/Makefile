@@ -1,8 +1,8 @@
 BIN = bin
-SRC = 4k.S
+SRC = 4k.s
 FOURKC = fourkc
 REF_SUFFIX = -ref
-SRC_FILES = elf.m4 import.m4 macros.m4 dict.m4 prim.S $(SRC)
+SRC_FILES = elf.m4 import.m4 macros.m4 dict.m4 prim.s $(SRC)
 BOOT_FILES = $(BIN)/boot.4ki $(BIN)/boot$(REF_SUFFIX).4ki
 PROGRAM = $(BIN)/4k
 BASIC_FILES = $(PROGRAM) $(PROGRAM)$(REF_SUFFIX)
@@ -23,25 +23,25 @@ compress:
 	chmod +x 4k
 
 $(PROGRAM): $(SRC_FILES)
-	m4 -s $(SRC) > $(BIN)/t.S 
+	m4 -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
-	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
+	mv $(BIN)/t.P $(BIN)/t.s
+	gcc -c -nostdlib $(BIN)/t.s -o $(BIN)/tiny.o
 	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
 $(BIN)/4k-debug: $(SRC)
-	m4 -s $(SRC) > $(BIN)/t.S 
+	m4 -DDEBUG -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
-	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -lc -DDEBUG $(BIN)/t.S -o $@
+	mv $(BIN)/t.P $(BIN)/t.s
+	gcc -lc $(BIN)/t.s -o $@
 	cp $@ $(PREFIX)
 
 $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)
-	m4 -s $(SRC) > $(BIN)/t.S 
+	m4 -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
-	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
+	mv $(BIN)/t.P $(BIN)/t.s
+	gcc -c -nostdlib $(BIN)/t.s -o $(BIN)/tiny.o
 	ld --oformat binary -Ttext 9149000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 

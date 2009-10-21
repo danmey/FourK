@@ -5,7 +5,7 @@ include src/strings.4k
 3 ccall: exit
 
 : load-libc
-  " libc.so.6" lib " printf" sym 
+ " libc.so.6" lib " printf" sym 
   rcell add-handle
   " libc.so.6" lib " _exit" sym 
   rcell add-handle
@@ -14,7 +14,9 @@ include src/strings.4k
 
 : main
   load-libc
-  " ala ma kota" " ala ma koth " str= if " Yes there are the same!
-" >cstr printf then
-  " hello world!!
-  " >cstr printf 0 exit ;
+|  " hello world!!
+|  " >cstr printf 0 exit 
+;
+
+main
+

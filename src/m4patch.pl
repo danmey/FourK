@@ -7,7 +7,7 @@
 	  'lb' => '[',
 	  'rb' => ']');
 
-open(FH, '<', "bin/t.S") or die $';
+open(FH, '<', "bin/t.s") or die $';
 
 $last="";
 $match=0;

@@ -14,7 +14,7 @@ include src/strings.4k
 
 : main
   load-libc
-  " ala ma kota" " ala ma kota" str= if " Yes there are the same!
+  " ala ma kota" " ala ma koth " str= if " Yes there are the same!
 " >cstr printf then
   " hello world!!
   " >cstr printf 0 exit ;

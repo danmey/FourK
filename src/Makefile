@@ -14,6 +14,7 @@ all: basic boot
 basic: $(BASIC_FILES)
 boot: $(BOOT_FILES)
 compiler: $(FOURKC)
+debug: $(BIN)/4k-debug
 
 .PHONY: compress 
 compress: 
@@ -27,6 +28,13 @@ $(PROGRAM): $(SRC_FILES)
 	mv $(BIN)/t.P $(BIN)/t.S
 	gcc -c -nostdlib -DTINY $(BIN)/t.S -o $(BIN)/tiny.o
 	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
+	cp $@ $(PREFIX)
+
+$(BIN)/4k-debug: $(SRC)
+	m4 -s $(SRC) > $(BIN)/t.S 
+	./m4patch.pl > $(BIN)/t.P
+	mv $(BIN)/t.P $(BIN)/t.S
+	gcc -DDEBUG $(BIN)/t.S -o $@
 	cp $@ $(PREFIX)
 
 $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)

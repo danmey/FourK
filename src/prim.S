@@ -392,8 +392,6 @@ DEF_CODE(dotf, ".f")
 	add	$12,%esp
 	xchg	%esp,%ebx
 END_CODE
-
-
 DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)
@@ -453,10 +451,6 @@ END_CODE
 
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)
-
-#ifdef DEBUG
-	.data
-#endif
 
 DEF_VAR(base,10)
 DEF_VAR(state, 1)

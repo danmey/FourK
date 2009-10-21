@@ -6,29 +6,34 @@ include(elf.m4)
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there
 
-#ifndef TINY
 #ifdef DEBUG
 	.TEXT
-#else
-	.DATA
+	.align 4096
 #endif
-#else
+
+#ifdef TINY
 	ELF_HEADER()
 #endif
 
 _image_start:
+
 	ELF_SECTION_TAB_OFFSET()
 	SECTION(dict)
 				# for relocations
-#ifdef TINY
-_start:
-#endif
-
 #ifdef DEBUG
 main:
+#else
+_start:
 #endif
+	
 # The call is nopped in the final image
 	jmp 	entry_point
+#ifdef DEBUG
+#define PROT_READ	0x1		/* Page can be read.  */
+#define PROT_WRITE	0x2		/* Page can be written.  */
+#define PROT_EXEC	0x4		/* Page can be executed.  */
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+#endif
 	mov	$0,	%ebx
 	push	%ebx
 # I don't why following paragraph is needed but certainly is needed
@@ -156,11 +161,6 @@ SECTION(interpret)
 #libc:	.ASCIZ "/lib/libc-2.8.90.so"
 #stdins:	.ASCIZ "stdin"
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# this bit cannot be saved into image, therefore cannot be in the
-# interpret pseudo section due to `stdin' symbol relocation problem
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 _gettoken:
 # Skip whites
 	call	_get_key_white_skip
@@ -180,10 +180,10 @@ _gettoken:
 
 
 
-#ifdef TINY
 include(import.m4)
-K4_IMPORT(printf)
 K4_IMPORT(stdout)
+K4_IMPORT(stdin)
+K4_IMPORT(printf)
 K4_IMPORT(fflush)
 K4_IMPORT(fopen)
 K4_IMPORT(fmemopen)
@@ -195,13 +195,9 @@ K4_IMPORT(fclose)
 K4_IMPORT(mprotect)
 K4_IMPORT(fread)
 K4_INIT_IMPORTS(init_imports)
-#endif
 
 
 
-#ifdef DEBUG
-	.DATA
-#endif
 
 
 
@@ -233,20 +229,8 @@ fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
 
 
-libc:	.asciz "libc.so.6"
-printf_s: .asciz "printf"
-
-
-stdin_:	.LONG 0
-stdin_name:	.asciz "stdin"
 libc_handle:	 .LONG 0
 
-
-
-
-#ifdef DEBUG
-	.TEXT
-#endif
 
 
 	.macro ld_fh reg
@@ -452,40 +436,21 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
+	
 #ifdef TINY
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
 	call	dlsym
 	add	$8,%esp
-	mov	%eax,dlopen_
 ################################################################################
-
-	push	$dlopen_s
-	push	$ -1
-	call	dlsym
-	mov	%eax,dlopen_
-
-	push    $1
-	push    $libc
-	call    dlopen
-        add     $8,%esp
-        mov     %eax,libc_handle
-
-	add	$8,%esp
-	mov	%eax,libc_handle
 	call	init_imports
-
-	pushl	$stdin_name
-	pushl	libc_handle
-	call 	dlsym
-	add	$8,%esp
-	mov	%eax,stdin_
-
-	movl	stdin_,%eax
+#ifdef DEBUG
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+#endif
+	movl	stdin_ptr,%eax
 	pushl	(%eax)
-#else
-	pushl	stdin
+
 #endif
 	popl	fh_stack
 
@@ -567,7 +532,6 @@ _exit2:
 
 	.GLOBL main
 	.GLOBL _start
-.ALIGN 4096
 
 
 ################################################################################
@@ -579,11 +543,10 @@ _exit2:
 # Our core words
 include(prim.S)
 
-
-
 # TODO: For real usage maybe we need malloced heap
-	.ALIGN 4096
-
 ELF_CODE_END()
+#ifdef TINY
 ELF_DATA_END()
+#endif
+	.ALIGN 4096
 _image_end:

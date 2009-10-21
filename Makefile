@@ -14,6 +14,9 @@ compress:
 	gzip -cn9 $(BIN)/fourk >> $(BIN)/4k
 	chmod +x $(BIN)/4k
 
+debug:
+	$(MAKE) -C src debug
+
 basic: 
 	$(MAKE) -C src basic
 

@@ -197,14 +197,15 @@ define([ELF_CODE_END],
 [
 _section_tab:
 	undivert(6)
+])
+define([ELF_DATA_END],
+[
 	.long 0x1111
 	undivert(7)
 	.byte 0
 	undivert(5)
 	.equ filesz, 	. - beg
-])
-define([ELF_DATA_END],
-[
+
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
 .equ memsz, 	0x1000+dataorg - beg

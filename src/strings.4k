@@ -1,3 +1,4 @@
+
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;
 
@@ -32,12 +33,15 @@ variable flag
   begin dup c@ 0 = if drop r> ;; then 1+ r> 1+ >r repeat 
 ;
 
+
 variable last-symbol
 
 create symbols
 1024 allot
 
+
 symbols last-symbol ! 
+
 
 : symbol" ( -- ) 
   c: " parse there @ >r last-symbol @ there !
@@ -54,10 +58,12 @@ symbols last-symbol !
   repeat 
 ;
 
-
 symbol" foo"
 symbol" your-father"
 symbol" your-mother"
 
-: moo 1 1 = if 5 . then  ;
+last @ . cr 
+
+: moo 1 1 = if 5 . cr then ; 
 moo
+

@@ -5,7 +5,7 @@ BIN := $(PREFIX)
 
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all: basic boot linker compiler
+all: basic boot linker compiler debug
 
 
 compress:

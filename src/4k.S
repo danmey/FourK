@@ -192,8 +192,11 @@ K4_IMPORT(fgetc)
 K4_IMPORT(_exit)
 K4_IMPORT(fwrite)
 K4_IMPORT(fclose)
-K4_IMPORT(mprotect)
 K4_IMPORT(fread)
+ifndef([DEBUG],
+[
+	K4_IMPORT(mprotect)
+])
 K4_INIT_IMPORTS(init_imports)
 
 
@@ -437,21 +440,23 @@ _find_word:
 #there will be no code here in final image
 entry_point:
 	
-#ifdef TINY
 # I don't why following paragraph is needed but certainly is needed
+#ifdef TINY
+
 	push	$dlopen_s
 	push	$ -1
 	call	dlsym
 	add	$8,%esp
+#endif
 ################################################################################
-	call	init_imports
 #ifdef DEBUG
+	K4_SAFE_CALL(puts,$msg_test1)
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 #endif
+	call	init_imports
 	movl	stdin_ptr,%eax
 	pushl	(%eax)
 
-#endif
 	popl	fh_stack
 
 	mov	var_last,	%ebx

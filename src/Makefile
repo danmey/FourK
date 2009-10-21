@@ -9,7 +9,7 @@ BASIC_FILES = $(PROGRAM) $(PROGRAM)$(REF_SUFFIX)
 
 $(shell test -e $(BIN) || mkdir $(BIN))
 
-all: basic boot
+all: basic boot debug
 
 basic: $(BASIC_FILES)
 boot: $(BOOT_FILES)
@@ -34,7 +34,7 @@ $(BIN)/4k-debug: $(SRC)
 	m4 -s $(SRC) > $(BIN)/t.S 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -DDEBUG $(BIN)/t.S -o $@
+	gcc -lc -DDEBUG $(BIN)/t.S -o $@
 	cp $@ $(PREFIX)
 
 $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)

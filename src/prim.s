@@ -12,6 +12,7 @@ define([log_op],[
 	add	$ 4,%ebx
  	xor	%edx,%edx
 	mov	%edx,%ecx
+	xor	%ecx,%ecx
 	dec 	%ecx
 	cmp	%eax,(%ebx)
 ])
@@ -262,8 +263,6 @@ DEF_CODE(cstore, "c!")
 	movb %cl, (%eax)
 	add $8, %ebx
 END_CODE
-
-
 DEF_CODE(equals, "=")
 	log_op
 	cmove 	%ecx,%edx
@@ -392,8 +391,11 @@ DEF_CODE(dotf, ".f")
 	push 	%eax
 	fstpl 	(%esp)
 	pushl 	$fmt_float
-	printf2
-	add	$12,%esp
+	call	printf
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	call	fflush
+	add	$ 16,%esp
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(save_image, "save-image")
@@ -450,12 +452,13 @@ lib_sdl:	.ASCIZ "libSDL.so"
 	xchg	%ebx,%esp
 END_CODE
 
+DEF_VAR(here, here)
+
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)
 
 DEF_VAR(base,10)
 DEF_VAR(state, 1)
-DEF_VAR(here, here)
 DEF_VAR(last, [NCORE_WORDS])
 END_DICT
 

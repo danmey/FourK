@@ -26,7 +26,7 @@ variable flag
 ;
 
 | compare two counted strings ( so with size checking ) 
-: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 0 ;
+: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
 
 | count the given zero-terminated string
 : count ( str -- c ) 0 >r 
@@ -53,13 +53,14 @@ symbols last-symbol !
   dup count + 1+ 
 ; 
 : search ( str c -- index ) 0 >r symbols >r
-  begin 
+  begin
    2dup r count 0 = if r> 2drop 2drop r> 2drop 0 ;; then 
-   r dup count .s cr str= if 2drop r> drop r> ;; then 
-   r> next-symbol r> 1+ >r >r r r count type cr  
+   r dup count str= if 2drop r> drop r> ;; then 
+    r> next-symbol r> 1+ >r >r r r count type cr  
   repeat 
 ;
 
 symbol" foo" 
 symbol" your-father"
 symbol" your-mother"
+

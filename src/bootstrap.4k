@@ -129,7 +129,7 @@ create #str
 
 | inlines a counted list of bytes to there
 : inline ( str c -- str c ) here @ >r there @ here ! here @ + >r
-  begin r here @ = if there @ r> there @ - here @ there ! r> here ! ;; then
+  begin r here @ = if drop there @ r> there @ - here @ there ! r> here ! ;; then
   dup c@ c, 1+ repeat
 ;
 

@@ -46,8 +46,8 @@ symbols last-symbol !
 
 
 : symbol" ( -- ) 
-  c: " parse there @ >r last-symbol @ there !
-  1+ inline there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
+  c: " parse there @ >r last-symbol @ there !  
+  1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
 ;
 : next-symbol ( symbol -- symbol+1 ) 
   dup count + 1+ 
@@ -55,14 +55,11 @@ symbols last-symbol !
 : search ( str c -- index ) 0 >r symbols >r
   begin 
    2dup r count 0 = if r> 2drop 2drop r> 2drop 0 ;; then 
-   r dup count str= if 2drop r> drop r> ;; then 
+   r dup count .s cr str= if 2drop r> drop r> ;; then 
    r> next-symbol r> 1+ >r >r r r count type cr  
   repeat 
 ;
 
-symbol" foo"
+symbol" foo" 
 symbol" your-father"
 symbol" your-mother"
-
-: moo 1 1 = if 5 . cr then ;
-

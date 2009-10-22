@@ -464,7 +464,7 @@ ifdef([DEBUG],[
 	call 	build_dispatch
 
 	mov	%esp,%ebx
-	sub	$4096,%ebx
+	sub	$ 4096,%ebx
 
 interpret_loop:
 	K4_SAFE_CALL(_gettoken)	#get next token

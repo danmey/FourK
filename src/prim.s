@@ -84,6 +84,7 @@ DEF_CODE(execute, "execute")
 END_CODE
 
 DEF_CODE(interpret,"interpret")
+	pop	%eax
 	jmp	interpret_loop
 END_CODE
 	##

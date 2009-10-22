@@ -324,7 +324,11 @@ END_CODE
 DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
 	pushl 	$fmt_char
-	printf2
+	call	printf
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	call	fflush
+	add	$ 12,%esp
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(tick, "'")

@@ -49,6 +49,9 @@ create :
 : 1+ 1 + ;
 : 1- 1 - ;
 : 0= 0 = ;
+: cr 10 emit ;
+: space 32 emit ;
+: . . space ;
 
 : begin here@ ; immediate
 
@@ -56,7 +59,7 @@ create :
 : until  postpone branch0 here@ - c, ; immediate
 
 : if postpone branch0 here@ 0 c, ; immediate
-: then 1- dup here@ swap - swap c! ; immediate
+: then dup here@ swap - swap dup here @ . space . cr c! ; immediate
 
 : | begin key 10 = if ;; then repeat ; immediate
 
@@ -88,10 +91,6 @@ comment
 : data; data: ;
 
 | output words
-: cr 10 emit ;
-: space 32 emit ;
-: # . ;
-: . . space ;
 
 
 : create create there @ rliteral postpone ; ;
@@ -211,4 +210,5 @@ variable #ithere
     postpone swap
     postpone >r
 ; immediate
+
 

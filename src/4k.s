@@ -34,13 +34,14 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	jmp 	entry_point
 	mov	$0,	%ebx
 	push	%ebx
-	call	init_imports
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
 	call	dlsym
 	add	$8,%esp
 	mov	%eax,dlopen_
+	call	init_imports
+
 ################################################################################
 # This will be supplied with the last word by linker
 	call 	build_dispatch
@@ -446,6 +447,7 @@ entry_point:
 	push	$ -1
 	call	dlsym
 	add	$8,%esp
+	mov	%eax,dlopen_
 ################################################################################
 ifdef([DEBUG],[
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))

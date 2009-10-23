@@ -59,7 +59,7 @@ create :
 : until  postpone branch0 here@ - c, ; immediate
 
 : if postpone branch0 here@ 0 c, ; immediate
-: then dup here@ swap - swap dup here . here@ . space . cr c! ; immediate
+: then dup here@ swap - swap  c! ; immediate
 
 : | begin key 10 = if ;; then repeat ; immediate
 

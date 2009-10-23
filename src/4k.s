@@ -32,11 +32,9 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	
 # The call is nopped in the final image
 	jmp 	entry_point
-ifdef([DEBUG],[
-	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-])
 	mov	$0,	%ebx
 	push	%ebx
+	call	init_imports
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
@@ -44,7 +42,6 @@ ifdef([DEBUG],[
 	add	$8,%esp
 	mov	%eax,dlopen_
 ################################################################################
-
 # This will be supplied with the last word by linker
 	call 	build_dispatch
 
@@ -451,7 +448,6 @@ entry_point:
 	add	$8,%esp
 ################################################################################
 ifdef([DEBUG],[
-	K4_SAFE_CALL(puts,$msg_test1)
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
 	call	init_imports
@@ -463,7 +459,7 @@ ifdef([DEBUG],[
 	mov	var_last,	%ebx
 	call 	build_dispatch
 
-	mov	%esp,%ebx
+ 	mov	%esp,%ebx
 	sub	$ 4096,%ebx
 
 interpret_loop:

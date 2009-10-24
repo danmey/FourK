@@ -10,12 +10,12 @@ out_file=a.out
 self=${0}
 bootstrap=src/bootstrap.4k
 image4k=bin/image4k
-fourk=bin/4k
+fourk=bin/4k-debug
 ref_suffix=-ref
 
 function usage()
 {
-    echo "FourK - an interactive tool for non-interactive 4kb presentations"
+    echo "4K - an interactive tool for non-interactive 4KB presentations"
     echo "Compiler front end."
     echo "Idea at the Function 2009."
     echo "Please use with precatious, might compress the Universe into 4k."

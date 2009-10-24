@@ -189,7 +189,8 @@ _code_start:
 	STD_DIVERT
 
 ])
-define([ELF_SECTION_TAB_OFFSET],[
+define([ELF_SECTION_TAB_OFFSET],
+[
 	.long _section_tab - _image_start
 ])
 

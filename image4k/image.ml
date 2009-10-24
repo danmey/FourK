@@ -154,7 +154,6 @@ module Image = struct
 	  && array.(3) = int_of_char 'F'
 	then
 	  begin
-	    let code_start = 408 in
 	    let entry_point  = BinaryArray.get_dword array 24 in
 	    let rva = BinaryArray.get_dword array 0x54 in
 	    let entry_offset = Int32.sub entry_point rva in

@@ -17,15 +17,10 @@ ifdef([DEBUG],,
 ])
 
 _image_start:
-
 	ELF_SECTION_TAB_OFFSET()
 	SECTION(dict)
 				# for relocations
-ifdef([DEBUG],[
-main:
-],[
 _start:
-])
 define([PROT_READ],	0x1)		/* Page can be read.  */
 define([PROT_WRITE],	0x2)		/* Page can be written.  */
 define([PROT_EXEC],	0x4)		/* Page can be executed.  */
@@ -40,8 +35,6 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	call	dlsym
 	add	$8,%esp
 	mov	%eax,dlopen_
-	call	init_imports
-
 ################################################################################
 # This will be supplied with the last word by linker
 	call 	build_dispatch
@@ -197,8 +190,7 @@ K4_IMPORT(_exit)
 K4_IMPORT(fwrite)
 K4_IMPORT(fclose)
 K4_IMPORT(fread)
-ifdef([DEBUG],,
-	[K4_IMPORT(mprotect)])
+ifdef([DEBUG],, [K4_IMPORT(mprotect)])
 K4_INIT_IMPORTS(init_imports)
 
 
@@ -441,6 +433,10 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
+ifdef([DEBUG],[
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+])
+	call	init_imports
 	
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
@@ -449,10 +445,6 @@ entry_point:
 	add	$8,%esp
 	mov	%eax,dlopen_
 ################################################################################
-ifdef([DEBUG],[
-	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-])
-	call	init_imports
 	movl	stdin_ptr,%eax
 	pushl	(%eax)
 

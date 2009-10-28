@@ -35,18 +35,25 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	call	dlsym
 	add	$8,%esp
 	mov	%eax,dlopen_
+	call	init_imports
+
 ################################################################################
 # This will be supplied with the last word by linker
 	call 	build_dispatch
+	pop	%eax
+	dec	%eax
+#	K4_SAFE_CALL(printf, $fmt_dec,	%eax)
+#	movl $1,%eax
+#	xor %ebx,%ebx
+#	int $128
 
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	$next_word,%ebp
-	pop	%eax
-	dec	%eax
 	mov	%al,ex_bytecode
 	movb	$-1,(ex_bytecode+1)
 	mov	$(ex_bytecode-1),%eax
+
 	jmp	runbyte
 dlopen_s:	.asciz "dlopen"
 
@@ -141,8 +148,24 @@ runbyte:
 next_word:
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
+fmt_dec:		.ASCIZ 	"%d\n"
 
 
+include(import.m4)
+K4_IMPORT(stdout)
+K4_IMPORT(stdin)
+K4_IMPORT(printf)
+K4_IMPORT(fflush)
+K4_IMPORT(fopen)
+K4_IMPORT(fmemopen)
+K4_IMPORT(sscanf)
+K4_IMPORT(fgetc)
+K4_IMPORT(_exit)
+K4_IMPORT(fwrite)
+K4_IMPORT(fclose)
+K4_IMPORT(fread)
+ifdef([DEBUG],, [K4_IMPORT(mprotect)])
+K4_INIT_IMPORTS(init_imports)
 
 
 # Our iterpreting section, we can easily get rid of that and relocate rest
@@ -177,21 +200,6 @@ _gettoken:
 
 
 
-include(import.m4)
-K4_IMPORT(stdout)
-K4_IMPORT(stdin)
-K4_IMPORT(printf)
-K4_IMPORT(fflush)
-K4_IMPORT(fopen)
-K4_IMPORT(fmemopen)
-K4_IMPORT(sscanf)
-K4_IMPORT(fgetc)
-K4_IMPORT(_exit)
-K4_IMPORT(fwrite)
-K4_IMPORT(fclose)
-K4_IMPORT(fread)
-ifdef([DEBUG],, [K4_IMPORT(mprotect)])
-K4_INIT_IMPORTS(init_imports)
 
 
 
@@ -203,7 +211,6 @@ long_tmp: 		.LONG 0
 token:			.FILL	64
 fmt_float: 		.ASCIZ  "%f"
 fmt_hex:		.ASCIZ 	"%x\n"
-fmt_dec:		.ASCIZ 	"%d"
 fmt_char:		.ASCIZ 	"%c"
 str_wb:			.ASCIZ 	"wb"
 str_rb:			.ASCIZ 	"rb"

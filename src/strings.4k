@@ -49,7 +49,7 @@ symbols last-symbol !
   there @ >r last-symbol @ there !  
   1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
 ;
-: symbol" ( -- ) c: " ̂parse symbol ;
+: symbol" ( -- ) c: " parse symbol ;
 
 : next-symbol ( symbol -- symbol+1 ) 
   dup count + 1+ 
@@ -69,4 +69,5 @@ variable library
 : func" ( stackfix  -- ) library @ c: " parse 2dup symbol sym add-handle ;
 
 lib" libc.so.6"
-func" printf"
+rcell func" printf"
+

@@ -45,23 +45,28 @@ symbols last-symbol !
 
 
 
-: symbol" ( -- ) 
-  c: " parse there @ >r last-symbol @ there !  
+: symbol ( str c -- ) 
+  there @ >r last-symbol @ there !  
   1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
 ;
+: symbol" ( -- ) c: " ̂parse symbol ;
+
 : next-symbol ( symbol -- symbol+1 ) 
   dup count + 1+ 
 ; 
 : search ( str c -- index ) 0 >r symbols >r
   begin
-   2dup r count 0 = if r> 2drop 2drop r> 2drop 0 ;; then 
+   2dup r count 0 = if r> 2drop 2drop r> 2drop -1 ;; then 
    r dup count str= if 2drop r> drop r> ;; then 
     r> next-symbol r> 1+ >r >r r r count type cr  
   repeat 
 ;
 
-symbol" foo" 
-symbol" your-father"
-symbol" your-mother"
 
+variable library 
 
+: lib" ( -- ) c: " parse lib library ! ;
+: func" ( stackfix  -- ) library @ c: " parse 2dup symbol sym add-handle ;
+
+lib" libc.so.6"
+func" printf"

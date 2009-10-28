@@ -209,7 +209,7 @@ module Image = struct
 				    { offset   = o;
 				      name     = name';
 				      len      = len;
-				      image = sec_im;
+				      image    = sec_im;
 				      markers  = [];
 				      real_len = 0  } in s::acc)
 		   end

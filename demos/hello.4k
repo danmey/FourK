@@ -8,15 +8,14 @@ include src/strings.4k
  " libc.so.6" lib " printf" sym 
   rcell add-handle
   " libc.so.6" lib " _exit" sym 
-  rcell add-handle
+   rcell add-handle
+ ;
+
+
+ : main
+   load-libc
+   " hello world!!
+  " >cstr printf 0 exit 
 ;
 
-
-: main
-|  load-libc
-|  " hello world!!
-|  " >cstr printf 0 exit 
-;
-
-main
 

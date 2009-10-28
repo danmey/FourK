@@ -1,11 +1,11 @@
-define([STD_DIVERT], [divert(5)])
+define([STD_DIVERT], [divert(0)])
 define([SECTION], [
  	.equ sec_$1, . - _image_start
  	divert(6)
  	.LONG sec_$1
 	divert(7)
 	.ASCIZ "$1"
- 	STD_DIVERT
+	divert(0)
 ])
 
 define([ELF_HEADER],[
@@ -186,25 +186,23 @@ dynstr:
 
 /* # End of file image. */
 _code_start:
-	STD_DIVERT
 
 ])
 define([ELF_SECTION_TAB_OFFSET],
 [
-	.long _section_tab - _image_start
+	.long _section_tab
 ])
 
 define([ELF_CODE_END],
 [
 _section_tab:
 	undivert(6)
-])
-define([ELF_DATA_END],
-[
 	.long 0x1111
 	undivert(7)
 	.byte 0
-	undivert(5)
+])
+define([ELF_DATA_END],
+[
 	.equ filesz, 	. - beg
 
 .equ dataorg, 	beg + ((filesz + 16) & ~15)

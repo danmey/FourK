@@ -10,7 +10,7 @@ out_file=a.out
 self=${0}
 bootstrap=src/bootstrap.4k
 image4k=bin/image4k
-fourk=bin/4k-debug
+fourk=bin/4k
 ref_suffix=-ref
 
 function usage()

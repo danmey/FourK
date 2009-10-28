@@ -13,7 +13,7 @@ include src/strings.4k
 
 
 : main
-  load-libc
+|  load-libc
 |  " hello world!!
 |  " >cstr printf 0 exit 
 ;

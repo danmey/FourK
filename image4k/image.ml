@@ -155,13 +155,16 @@ module Image = struct
 	then
 	  begin
 	    let entry_point  = BinaryArray.get_dword array 24 in
-	    let rva = BinaryArray.get_dword array 0x54 in
+	      Printf.printf "Entry: %lx\n" entry_point; (*08049004 *)
+	    let phdr = BinaryArray.get_dword array 28 in
+	    let rva = BinaryArray.get_dword array (40 + Int32.to_int phdr) in
 	    let entry_offset = Int32.sub entry_point rva in
-	    let sec_tab_ptr_offset = (Int32.to_int entry_offset)-4 in
-	    let section_tab_offset = Int32.to_int (BinaryArray.get_dword array sec_tab_ptr_offset) + sec_tab_ptr_offset in
+	    let sec_tab_ptr_offset = Int32.sub entry_offset (Int32.of_int 4) in
+	    let sec_tab_offset = BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in
+	    let section_tab_offset = Int32.to_int (Int32.sub sec_tab_offset rva) in
 	      Printf.printf "Entry point: %lx\n" entry_point;
-	      Printf.printf "Entry index: %lx\n" entry_offset;
-	      Printf.printf "Section tab offset: %x\n" section_tab_offset;
+	      Printf.printf "Entry offset: %lx\n" rva;
+	      Printf.printf "Section tab offset: %lx\n" sec_tab_ptr_offset;
 	      Int32.to_int entry_offset-4, section_tab_offset
 	  end
 	else 0, Int32.to_int (BinaryArray.get_dword array 0)
@@ -273,9 +276,9 @@ module Words = struct
       let rec disassemble_word' =
 	function
 	  | []                           -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> (Prefix (a, i))::(disassemble_word' xs)
-	  | 1::b1::b2::b3::b4::xs                          -> (Prefix32 (1, (dword b4 b3 b2 b1)))::(disassemble_word' xs)
-	  | c::xs                                          -> (Opcode c)::(disassemble_word' xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> Prefix (a, i)::(disassemble_word' xs)
+	  | 1::b1::b2::b3::b4::xs                          -> Prefix32 (1, (dword b4 b3 b2 b1))::(disassemble_word' xs)
+	  | c::xs                                          -> Opcode c::(disassemble_word' xs)
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)

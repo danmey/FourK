@@ -403,7 +403,13 @@ DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)
 	push	%eax
-	K4_SAFE_CALL(fwrite, $_image_start, $ 1, $(_image_end-_image_start), %eax)
+	push	%eax
+	push	_image_start
+	subl	$_image_start,(%esp)
+	pop	long_tmp
+	K4_SAFE_CALL(fwrite, $long_tmp, $ 4, $ 1,  %eax)
+	pop	%eax
+	K4_SAFE_CALL(fwrite, $_image_start+4, $ 1, $(_image_end-_image_start-4), %eax)
 	pop	%eax
 	K4_SAFE_CALL(fclose, %eax)
 END_CODE

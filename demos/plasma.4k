@@ -26,8 +26,8 @@ include src/bootstrap.4k
 : \ postpone | ; immediate
 \ this for making happy my ans-loving Emacs mode ;) 
 
-320 const width
-200 const height
+800 const width
+600 const height
 32  const bpp
 bpp 8 / const point
 27  const Esc
@@ -39,9 +39,10 @@ bpp 8 / const point
 variable screen
 variable surface
 create event 20 cells allot
+create pallete 256 rcells allot
 
 : points point * ;
-: pixel ( col x y -- ) width * + points screen @ s>pixels + !  ;
+: pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap !  ;
 
 : video 0 bpp height width SDL_SetVideoMode ;
 
@@ -60,25 +61,66 @@ variable cy
 
 : sqr dup * ;
 
+
 width sqr height sqr + i>f >f fsqrt f> const max
+
+width  2 / i>f const w/2
+height 2 / i>f const h/2
+
 : fsin fsincos f> drop ;
+
+: sin fsin 127.0 >f f* 128.0 >f f+ ;
+
+: nx i>f >f w/2 >f f- ;
+
+: ny i>f >f h/2 >f f- ;
+
+1.0 >f 8.0 >f f/ f> const c1/8
+1.0 >f 16.0 >f f/ f> const c1/16
+1.0 >f 32.0 >f f/ f> const c1/32
+
 
 variable time
 1.0 time !
+
+: draw2
+    x i>f dup >f >f f* 
+    y i>f dup >f >f f* 
+    f+ fsqrt
+    c1/8 >f f* sin
+;
+
 : draw
     height 0 do
 	width 0 do
+	    finit
+	    x i>f >f c1/16 >f f* sin 
+	    y i>f >f c1/32 >f f* sin f+
 
-	    | finit time @ >f fsin y x + i>f 0.1 >f f* f+ fsincos f* x i>f >f 0.1 >f f* fsin f+ 2.0  >f f+ 64.0 >f f* f> f>i x y pixel
-    time @ >f 255.0 >f f* f> f>i x y pixel
-	    |	    finit
-	    |	    x i>f width  i>f f/ 0.5 >f f- 3 i>f f* 0.7 >f f- f> cx !
-	    |	    y i>f height i>f f/ 0.5 >f f- 3 i>f f* f> cy !
-	    |	    mandel 0= invert if green x y pixel then
+	    x nx f> dup >f >f f* 
+	    y ny f> dup >f >f f* 
+	    f+ fsqrt
+	    
+	    c1/8 >f f* sin
+	    f+
+	    draw2 f+
+	    
+	    f> f>i 4 / x y pixel
 	loop
     loop
 	    
-	    0.01 >f time @ >f f+ f> time !
+|	    0.01 >f time @ >f f+ f> time !
+;
+
+3.1415 const pi
+: init-pallete
+    256 0
+    do
+	finit
+	i i>f >f pi >f f* c1/8 >f f* sin f> f>i pallete i rcells + c!
+	i i>f >f pi >f f* c1/16 >f f* sin f> f>i pallete i rcells 1 + + c!
+	i i>f >f pi >f f* c1/32 >f f* sin f> f>i pallete i rcells 2 + + c!
+    loop
 ;
 
 : draw'
@@ -93,7 +135,10 @@ variable time
 
 : main
     init
+    init-pallete
     video screen !
     render-loop
     0 exit
 ;
+
+| main

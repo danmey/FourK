@@ -352,21 +352,21 @@ END_CODE
 
 DEF_CODE(f_push, ">f")
 	flds (%ebx)
-	add $4, %ebx
+	add $ 4, %ebx
 END_CODE
 
 DEF_CODE(f_pushi, "i>f")
 	filds (%ebx)
-	add $4, %ebx
+	fstps (%ebx)
 END_CODE
 
 DEF_CODE(f_popi, "f>i")
-	fistp (%ebx)
-	add $4, %ebx
+	flds 	(%ebx)
+	fistpl 	(%ebx)
 END_CODE
 
 DEF_CODE(f_pop, "f>")
-	sub $4, %ebx
+	sub $ 4, %ebx
 	fstps (%ebx)
 END_CODE
 
@@ -382,8 +382,17 @@ DEF_CODE(f_mul, "f*")
 	fmulp
 END_CODE
 
-DEF_CODE(f_div, "f/")
+DEF_CODE(f_swap, "f/")
+	fxch
 	fdivp
+END_CODE
+
+DEF_CODE(f_sqrt, "fsqrt")
+	fsqrt
+END_CODE
+
+DEF_CODE(f_sincos, "fsincos")
+	fsincos
 END_CODE
 
 DEF_CODE(dotf, ".f")

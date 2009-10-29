@@ -17,5 +17,3 @@ include src/strings.4k
    " hello world!!
   " >cstr printf 0 exit 
 ;
-
-

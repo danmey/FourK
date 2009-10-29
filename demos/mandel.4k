@@ -48,7 +48,7 @@ create event 20 cells allot
 : y postpone j ; immediate
 : x postpone i ; immediate
 
-$00ff00 const green
+$0000ff const green
 
 variable iteration
 variable x'
@@ -57,44 +57,43 @@ variable cx
 variable cy
 100 const max-iter
 
-\ : mandel
-\     0.0 x' !
-\     0.0 y' !
-\     begin
-\ 	iteration @ max-iter > if 0 ;; then
-\ 	x' @ dup >f >f f*
-\ 	y' @ dup >f >f f* f- cx @ >f f+
-\ 	2 i>f x' @ >f y' @ >f f* f* cy @ >f f+ f> y' !
-\ 	f> x' !
-\ 	x' @ dup >f >r f* y' @ dup >r >f f* f+ f>i 100 >
-\ 	if 1 ;; then
-\     repeat
-\ ;
 
+: sqr dup * ;
+
+width sqr height sqr + i>f >f fsqrt f> const max
+: fsin fsincos f> drop ;
+
+variable time
+1.0 time !
 : draw
-\   height 0 do
- \      width 0 do
-	    \	    finit
-	    \	    x i>f width  i>f f/ 0.5 >f f- 3 i>f f* 0.7 >f f- f> cx !
-	    \	    y i>f height i>f f/ 0.5 >f f- 3 i>f f* f> cy !
-	    \	    mandel 0= invert if green x y pixel then
-  \     loop
-   \ loop
+    height 0 do
+	width 0 do
+
+	    | finit time @ >f fsin y x + i>f 0.1 >f f* f+ fsincos f* x i>f >f 0.1 >f f* fsin f+ 2.0  >f f+ 64.0 >f f* f> f>i x y pixel
+    time @ >f 255.0 >f f* f> f>i x y pixel
+	    |	    finit
+	    |	    x i>f width  i>f f/ 0.5 >f f- 3 i>f f* 0.7 >f f- f> cx !
+	    |	    y i>f height i>f f/ 0.5 >f f- 3 i>f f* f> cy !
+	    |	    mandel 0= invert if green x y pixel then
+	loop
+    loop
+	    
+	    0.01 >f time @ >f f+ f> time !
 ;
-: a 10 0 do 10 0 do i . loop cr loop ;
 
-
-
-
-\ : render-loop begin event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
-
-: main
-    init
-    video screen !
+: draw'
     screen @ SDL_LockSurface drop
     draw
     screen @ SDL_UnlockSurface drop
     screen @ SDL_Flip drop
- \   render-loop
+;
+
+: render-loop begin draw' event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+
+
+: main
+    init
+    video screen !
+    render-loop
     0 exit
 ;

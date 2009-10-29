@@ -1,5 +1,6 @@
 include src/bootstrap.4k
 
+| Let's bind some C library symbols
 
 2 ccall: exit
 3 ccall: SDL_SetVideoMode
@@ -7,7 +8,6 @@ include src/bootstrap.4k
 5 ccall: SDL_Flip
 6 ccall: SDL_LockSurface
 7 ccall: SDL_UnlockSurface
-
 
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
@@ -23,66 +23,70 @@ include src/bootstrap.4k
     " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
 ;
 
+| this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
-\ this for making happy my ans-loving Emacs mode ;) 
 
+\ some constants
 800 const width
 600 const height
 32  const bpp
 bpp 8 / const point
+
+\ SDL constants
 27  const Esc
 2   const Keydown
 
+\ SDL structure dispatch
 : e>type c@ ;
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
+
+\ out screen surface
 variable screen
-variable surface
+\ allot needed stuff for SDL
 create event 20 cells allot
+\ and for pallete
 create pallete 256 rcells allot
 
+\ get the linear offset
 : points point * ;
+\ put the pixel in right place with pallete colour
 : pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap !  ;
 
+\ set the video mode
 : video 0 bpp height width SDL_SetVideoMode ;
 
+\ alias for convenience
 : y postpone j ; immediate
 : x postpone i ; immediate
 
-$0000ff const green
-
-variable iteration
-variable x'
-variable y'
-variable cx
-variable cy
-100 const max-iter
-
-
+\ sqr function
 : sqr dup * ;
 
-
-width sqr height sqr + i>f >f fsqrt f> const max
-
+\ some more constants
 width  2 / i>f const w/2
 height 2 / i>f const h/2
 
+\ our sin (or cos I dunno) function
 : fsin fsincos f> drop ;
 
+\ some pimped sin function which keeps value 0. - 256.
 : sin fsin 127.0 >f f* 128.0 >f f+ ;
 
+\ factoring could be done here
 : nx i>f >f w/2 >f f- ;
-
 : ny i>f >f h/2 >f f- ;
 
+\ some float constants
 1.0 >f 8.0 >f f/ f> const c1/8
 1.0 >f 16.0 >f f/ f> const c1/16
 1.0 >f 32.0 >f f/ f> const c1/32
 
-
+\ unused currently
 variable time
 1.0 time !
 
+\ we needed to split the word into second one because of -127 limit for a loop
 : draw2
     x i>f dup >f >f f* 
     y i>f dup >f >f f* 
@@ -90,6 +94,7 @@ variable time
     c1/8 >f f* sin
 ;
 
+\ draw it!
 : draw
     height 0 do
 	width 0 do
@@ -113,6 +118,8 @@ variable time
 ;
 
 3.1415 const pi
+
+\ init our pallete
 : init-pallete
     256 0
     do
@@ -123,14 +130,14 @@ variable time
     loop
 ;
 
-: draw'
+: draw
     screen @ SDL_LockSurface drop
     draw
     screen @ SDL_UnlockSurface drop
     screen @ SDL_Flip drop
 ;
 
-: render-loop begin draw' event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+: render-loop begin draw event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
 
 
 : main

@@ -51,7 +51,7 @@ create pallete 256 rcells allot
 \ get the linear offset
 : points point * ;
 \ put the pixel in right place with pallete colour
-: pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap !  ;
+: pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap ! ;
 
 \ set the video mode
 : video 0 bpp height width SDL_SetVideoMode ;
@@ -70,7 +70,7 @@ height 2 / i>f const h/2
 \ our sin (or cos I dunno) function
 : fsin fsincos f> drop ;
 
-\ some pimped sin function which keeps value 0. - 256.
+\ some pimped sin function which keeps value 0. - 255.
 : sin fsin 127.0 >f f* 128.0 >f f+ ;
 
 \ factoring could be done here

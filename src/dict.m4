@@ -80,7 +80,7 @@ define([END_DICT],
 	.FILL 256-16
 	undivert(3)
 	there:
-       .FILL 8*MAX_WORDS*4
+       .FILL 4096
 	SECTION(name)
 	ntab:
 	undivert(1)

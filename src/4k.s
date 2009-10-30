@@ -475,6 +475,7 @@ _find_word:
 entry_point:
 
 ifdef([DEBUG],[
+	K4_SAFE_CALL(_setjmp, $mainloop)
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
 	call	init_imports
@@ -501,10 +502,6 @@ ifdef([DEBUG],[
 	call 	install_segf_handler
 	])
 interpret_loop:
-	ifdef([DEBUG],[
-	K4_SAFE_CALL(_setjmp, $mainloop)
-	])
-
 	K4_SAFE_CALL(_gettoken)	#get next token
 
 	mov	$next_word,%ebp

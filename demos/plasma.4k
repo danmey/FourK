@@ -2,13 +2,74 @@ include src/bootstrap.4k
 
 | Let's bind some C library symbols
 
+
+| OSS Stuff
+$c0045005 const SNDCTL_DSP_SETFMT
+$c0045006 const SNDCTL_DSP_CHANNELS
+$c0045005 const SNDCTL_DSP_SETFMT
+$c0045002 const SNDCTL_DSP_SPEED
+$5001     const SNDCTL_DSP_SYNC
+$1        const O_WRONLY
+$00000010 const AFMT_S16_LE
+
+
+4096 const sample/second
+
+1 sample/second * const #samples
+
+2 const sample
+
+: samples sample * ;
+
+variable buffer
+variable audio
+variable temp
+
+: w! 2dup c! swap 8 >> swap 1+ c! ;
+
+: #sample! samples buffer @ + w! ;
+
+
+: i>>f i>f >f ;
+
+
 2 ccall: exit
 3 ccall: SDL_SetVideoMode
 4 ccall: SDL_PollEvent
 5 ccall: SDL_Flip
 6 ccall: SDL_LockSurface
 7 ccall: SDL_UnlockSurface
+8 ccall: malloc |  should be in bss section
+9 ccall: printf
+10 ccall: open
+11 ccall: ioctl
+12 ccall: write
 
+: render-noise
+    	0 SNDCTL_DSP_SYNC audio @ ioctl drop
+	sample/second samples buffer @ audio @ write drop
+;
+
+: init-synth
+    " libc.so" lib " malloc" sym rcell add-handle
+    " libc.so" lib " printf" sym 2 rcells add-handle
+    " libc.so" lib " open" sym 3 rcells add-handle
+    " libc.so" lib " ioctl" sym 3 rcells add-handle
+    " libc.so" lib " write" sym 3 rcells add-handle
+
+    #samples samples malloc buffer !
+    #samples 0
+    do
+	i 8 << i #sample!
+    loop
+    0 O_WRONLY " /dev/dsp" >cstr open audio !
+    AFMT_S16_LE temp !
+    temp SNDCTL_DSP_SETFMT audio @ ioctl drop
+    1 temp !
+    temp SNDCTL_DSP_CHANNELS audio @ ioctl drop
+    11024 temp !
+    temp SNDCTL_DSP_SPEED audio @ ioctl drop
+;
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
     
@@ -21,7 +82,10 @@ include src/bootstrap.4k
     " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym rcell add-handle
 
     " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
+
+    init-synth
 ;
+
 
 | this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
@@ -137,15 +201,15 @@ variable time
     screen @ SDL_Flip drop
 ;
 
-: render-loop begin draw event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
+: render-loop begin render-noise event SDL_PollEvent drop event e>type Keydown = if event e>key Esc = if ;; then then repeat ;
 
 
 : main
     init
     init-pallete
     video screen !
+    draw
     render-loop
     0 exit
 ;
 
-| main

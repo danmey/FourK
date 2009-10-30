@@ -57,12 +57,15 @@ variable temp
 
 : i>>f i>f >f ;
 
+: render-noise
+    	0 SNDCTL_DSP_SYNC audio @ ioctl drop
+	sample/second samples buffer @ audio @ write drop
+;
 : main
 
     init
     begin
-	0 SNDCTL_DSP_SYNC audio @ ioctl drop
-	sample/second samples buffer @ audio @ write drop
+	render-noise
 repeat
 	0 exit
 ;

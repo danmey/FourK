@@ -1,0 +1,68 @@
+include src/bootstrap.4k
+
+\ OSS Stuff
+$c0045005 const SNDCTL_DSP_SETFMT
+$c0045006 const SNDCTL_DSP_CHANNELS
+$c0045005 const SNDCTL_DSP_SETFMT
+$c0045002 const SNDCTL_DSP_SPEED
+$5001     const SNDCTL_DSP_SYNC
+$1        const O_WRONLY
+$00000010 const AFMT_S16_LE
+
+| Let's bind some C library symbols
+
+2 ccall: exit
+3 ccall: malloc \ should be in bss section
+4 ccall: printf
+5 ccall: open
+6 ccall: ioctl
+7 ccall: write
+
+4096 const sample/second
+
+1 sample/second * const #samples
+
+2 const sample
+
+: samples sample * ;
+
+variable buffer
+variable audio
+variable temp
+: w! 2dup c! swap 8 >> swap 1+ c! ;
+
+: #sample! samples buffer @ + w! ;
+
+: init ( -- )
+    " libc.so" lib " _exit" sym rcell add-handle
+    " libc.so" lib " malloc" sym rcell add-handle
+    " libc.so" lib " printf" sym 2 rcells add-handle
+    " libc.so" lib " open" sym 3 rcells add-handle
+    " libc.so" lib " ioctl" sym 3 rcells add-handle
+    " libc.so" lib " write" sym 3 rcells add-handle
+    
+    #samples samples malloc buffer !
+    #samples 0
+    do
+	i 8 << i #sample!
+    loop
+    0 O_WRONLY " /dev/dsp" >cstr open audio !
+    AFMT_S16_LE temp !
+    temp SNDCTL_DSP_SETFMT audio @ ioctl drop
+    1 temp !
+    temp SNDCTL_DSP_CHANNELS audio @ ioctl drop
+    11024 temp !
+    temp SNDCTL_DSP_SPEED audio @ ioctl drop
+;
+
+: i>>f i>f >f ;
+
+: main
+
+    init
+    begin
+	0 SNDCTL_DSP_SYNC audio @ ioctl drop
+	sample/second samples buffer @ audio @ write drop
+repeat
+	0 exit
+;

@@ -214,7 +214,7 @@ segf_handler:
 	mov	8(%ebp),%eax
 	K4_SAFE_CALL(printf,$msg_segf,%eax)
 	K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
-	K4_SAFE_CALL(sigsegv_leave_handler)
+#	K4_SAFE_CALL(sigsegv_leave_handler)
 	K4_SAFE_CALL(longjmp,$mainloop)
 	pop	%ebp
 	ret

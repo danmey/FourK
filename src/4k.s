@@ -473,6 +473,10 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
+	ifdef([DEBUG],[
+	K4_SAFE_CALL(_setjmp, $mainloop)
+])
+
 ifdef([DEBUG],[
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
@@ -497,12 +501,9 @@ ifdef([DEBUG],[
 	sub	$ 4096,%ebx
 
 ifdef([DEBUG],[
-	call install_segf_handler
+	call 	install_segf_handler
 	])
 interpret_loop:
-ifdef([DEBUG],[
-	K4_SAFE_CALL(_setjmp, $mainloop)
-]) 
 	K4_SAFE_CALL(_gettoken)	#get next token
 
 	mov	$next_word,%ebp

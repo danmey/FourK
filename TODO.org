@@ -61,24 +61,24 @@
    Please see the design section. (What we don't know yet)
 ** DONE put DEF_CODE stuff into its own file
 ** DONE hide current word, to allow overriding old implementation
-** TODO printing stack
+** DONE implementing .s
+** TODO implementing stack traces				       :phon:
 ** DONE hex mode 
 ** DONE including a file
-** TODO float words, debug it
+** DONE float words, debug it
 ** TODO arrays support
-** TODO return stack operations
+** DONE return stack operations
 ** TODO scratch pad
 ** TODO does> ???
 ** DONE ccall prefix word moved to prefix section
 ** TODO stack boundaries check
-** TODO refactoring bootstrap.4k, means factoring out
-** TODO parsing words, i rely on Phon's ideas here
-** TODO begin while repeat 
-** TODO do loop 
+** DONE begin while repeat 
+** DONE do loop
+** TODO VIM Forth REPL						       :phon:
 ** TODO unit tests
-** TODO storing imports name table
-** TODO loading imports
-** TODO nice interface to imports
+** TODO storing imports name table				       :phon:
+** TODO loading imports						       :phon:
+** TODO nice interface to imports				       :phon:
 ** TODO *very* simple structures like what? like in C?
 * Linker/Image Specific
 ** TODO Compile and make work tiny example with imports in the experiment directory

@@ -20,7 +20,13 @@ _image_start:
 	ELF_SECTION_TAB_OFFSET()
 	SECTION(dict)
 				# for relocations
+ifdef([DEBUG],
+[
+main:
+],
+[
 _start:
+])
 define([PROT_READ],	0x1)		/* Page can be read.  */
 define([PROT_WRITE],	0x2)		/* Page can be written.  */
 define([PROT_EXEC],	0x4)		/* Page can be executed.  */
@@ -197,6 +203,33 @@ _gettoken:
 	rep 	stosb			# Fill rest of token
 	ret
 
+ifdef([DEBUG],
+[
+msg_segf:	
+	.string	"***Exception: Memory referenced at %p\n"
+
+segf_handler:
+	push	%ebp
+	mov	%esp,%ebp
+	mov	8(%ebp),%eax
+	K4_SAFE_CALL(printf,$msg_segf,%eax)
+	K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
+	K4_SAFE_CALL(sigsegv_leave_handler)
+	K4_SAFE_CALL(longjmp,$mainloop)
+	pop	%ebp
+	ret
+
+install_segf_handler:
+	K4_SAFE_CALL(sigsegv_install_handler,$segf_handler)
+	K4_SAFE_CALL(sigemptyset,$emptyset)
+	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
+	ret
+	.comm	mainsigset,128,32
+	.comm	ss_dispatcher,4,4
+	.comm	mainloop,156,32
+	.comm	emptyset,128,32
+
+])
 
 
 
@@ -463,7 +496,13 @@ ifdef([DEBUG],[
  	mov	%esp,%ebx
 	sub	$ 4096,%ebx
 
+ifdef([DEBUG],[
+	call install_segf_handler
+	])
 interpret_loop:
+ifdef([DEBUG],[
+	K4_SAFE_CALL(_setjmp, $mainloop)
+]) 
 	K4_SAFE_CALL(_gettoken)	#get next token
 
 	mov	$next_word,%ebp

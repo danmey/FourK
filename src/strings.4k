@@ -2,10 +2,6 @@
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;
 
-: 2drop ( n n -- ) drop drop ; 
-: over ( a b -- a b a ) swap dup >r swap r> ;
-: 2dup ( a b -- a b a b ) over over ;
-
 | exit current word if TOS is zero
 : 0; ( n -- ) postpone = postpone if 
               postpone ;; postpone then 

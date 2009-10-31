@@ -172,11 +172,12 @@ DEF_CODE(comma, ["comma"])
 	xchg	%esp,%ebx
 END_CODE
 
-DEF_CODE(create,"create")
+DEF_CODE(make,"make")
 	push	%esi
 	xchg	%esp,%ebx
-	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
-	mov	$token,	%esi		#load token into esi
+	pop	%esi
+#	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+#	mov	$token,	%esi		#load token into esi
 	movl	var_last,%eax 	#current words index
 	shl	$2, %eax	 	#multiply by 4
 	movl	$ntab,%edi		#load ntab beg
@@ -197,6 +198,18 @@ DEF_CODE(create,"create")
 	xchg	%esp,%ebx
 	pop	%esi
 END_CODE
+DEF_CODE(token, "token")
+	K4_SAFE_CALL(_gettoken)
+	pushal
+	mov	$ 64, %ecx
+	mov	$token, %esi
+	mov	$token2, %edi
+	rep 	movsb
+	popal
+	sub	$ 4,%ebx
+	movl	$token2,(%ebx)
+END_CODE
+
 ## DEF_CODE(lb, "lb")		#alias for [
 ## 	movl	$1, var_state
 ## END_CODE
@@ -344,7 +357,15 @@ DEF_CODE(key, "key")
 	sub	$4,%ebx
 	movl	%eax, (%ebx)
 END_CODE
-
+DEF_CODE(find,"find")
+	mov	(%ebx),%edi
+	K4_SAFE_CALL(_find_word)
+	jnc	1f
+	mov	$ -1, %eax
+1:	
+	mov	%eax, (%ebx)
+END_CODE
+	
 # floating point magic
 DEF_CODE(f_init, "finit")
 	fninit
@@ -440,7 +461,7 @@ DEF_CODE(include,"include")
 #	mov	$token,%edi
 	K4_SAFE_CALL(file_nest)
 	jnc 	1f
-	K4_SAFE_CALL(printf,$msg_file_not_found,$token)
+	K4_SAFE_CALL(printf,$msg_file_not_found,%edi)
 1:
 END_CODE
 DEF_CODE(eval,"eval")

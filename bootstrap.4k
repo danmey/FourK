@@ -1,4 +1,4 @@
-create ;
+token ; make
 postpone lit 1 c, postpone state postpone !
 postpone last
 postpone @
@@ -27,12 +27,13 @@ immediate
 
 last @ 1 + last !
 
-create :
-       postpone create
-       postpone lit
-       0 c,
-       postpone state
-       postpone !
+token : make
+    postpone token
+    postpone make
+    postpone lit
+    0 c,
+    postpone state
+    postpone !
 ;
 
 : [ 1 state ! ; immediate
@@ -80,6 +81,11 @@ line
 comment
 *)
 
+| moved from strings.4k
+: 2drop ( n n -- ) drop drop ; 
+: over ( a b -- a b a ) swap dup >r swap r> ;
+: 2dup ( a b -- a b a b ) over over ;
+
 | comparison words
 : <> = invert ;
 : 0<> 0= invert ;
@@ -92,8 +98,7 @@ comment
 
 | output words
 
-
-: create create there @ rliteral postpone ; ;
+: create token make there @ rliteral postpone ; ;
 
 | to verbose but will make optimisations later
 | by default we will use byte cells, as it is meant to be 4kb tool
@@ -124,7 +129,7 @@ create #str
 ;
 1 allot
 
-: " c: " parse ; immediate
+: \" c: " parse ;
 
 
 | inlines a counted list of bytes to there
@@ -142,7 +147,7 @@ create #str
 
 
 | pimped ", it now compiles the string to there @compile time
-: " postpone " state @ 0 = if inline there @ dup 0 swap c! 1+ there !
+: " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
    sliteral then
 ; immediate
 
@@ -211,8 +216,10 @@ variable #ithere
     postpone >r
 ; immediate
 
-: include" c: " parse include ;
+: include" \" include ; immediate
 
+: require" \" over find -1 = if over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+    
 ." 4K-0.0.1 
 An interactive tool for the non-interactive presentation.
 Idea at Function 2009.

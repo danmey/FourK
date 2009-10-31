@@ -260,6 +260,7 @@ install_handlers:
 # Our data, it will be stripped off so store it in intepret section
 long_tmp: 		.LONG 0
 token:			.FILL	64
+token2:			.FILL 	64
 fmt_float: 		.ASCIZ  "%f"
 fmt_hex:		.ASCIZ 	"%x\n"
 fmt_char:		.ASCIZ 	"%c"

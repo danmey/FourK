@@ -211,6 +211,7 @@ variable #ithere
     postpone >r
 ; immediate
 
+: include" c: " parse include ;
 
 ." 4K-0.0.1 
 An interactive tool for the non-interactive presentation.

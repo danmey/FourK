@@ -1,4 +1,3 @@
-include src/bootstrap.4k
 
 \ OSS Stuff
 $c0045005 const SNDCTL_DSP_SETFMT

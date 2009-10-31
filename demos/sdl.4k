@@ -1,5 +1,4 @@
-include src/bootstrap.4k
-include src/debug.4k
+include" src/debug.4k"
 
 2 ccall: exit
 3 ccall: printf

@@ -1,5 +1,5 @@
-include src/bootstrap.4k
-include src/strings.4k
+include" src/bootstrap.4k" 
+include" "src/strings.4k"
 
 2 ccall: printf
 3 ccall: exit

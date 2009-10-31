@@ -282,7 +282,7 @@ _vm_context_EBP:	.fill  4
 
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
-
+bootstrap_s:		.asciz "bootstrap.4k"
 
 libc_handle:	 .LONG 0
 
@@ -515,7 +515,8 @@ ifdef([DEBUG],[
 
  	mov	%esp,%ebx
 	sub	$ 4096,%ebx
-
+	mov	$bootstrap_s,%edi
+	K4_SAFE_CALL(file_nest)
 ifdef([DEBUG],[
 	call 	install_handlers
 	])

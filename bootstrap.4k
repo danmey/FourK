@@ -219,7 +219,7 @@ variable #ithere
 : include" \" include ; immediate
 
 : require" \" over find -1 = if over make postpone ; include ;; then ." File " type ."  already provided." cr ;
-    
+
 ." 4K-0.0.1 
 An interactive tool for the non-interactive presentation.
 Idea at Function 2009.

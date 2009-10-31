@@ -491,6 +491,8 @@ lib_sdl:	.ASCIZ "libSDL.so"
 	xchg	%ebx,%esp
 END_CODE
 
+DEF_VAR(vtab, dsptch)
+DEF_VAR(ntab, ntab)
 DEF_VAR(here, here)
 
 DEF_VAR(there, there)

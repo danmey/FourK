@@ -67,3 +67,24 @@ variable library
 lib" libc.so.6"
 rcell func" printf"
 
+| a marker?
+: marker? ( str c -- t|f ) " *marker*" str= ;
+| get name for token n
+: name> ( n -- str c ) 32 * ntab @ + dup count ;
+
+: mark ( -- ) " *marker*" drop make postpone ; ;
+
+| little alias to make 4k.el mode happier
+: again repeat ;
+
+: forget ( -- )
+    last @ 1-
+    begin
+	dup name> marker?
+	if
+	    dup last ! rcells vtab @ + @ here ! ;;
+	then
+	dup 0 = if cr drop ;; then
+	1-
+    again
+;

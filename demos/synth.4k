@@ -1,12 +1,13 @@
 require" src/strings.4k"
-
+forget
+mark
 | OSS Stuff
 $c0045005 const SNDCTL_DSP_SETFMT
 $c0045006 const SNDCTL_DSP_CHANNELS
 $c0045005 const SNDCTL_DSP_SETFMT
 $c0045002 const SNDCTL_DSP_SPEED
-$5001     const SNDCTL_DSP_SYNC
-$1        const O_WRONLY
+$00005001 const SNDCTL_DSP_SYNC
+$00000001 const O_WRONLY
 $00000010 const AFMT_S16_LE
 
 | Let's bind some C library symbols
@@ -69,3 +70,4 @@ variable temp
 repeat
 	0 exit
 ;
+

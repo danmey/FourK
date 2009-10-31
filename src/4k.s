@@ -136,6 +136,13 @@ dlopen_:
 # Function escapes to main text interpreter loop throuh `interpret' token
 # In: %eax - contains a word pointer
 runbyte:
+	ifdef([DEBUG],[
+	cmpl	$ 0, interrtupted
+	je	1f
+	movl	$ 0, interrtupted
+	K4_SAFE_CALL(longjmp,$mainloop)
+1:	
+])
 	push	%esi		# push the current word address on the return stack
 	lea	1(%eax),%esi	# load the byte code pointer
 .fetchbyte:
@@ -210,7 +217,9 @@ msg_segf:
 
 msg_int:	
 	.string	"***Interrupt: The interpreter is interrupted\n"
-
+interrtupted:
+	.long	0
+	
 segf_handler:
 	push	%ebp
 	mov	%esp,%ebp
@@ -224,6 +233,7 @@ segf_handler:
 
 int_handler:
 	K4_SAFE_CALL(printf,$msg_int)
+	movl	$ 1, interrtupted
 	ret
 	
 install_handlers:

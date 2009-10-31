@@ -1,5 +1,8 @@
 include src/bootstrap.4k
 
+: fconst : rliteral postpone >f postpone ; ;
+: i>>f i>f >f ;
+
 | Let's bind some C library symbols
 
 
@@ -50,6 +53,7 @@ variable temp
 	sample/second samples buffer @ audio @ write drop
 ;
 
+: >/dev/dsp ( ctl val -- ) temp ! temp swap audio @ ioctl drop ;
 : init-synth
     " libc.so" lib " malloc" sym rcell add-handle
     " libc.so" lib " printf" sym 2 rcells add-handle
@@ -63,12 +67,11 @@ variable temp
 	i 8 << i #sample!
     loop
     0 O_WRONLY " /dev/dsp" >cstr open audio !
-    AFMT_S16_LE temp !
-    temp SNDCTL_DSP_SETFMT audio @ ioctl drop
-    1 temp !
-    temp SNDCTL_DSP_CHANNELS audio @ ioctl drop
-    11024 temp !
-    temp SNDCTL_DSP_SPEED audio @ ioctl drop
+    
+    
+    SNDCTL_DSP_SETFMT   AFMT_S16_LE >/dev/dsp
+    SNDCTL_DSP_CHANNELS 1           >/dev/dsp
+    SNDCTL_DSP_SPEED    11024       >/dev/dsp
 ;
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
@@ -128,8 +131,8 @@ create pallete 256 rcells allot
 : sqr dup * ;
 
 \ some more constants
-width  2 / i>f const w/2
-height 2 / i>f const h/2
+width  2 / i>f fconst w/2
+height 2 / i>f fconst h/2
 
 \ our sin (or cos I dunno) function
 : fsin fsincos f> drop ;
@@ -137,25 +140,27 @@ height 2 / i>f const h/2
 \ some pimped sin function which keeps value 0. - 255.
 : sin fsin 127.0 >f f* 128.0 >f f+ ;
 
+: dupf f> dup >f >f ;
 \ factoring could be done here
-: nx i>f >f w/2 >f f- ;
-: ny i>f >f h/2 >f f- ;
+: nx i>f >f w/2 f- ;
+: ny i>f >f h/2 f- ;
 
 \ some float constants
-1.0 >f 8.0 >f f/ f> const c1/8
-1.0 >f 16.0 >f f/ f> const c1/16
-1.0 >f 32.0 >f f/ f> const c1/32
+1.0 >f 8.0 >f f/ f> fconst c1/8
+1.0 >f 16.0 >f f/ f> fconst c1/16
+1.0 >f 32.0 >f f/ f> fconst c1/32
 
 \ unused currently
 variable time
 1.0 time !
 
+: isqrf i>>f dupf f* ;
 \ we needed to split the word into second one because of -127 limit for a loop
 : draw2
-    x i>f dup >f >f f* 
-    y i>f dup >f >f f* 
+    x isqrf 
+    y isqrf 
     f+ fsqrt
-    c1/8 >f f* sin
+    c1/8 f* sin
 ;
 
 \ draw it!
@@ -163,14 +168,14 @@ variable time
     height 0 do
 	width 0 do
 	    finit
-	    x i>f >f c1/16 >f f* sin 
-	    y i>f >f c1/32 >f f* sin f+
+	    x i>>f c1/16 f* sin 
+	    y i>>f c1/32 f* sin f+
 
-	    x nx f> dup >f >f f* 
-	    y ny f> dup >f >f f* 
+	    x nx dupf f* 
+	    y ny dupf f* 
 	    f+ fsqrt
 	    
-	    c1/8 >f f* sin
+	    c1/8 f* sin
 	    f+
 	    draw2 f+
 	    
@@ -181,16 +186,19 @@ variable time
 |	    0.01 >f time @ >f f+ f> time !
 ;
 
-3.1415 const pi
+3.1415 fconst pi
 
+: col> ( i f:fac -- f:c ) i>>f pi f* f* sin ;
+: col! ( c i -- ) rcells pallete + + f> f>i swap c! ;
+: color ( i f ) dup >r col> r> col! ;
 \ init our pallete
 : init-pallete
     256 0
     do
 	finit
-	i i>f >f pi >f f* c1/8 >f f* sin f> f>i pallete i rcells + c!
-	i i>f >f pi >f f* c1/16 >f f* sin f> f>i pallete i rcells 1 + + c!
-	i i>f >f pi >f f* c1/32 >f f* sin f> f>i pallete i rcells 2 + + c!
+	0 i c1/8 color
+	1 i c1/16 color
+	2 i c1/32 color 
     loop
 ;
 
@@ -211,5 +219,6 @@ variable time
     render-loop
     0 exit
 ;
+
 
 

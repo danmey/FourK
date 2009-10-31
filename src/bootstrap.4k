@@ -212,3 +212,12 @@ variable #ithere
 ; immediate
 
 
+." 4K-0.0.1 
+An interactive tool for the non-interactive presentation.
+Idea at Function 2009.
+Greetings fly to everybody.
+Released under limited conditions, type `license' to see the text.
+Type `bye' to end the interaction. 
+
+4096 static cells pending.
+"

@@ -208,6 +208,9 @@ ifdef([DEBUG],
 msg_segf:	
 	.string	"***Exception: Memory referenced at %p\n"
 
+msg_int:	
+	.string	"***Interrupt: The interpreter is interrupted\n"
+
 segf_handler:
 	push	%ebp
 	mov	%esp,%ebp
@@ -219,10 +222,15 @@ segf_handler:
 	pop	%ebp
 	ret
 
-install_segf_handler:
+int_handler:
+	K4_SAFE_CALL(printf,$msg_int)
+	ret
+	
+install_handlers:
 	K4_SAFE_CALL(sigsegv_install_handler,$segf_handler)
 	K4_SAFE_CALL(sigemptyset,$emptyset)
 	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
+	K4_SAFE_CALL(signal,$ 2, $int_handler)
 	ret
 	.comm	mainsigset,128,32
 	.comm	ss_dispatcher,4,4
@@ -499,7 +507,7 @@ ifdef([DEBUG],[
 	sub	$ 4096,%ebx
 
 ifdef([DEBUG],[
-	call 	install_segf_handler
+	call 	install_handlers
 	])
 interpret_loop:
 	K4_SAFE_CALL(_gettoken)	#get next token

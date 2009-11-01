@@ -85,7 +85,7 @@ variable temp
     " test.wav" file: >whdr
     #samples 0
     do
-	finit i i>>f pi2 f* 200 i>>f f* fr f/ sin f> f>i s>file
+	finit i i>>f pi2 f* 400 i>>f f* fr f/ dupf fsin f> 50 i>>f f/ sin >f f*  f> f>i s>file
     loop
     file;
 ;

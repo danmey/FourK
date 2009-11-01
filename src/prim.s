@@ -403,7 +403,7 @@ DEF_CODE(f_mul, "f*")
 	fmulp
 END_CODE
 
-DEF_CODE(f_swap, "f/")
+DEF_CODE(f_div, "f/")
 	fxch
 	fdivp
 END_CODE

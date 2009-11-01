@@ -1,25 +1,23 @@
 require" src/strings.4k"
 forget
 mark
-| OSS Stuff
-$c0045005 const SNDCTL_DSP_SETFMT
-$c0045006 const SNDCTL_DSP_CHANNELS
-$c0045005 const SNDCTL_DSP_SETFMT
-$c0045002 const SNDCTL_DSP_SPEED
-$00005001 const SNDCTL_DSP_SYNC
-$00000001 const O_WRONLY
-$00000010 const AFMT_S16_LE
+4 #ithere !
+: fconst : rliteral postpone >f postpone ; ;
 
 | Let's bind some C library symbols
-
 2 ccall: exit
 3 ccall: malloc | should be in bss section
 4 ccall: printf
+5 ccall: fopen
+6 ccall: fwrite
+7 ccall: fclose
+8 ccall: system
+(*
 5 ccall: open
 6 ccall: ioctl
 7 ccall: write
-
-4096 const sample/second
+*)
+44100 const sample/second
 
 1 sample/second * const #samples
 
@@ -34,40 +32,100 @@ variable temp
 
 : #sample! samples buffer @ + w! ;
 
+
+(*
+PLAYERWAVE mywave={'R','I','F','F',
+		   sizeof(PLAYERWAVE)+NUMSAMPLES*2,
+		   'W','A','V','E','f','m','t',' ',
+		   0x10,1,1,
+		   PLAYFREQ,
+		   PLAYFREQ*2,
+		   2,16,'d','a','t','a',
+		   SAMPLESIZE,{0}
+};
+*)
+
+variable stream
+variable temp
+: >file ( str c -- file ) >r >r stream @ 1 r> r> swap fwrite drop  ;
+: i>file temp ! temp 4 >file ;
+: s>file temp ! temp 2 >file ;
+: file: ( str c -- file ) >cstr " wb" >cstr swap fopen stream ! ;
+: file; stream @ fclose ;
+
+52 #samples 2 * + const wav-size
+
+: >whdr
+    " RIFF" >file
+    wav-size i>file
+    " WAVEfmt " >file
+    16 i>file
+    1 s>file
+    1 s>file
+    44100 i>file
+    44100 2 * i>file
+    2 s>file
+    16 s>file
+    " data" >file
+    #samples 2 * i>file
+;
+
+| our sin (or cos I dunno) function
+: fsin fsincos f> drop ;
+: i>>f i>f >f ;
+
+| some pimped sin function which keeps value 
+: sin fsin 32000 i>>f f* ;
+
+: dupf f> dup >f >f ;
+
+3.1415 2.0 >f >f f* f> fconst pi2
+44100.0 fconst fr
+: sound
+    " test.wav" file: >whdr
+    #samples 0
+    do
+	finit i i>>f pi2 f* 200 i>>f f* fr f/ sin f> f>i s>file
+    loop
+    file;
+;
+
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
     " libc.so" lib " malloc" sym rcell add-handle
     " libc.so" lib " printf" sym 2 rcells add-handle
-    " libc.so" lib " open" sym 3 rcells add-handle
+    " libc.so" lib " fopen" sym 2 rcells add-handle
+    " libc.so" lib " fwrite" sym 4 rcells add-handle
+    " libc.so" lib " fclose" sym  rcell add-handle
+    " libc.so" lib " system" sym  rcell add-handle
+    
+(*    " libc.so" lib " open" sym 3 rcells add-handle
     " libc.so" lib " ioctl" sym 3 rcells add-handle
     " libc.so" lib " write" sym 3 rcells add-handle
-    
-    #samples samples malloc buffer !
-    #samples 0
-    do
-	i 8 << i #sample!
-    loop
-    0 O_WRONLY " /dev/dsp" >cstr open audio !
-    AFMT_S16_LE temp !
-    temp SNDCTL_DSP_SETFMT audio @ ioctl drop
-    1 temp !
-    temp SNDCTL_DSP_CHANNELS audio @ ioctl drop
-    11024 temp !
-    temp SNDCTL_DSP_SPEED audio @ ioctl drop
+*)   
+|    #samples samples malloc buffer !
+    |    #samples 0
+|    123 " inited %d" drop printf cr
+ |   do
+|	i 8 << i #sample!
+|    loop
 ;
 
-: i>>f i>f >f ;
 
+(*
 : render-noise
-    	0 SNDCTL_DSP_SYNC audio @ ioctl drop
 	sample/second samples buffer @ audio @ write drop
 ;
-: main
+*)
 
-    init
-    begin
-	render-noise
-repeat
-	0 exit
+: repeat postpone again ;
+
+: main
+    init sound
+    " play test.wav" >cstr system
+|    begin
+|	render-noise
+ |   again
+
 ;
 

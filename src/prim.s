@@ -12,7 +12,6 @@ define([log_op],[
 	add	$ 4,%ebx
  	xor	%edx,%edx
 	mov	%edx,%ecx
-	xor	%ecx,%ecx
 	dec 	%ecx
 	cmp	%eax,(%ebx)
 ])
@@ -377,7 +376,7 @@ DEF_CODE(f_push, ">f")
 END_CODE
 
 DEF_CODE(f_pushi, "i>f")
-	filds (%ebx)
+	fildl (%ebx)
 	fstps (%ebx)
 END_CODE
 
@@ -404,8 +403,11 @@ DEF_CODE(f_mul, "f*")
 END_CODE
 
 DEF_CODE(f_div, "f/")
-	fxch
 	fdivp
+END_CODE
+
+DEF_CODE(f_rnd, "frnd")
+	frndint
 END_CODE
 
 DEF_CODE(f_sqrt, "fsqrt")
@@ -414,6 +416,19 @@ END_CODE
 
 DEF_CODE(f_sincos, "fsincos")
 	fsincos
+END_CODE
+
+DEF_CODE(f_lower, "flt")
+	xor	%ecx,%ecx
+	dec	%ecx
+	xor	%edx,%edx
+	fcompp
+	sub	$ 4, %ebx
+	fstsw 	%ax
+	fwait
+	sahf
+	cmovb 	%ecx,%edx
+	mov	%edx,(%ebx)
 END_CODE
 
 DEF_CODE(dotf, ".f")

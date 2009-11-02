@@ -72,10 +72,8 @@ rcell func" printf"
 | get name for token n
 : name> ( n -- str c ) 32 * ntab @ + dup count ;
 
-: mark ( -- ) " *marker*" drop make postpone ; ;
-
 | little alias to make 4k.el mode happier
-: again repeat ;
+: again postpone repeat ; immediate
 
 : forget ( -- )
     last @ 1-

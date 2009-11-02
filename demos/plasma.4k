@@ -144,9 +144,10 @@ height 2 / i>f fconst h/2
 : ny i>f >f h/2 f- ;
 
 \ some float constants
-1.0 >f 8.0 >f f/ f> fconst c1/8
-1.0 >f 16.0 >f f/ f> fconst c1/16
-1.0 >f 32.0 >f f/ f> fconst c1/32
+: swapf f> f> swap >f >f ;
+1.0 >f 8.0 >f swapf f/ f> fconst c1/8
+1.0 >f 16.0 >f swapf f/ f> fconst c1/16
+1.0 >f 32.0 >f swapf f/ f> fconst c1/32
 
 \ unused currently
 variable time
@@ -161,7 +162,7 @@ variable time
     c1/8 f* sin
 ;
 
-\ draw it!
+| draw it!
 : draw
     height 0 do
 	width 0 do

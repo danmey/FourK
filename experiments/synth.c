@@ -16,7 +16,7 @@ int main()
       audio_buffer[i] = 32275.0*sinf((float)i*2.0*3.1415/8192.0*200.0);
     }
 
-  int audio_fd = open("/dev/dsp", O_WRONLY, 0);
+  int audio_fd = open("/dev/adsp1", O_WRONLY, 0);
   i=AFMT_S16_LE;
 
   printf("$%x const SNDCTL_DSP_SETFMT\n", SNDCTL_DSP_SETFMT);
@@ -38,6 +38,10 @@ int main()
       write(audio_fd,audio_buffer,8192);
       SDL_PollEvent(&event);
     } while (event.type!=SDL_KEYDOWN);
+  float x = 1.0;
+  for(i=0; i < 20; ++i )
+    x += 0.1;
+  float y = 2.0;
   
-  return 0;
+  return x < y;
 }

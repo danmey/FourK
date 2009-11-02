@@ -54,18 +54,27 @@ symbols last-symbol !
   begin
    2dup r count 0 = if r> 2drop 2drop r> 2drop -1 ;; then 
    r dup count str= if 2drop r> drop r> ;; then 
-    r> next-symbol r> 1+ >r >r r r count type cr  
+    r> next-symbol r> 1+ >r >r   
   repeat 
 ;
 
 
 variable library 
 
+symbol" dlopen"
+symbol" dlsym"
+
 : lib" ( -- ) c: " parse lib library ! ;
 : func" ( stackfix  -- ) library @ c: " parse 2dup symbol sym add-handle ;
 
+: x" c: " parse search ;
+
+
+
 lib" libc.so.6"
 rcell func" printf"
+x" printf"
+
 
 | a marker?
 : marker? ( str c -- t|f ) " *marker*" str= ;

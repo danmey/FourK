@@ -12,14 +12,16 @@ mark
 6 ccall: fwrite
 7 ccall: fclose
 8 ccall: system
+9 ccall: rand
 (*
 5 ccall: open
 6 ccall: ioctl
 7 ccall: write
 *)
+2147483647 const rand-max 
 44100 const sample/second
 
-44100 4 / const #samples
+44100 4 * const #samples
 
 2 const sample-size
 
@@ -87,6 +89,8 @@ variable temp
 : i>>f i>f >f ;
 : f>>i f> f>i ;
 
+: frand ( -- f: -1..1 ) rand i>>f rand-max i>>f fswap f/ 2 i>>f f* 1 i>>f f- ;
+
 | some pimped sin function which keeps value 
 : sin fcos 32000 i>>f f* ;
 
@@ -99,9 +103,13 @@ variable sample
 
 : +1! 1 swap +! ;
 
-: Tf sample @ i>>f #samples i>>f fswap f/ ;
+1 const bpm
+
+1 i>>f bpm i>>f fswap f/ f> fconst frame
+
+: Tf sample @ i>>f #samples i>>f fswap f/ 15 i>>f f* ;
 variable accum
-: Osc ( f: pitch-in amp-in freq-in -- f: out ) Tf fr f* pi2 f* f* f+ fcos f* ;
+: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) Tf fr f* pi2 f* f* f+ fcos f* ;
 : Lfo ( f: freq-in -- f: out ) Tf pi2 f* f* fcos ;
 : Out 20000 i>>f f* f>>i ;
 : IConst i>>f ;
@@ -110,6 +118,7 @@ variable accum
 : fl> flt ;
 : fl< fl> invert ;
 : Mul ( f: in val -- out ) f* ;
+: SimpleOsc f> 1 IConst 1 IConst >f Osc ;
 
 : Clamp ( f: in -- cut ) dupf 1 i>>f fl> if dropf 1 i>>f ;; then dupf -1 i>>f fl< if dropf -1 i>>f ;; then ;
 
@@ -126,8 +135,20 @@ variable accum
     dropf 1.0 >f
 ;
 
+: Noise frand ;
 
+: BassDrum
+    	0.5 FConst Sr2 2 IConst Mul         | Amplitude Envelope
+	0.5 FConst Sr Pitch 0.02 FConst Mul | Frequency Modulation
+	20 IConst                           | Pitch
+	Osc Clamp
+;
+
+: HiHat Noise 0.2 FConst Sr2 Mul 2 IConst Mul ;
 : Add f+ ;
+
+: Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
+
 : sound
     " test.wav" file:
     >whdr
@@ -135,11 +156,9 @@ variable accum
     #samples 0
     do
 	finit
-	0.5 FConst Sr2 2 IConst Mul
-	| Amplitude
-	0.5 FConst Sr Pitch 0.02 FConst Mul
-	20 IConst | Freq
-	Osc Clamp Out
+	Tf 1.0 >f fl> if 0 sample ! then
+	BassDrum
+	Out
 	s>file
 	sample +1!
     loop
@@ -156,6 +175,7 @@ variable accum
     " libc.so" lib " fwrite" sym 4 rcells add-handle
     " libc.so" lib " fclose" sym  rcell add-handle
     " libc.so" lib " system" sym  rcell add-handle
+    " libc.so" lib " rand" sym  0 add-handle | need to think about something better
 ;
 
 

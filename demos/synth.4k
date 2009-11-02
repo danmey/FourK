@@ -12,18 +12,20 @@ mark
 6 ccall: fwrite
 7 ccall: fclose
 8 ccall: system
+9 ccall: rand
 (*
 5 ccall: open
 6 ccall: ioctl
 7 ccall: write
 *)
+2147483647 const rand-max 
 44100 const sample/second
 
-1 sample/second * const #samples
+44100 4 * const #samples
 
-2 const sample
+2 const sample-size
 
-: samples sample * ;
+: samples sample-size * ;
 
 variable buffer
 variable audio
@@ -70,23 +72,98 @@ variable temp
     #samples 2 * i>file
 ;
 
+: dupf f> dup >f >f ;
+: dupf> f> dup >f ;
+: dropf f> drop ;
+: fswap f> f> swap >f >f ;
+
 | our sin (or cos I dunno) function
-: fsin fsincos f> drop ;
+: fcos fsincos fswap f> drop ;
+: frot f> f> f> rot >f >f >f ;
+
+( f: a b -> b a -> b a a -> a b a )
+: fover f> f> dup rot rot >f >f >f ;
+
+: ffrac dupf frnd fswap f- ;
+: fmod dupf frot fswap f/ ffrac f* ;
 : i>>f i>f >f ;
+: f>>i f> f>i ;
+
+: frand ( -- f: -1..1 ) rand i>>f rand-max i>>f fswap f/ 2 i>>f f* 1 i>>f f- ;
 
 | some pimped sin function which keeps value 
-: sin fsin 32000 i>>f f* ;
+: sin fcos 32000 i>>f f* ;
 
-: dupf f> dup >f >f ;
 
 3.1415 2.0 >f >f f* f> fconst pi2
 44100.0 fconst fr
+
+
+variable sample
+
+: +1! 1 swap +! ;
+
+1 const bpm
+
+1 i>>f bpm i>>f fswap f/ f> fconst frame
+
+: Tf sample @ i>>f #samples i>>f fswap f/ 15 i>>f f* ;
+variable accum
+: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) Tf fr f* pi2 f* f* f+ fcos f* ;
+: Lfo ( f: freq-in -- f: out ) Tf pi2 f* f* fcos ;
+: Out 20000 i>>f f* f>>i ;
+: IConst i>>f ;
+: IConst2 swap i>>f i>>f ;
+: FConst >f ;
+: fl> flt ;
+: fl< fl> invert ;
+: Mul ( f: in val -- out ) f* ;
+: SimpleOsc f> 1 IConst 1 IConst >f Osc ;
+
+: Clamp ( f: in -- cut ) dupf 1 i>>f fl> if dropf 1 i>>f ;; then dupf -1 i>>f fl< if dropf -1 i>>f ;; then ;
+
+0.0 accum !
+: Pitch accum @ >f f+ dupf f> accum ! ;
+    
+: Sr ( f: S - v )
+    dupf Tf fl< if dupf 1.0 >f f- fswap Tf f- f/ 1 i>>f f- ;; then
+    Tf f/
+;
+
+: Sr2 ( f: S - v )
+    dupf Tf fl< if dupf 1.0 >f f- fswap Tf f- f/ 1 i>>f f- ;; then
+    dropf 1.0 >f
+;
+
+: Noise frand ;
+
+: BassDrum
+    	0.5 FConst Sr2 2 IConst Mul         | Amplitude Envelope
+	0.5 FConst Sr Pitch 0.02 FConst Mul | Frequency Modulation
+	20 IConst                           | Pitch
+	Osc Clamp
+;
+
+: HiHat Noise 0.2 FConst Sr2 Mul 2 IConst Mul ;
+: Add f+ ;
+
+: Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
+
 : sound
-    " test.wav" file: >whdr
+    " test.wav" file:
+    >whdr
+    0 sample !
     #samples 0
     do
-	finit i i>>f pi2 f* 400 i>>f f* fr f/ dupf fsin f> 50 i>>f f/ sin >f f*  f> f>i s>file
+	finit
+	Tf 1.0 >f fl> if 0 sample ! then
+	BassDrum
+	Out
+	s>file
+	sample +1!
     loop
+    finit Tf f> .f cr
+    sample @ . cr
     file;
 ;
 
@@ -98,34 +175,16 @@ variable temp
     " libc.so" lib " fwrite" sym 4 rcells add-handle
     " libc.so" lib " fclose" sym  rcell add-handle
     " libc.so" lib " system" sym  rcell add-handle
-    
-(*    " libc.so" lib " open" sym 3 rcells add-handle
-    " libc.so" lib " ioctl" sym 3 rcells add-handle
-    " libc.so" lib " write" sym 3 rcells add-handle
-*)   
-|    #samples samples malloc buffer !
-    |    #samples 0
-|    123 " inited %d" drop printf cr
- |   do
-|	i 8 << i #sample!
-|    loop
+    " libc.so" lib " rand" sym  0 add-handle | need to think about something better
 ;
 
-
-(*
-: render-noise
-	sample/second samples buffer @ audio @ write drop
-;
-*)
-
-: repeat postpone again ;
 
 : main
-    init sound
+    init
+    sound
     " play test.wav" >cstr system
 |    begin
 |	render-noise
  |   again
-
 ;
 

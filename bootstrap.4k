@@ -220,6 +220,7 @@ variable #ithere
 
 : require" \" over find -1 = if over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
+
 ." 4K-0.0.1 
 An interactive tool for the non-interactive presentation.
 Idea at Function 2009.
@@ -229,3 +230,5 @@ Type `bye' to end the interaction.
 
 4096 static cells pending.
 "
+
+: mark ( -- ) " *marker*" drop make postpone ; ;

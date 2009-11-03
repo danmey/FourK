@@ -111,7 +111,7 @@ comment
 
 : allot there @ + there ! ;
 
-: variable : there @ rliteral postpone ; rcell allot  ;
+: variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 
 
@@ -220,7 +220,7 @@ variable #ithere
 | Hmmmm this does inteerupt compiling
 -1 const c-1
     
-: require" \" over find -1 = if over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+: require" \" over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
 
 (* ." 4K-0.0.1 
@@ -234,7 +234,7 @@ Type `bye' to end the interaction.
 "
 *)
 
-: mark ( -- )  " marker" drop make here @ rliteral there @ rliteral postpone ; ; 
+: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
 : forget " *marker*" drop find dup -1 <> if dup . cr execute . .  ;; then drop ;
 
 | little alias to make 4k.el mode happier

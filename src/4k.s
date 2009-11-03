@@ -207,7 +207,11 @@ _gettoken:
 	jnz 1b				# NO?
 #	K4_SAFE_CALL(ungetc,%eax, stdin) # unget char
 	xor 	%eax,%eax		# clear status (not needed?)
+	push	%ecx
 	rep 	stosb			# Fill rest of token
+	pop	%ecx
+	sub	$NTAB_ENTRY_SIZE,%ecx
+	neg	%ecx
 	ret
 
 ifdef([DEBUG],

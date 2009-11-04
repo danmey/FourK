@@ -1,4 +1,4 @@
-require" src/strings.4k"
+| require" src/strings.4k"
 forget
 mark
 4 #ithere !
@@ -162,8 +162,6 @@ variable accum
 	s>file
 	sample +1!
     loop
-    finit Tf f> .f cr
-    sample @ . cr
     file;
 ;
 
@@ -183,6 +181,7 @@ variable accum
     init
     sound
     " play test.wav" >cstr system
+    0 exit
 |    begin
 |	render-noise
  |   again

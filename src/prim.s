@@ -174,15 +174,21 @@ END_CODE
 DEF_CODE(make,"make")
 	push	%esi
 	xchg	%esp,%ebx
+	pop	%ecx
 	pop	%esi
+	push	%ecx
 #	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 #	mov	$token,	%esi		#load token into esi
 	movl	var_last,%eax 	#current words index
 	shl	$2, %eax	 	#multiply by 4
 	movl	$ntab,%edi		#load ntab beg
 	lea	(%edi,%eax,8),%edi 	#ntab + index * 4*8
-	mov	$NTAB_ENTRY_SIZE, %ecx #length of the word
 	rep	movsb		       	#copy the token
+	xor	%eax,%eax
+	pop	%ecx
+	sub	$NTAB_ENTRY_SIZE, %ecx
+	neg	%ecx
+	rep	stosb
 
 	movl	var_last,%eax       	#load index (unneeded?)
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
@@ -198,15 +204,16 @@ DEF_CODE(make,"make")
 	pop	%esi
 END_CODE
 DEF_CODE(token, "token")
-	K4_SAFE_CALL(_gettoken)
+	call _gettoken
 	pushal
 	mov	$ 64, %ecx
 	mov	$token, %esi
 	mov	$token2, %edi
 	rep 	movsb
 	popal
-	sub	$ 4,%ebx
-	movl	$token2,(%ebx)
+	sub	$ 8,%ebx
+	movl	$token2,4(%ebx)
+	movl	%ecx,(%ebx)
 END_CODE
 
 ## DEF_CODE(lb, "lb")		#alias for [
@@ -229,6 +236,7 @@ DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
 	cmp	$1, var_state
 	jne	1f
@@ -347,6 +355,7 @@ DEF_CODE(tick, "'")
 	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebx
@@ -357,7 +366,9 @@ DEF_CODE(key, "key")
 	movl	%eax, (%ebx)
 END_CODE
 DEF_CODE(find,"find")
-	mov	(%ebx),%edi
+	mov 	(%ebx),%ecx
+	mov	4(%ebx),%edi
+	add	$ 4, %ebx
 	K4_SAFE_CALL(_find_word)
 	jnc	1f
 	mov	$ -1, %eax

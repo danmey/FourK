@@ -111,7 +111,7 @@ comment
 
 : allot there @ + there ! ;
 
-: variable : there @ rliteral postpone ; rcell allot  ;
+: variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 
 
@@ -217,11 +217,13 @@ variable #ithere
 ; immediate
 
 : include" \" include ; immediate
+| Hmmmm this does inteerupt compiling
+-1 const c-1
+    
+: require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
-: require" \" over find -1 = if over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
-
-." 4K-0.0.1 
+(* ." 4K-0.0.1 
 An interactive tool for the non-interactive presentation.
 Idea at Function 2009.
 Greetings fly to everybody.
@@ -230,5 +232,25 @@ Type `bye' to end the interaction.
 
 4096 static cells pending.
 "
+*)
 
-: mark ( -- ) " *marker*" drop make postpone ; ;
+
+| little alias to make 4k.el mode happier
+: again postpone repeat ; immediate
+
+| count the given zero-terminated string
+: count ( str -- c ) 0 >r 
+  begin dup c@ 0 = if drop r> ;; then 1+ r> 1+ >r repeat 
+;
+
+: words ( -- )
+    last @ 1-
+    begin
+	dup 32 * ntab @ + dup count type space
+	dup 0 = if cr drop ;; then
+	1-
+    again
+;
+
+: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
+: forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! ;; then drop ;

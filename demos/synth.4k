@@ -157,7 +157,7 @@ variable accum
     do
 	finit
 	Tf 1.0 >f fl> if 0 sample ! then
-	BassDrum
+	dup execute
 	Out
 	s>file
 	sample +1!
@@ -179,11 +179,13 @@ variable accum
 
 : main
     init
-    sound
+    " BassDrum" find sound
     " play test.wav" >cstr system
-    0 exit
+|    0 exit
 |    begin
 |	render-noise
  |   again
 ;
+
+main
 

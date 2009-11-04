@@ -136,6 +136,7 @@ dlopen_:
 # Function escapes to main text interpreter loop throuh `interpret' token
 # In: %eax - contains a word pointer
 runbyte:
+	push	%eax
 	ifdef([DEBUG],[
 	cmpl	$ 0, interrtupted
 	je	1f
@@ -143,6 +144,7 @@ runbyte:
 	K4_SAFE_CALL(longjmp,$mainloop)
 1:	
 ])
+	pop	%eax
 	push	%esi		# push the current word address on the return stack
 	lea	1(%eax),%esi	# load the byte code pointer
 .fetchbyte:
@@ -469,12 +471,13 @@ _find_word:
 
 # Prepare for string comparition
 	mov 	%edx,%esi
-	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 
 # Compare it
+	push	%ecx
 	push	%edi			# save edi, because it contains
 	repe 	cmpsb			# the pointer to our value
 	pop	%edi			# restore
+	pop	%ecx
 	jz 	2f			# Found word!
 4:
 	sub 	$NTAB_ENTRY_SIZE,%edx 	# Nope.. go back one entry
@@ -530,6 +533,7 @@ interpret_loop:
 
 	mov	$next_word,%ebp
 	movl	$token,	%edi
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	call	_find_word	#find word
 	jc	2f		#if the word is not found, jump to get literal
 

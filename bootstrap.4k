@@ -220,7 +220,7 @@ variable #ithere
 | Hmmmm this does inteerupt compiling
 -1 const c-1
     
-: require" \" over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+: require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
 
 (* ." 4K-0.0.1 
@@ -234,8 +234,6 @@ Type `bye' to end the interaction.
 "
 *)
 
-: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
-: forget " *marker*" drop find dup -1 <> if dup . cr execute . .  ;; then drop ;
 
 | little alias to make 4k.el mode happier
 : again postpone repeat ; immediate
@@ -253,3 +251,6 @@ Type `bye' to end the interaction.
 	1-
     again
 ;
+
+: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
+: forget " *marker*" find dup -1 <> if execute there ! here ! ;; then drop ;

@@ -236,6 +236,7 @@ DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
 	cmp	$1, var_state
 	jne	1f
@@ -354,6 +355,7 @@ DEF_CODE(tick, "'")
 	xchg	%esp,%ebx
 	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	movl	$token,	%edi
+	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebx
@@ -364,7 +366,9 @@ DEF_CODE(key, "key")
 	movl	%eax, (%ebx)
 END_CODE
 DEF_CODE(find,"find")
-	mov	(%ebx),%edi
+	mov 	(%ebx),%ecx
+	mov	4(%ebx),%edi
+	add	$ 4, %ebx
 	K4_SAFE_CALL(_find_word)
 	jnc	1f
 	mov	$ -1, %eax

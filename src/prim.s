@@ -188,6 +188,7 @@ DEF_CODE(make,"make")
 	pop	%ecx
 	sub	$NTAB_ENTRY_SIZE, %ecx
 	neg	%ecx
+	dec	%ecx
 	rep	stosb
 
 	movl	var_last,%eax       	#load index (unneeded?)
@@ -206,10 +207,11 @@ END_CODE
 DEF_CODE(token, "token")
 	call _gettoken
 	pushal
-	mov	$ 64, %ecx
 	mov	$token, %esi
 	mov	$token2, %edi
 	rep 	movsb
+	xor	%eax,%eax
+	stosb
 	popal
 	sub	$ 8,%ebx
 	movl	$token2,4(%ebx)
@@ -234,9 +236,9 @@ DEF_IMM(immediate,"immediate")
 END_CODE
 DEF_IMM(postpone,"postpone")
 	xchg	%esp,%ebx
-	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	call	_gettoken		#fetch next word from the stream
 	movl	$token,	%edi
-	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
+#	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
 	cmp	$1, var_state
 	jne	1f
@@ -353,9 +355,8 @@ DEF_CODE(emit, "emit")
 END_CODE
 DEF_CODE(tick, "'")
 	xchg	%esp,%ebx
-	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	call 	_gettoken		#fetch next word from the stream
 	movl	$token,	%edi
-	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	K4_SAFE_CALL(_find_word)
         push    %eax            # push TOS
 	xchg	%esp,%ebx
@@ -442,21 +443,21 @@ DEF_CODE(f_lower, "flt")
 	mov	%edx,(%ebx)
 END_CODE
 
-DEF_CODE(dotf, ".f")
-	xchg	%esp,%ebx
-	flds 	(%esp)
-	push 	%eax
-	fstpl 	(%esp)
-	pushl 	$fmt_float
-	call	printf
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	call	fflush
-	add	$ 16,%esp
-	xchg	%esp,%ebx
-END_CODE
+## DEF_CODE(dotf, ".f")
+## 	xchg	%esp,%ebx
+## 	flds 	(%esp)
+## 	push 	%eax
+## 	fstpl 	(%esp)
+## 	pushl 	$fmt_float
+## 	call	printf
+## 	mov	stdout_ptr, %eax
+## 	pushl	(%eax)
+## 	call	fflush
+## 	add	$ 16,%esp
+## 	xchg	%esp,%ebx
+## END_CODE
 DEF_CODE(save_image, "save-image")
-	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	call	_gettoken		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)
 	push	%eax
 	push	%eax
@@ -470,7 +471,7 @@ DEF_CODE(save_image, "save-image")
 	K4_SAFE_CALL(fclose, %eax)
 END_CODE
 DEF_CODE(load_image, "load-image")
-	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
+	call	_gettoken		#fetch next word from the stream
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 	K4_SAFE_CALL(fopen, $token,$str_rb)
 	push	%eax

@@ -212,8 +212,8 @@ _gettoken:
 	push	%ecx
 	rep 	stosb			# Fill rest of token
 	pop	%ecx
-	sub	$NTAB_ENTRY_SIZE,%ecx
 	neg	%ecx
+	add 	$NTAB_ENTRY_SIZE,%ecx
 	ret
 
 ifdef([DEBUG],
@@ -289,7 +289,7 @@ _vm_context_EBP:	.fill  4
 
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
-bootstrap_s:		.asciz "bootstrap.4k"
+bootstrap_s:		.asciz "bootstrap.4k1"
 
 libc_handle:	 .LONG 0
 
@@ -344,13 +344,16 @@ _parse_literal:
 	push 	%edi
 	mov	$token,%edi
 # string length
-	xor 	%ecx,%ecx
-	not	%ecx
-	xor 	%eax,%eax
-	cld
-	repnz 	scasb
-	not 	%ecx
-	dec 	%ecx
+#	xor 	%ecx,%ecx
+#	not	%ecx
+#	xor 	%eax,%eax
+#	cld
+#	repnz 	scasb
+#	not 	%ecx
+#	dec 	%ecx
+#	K4_SAFE_CALL(printf,$msg, $token)
+#	K4_SAFE_CALL(printf,$fmt_dec, %ecx)
+#	K4_SAFE_CALL(printf,$msg2)
 
 	mov	$'.',%al
 	mov	$token,%edi
@@ -458,11 +461,13 @@ _get_key:
 # Out:
 # eax - rets word index, C - set if no word found
 _find_word:
+	push	%esi
 	mov 	$ntab,%edx		# set up a pointer past the end
 	mov	var_last,%eax
 	shl	$5,%eax
 	add	%eax,%edx
 	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
+#	K4_SAFE_CALL(printf,$fmt_dec,%ecx) 
 1:
 
 # If it's end of list then go and report fail
@@ -472,27 +477,34 @@ _find_word:
 # Prepare for string comparition
 	mov 	%edx,%esi
 
+2:
+	cmpb	$ 0, (%esi,%ecx)
+	jnz	4f
+
 # Compare it
 	push	%ecx
 	push	%edi			# save edi, because it contains
 	repe 	cmpsb			# the pointer to our value
+	mov	%edi,%eax
 	pop	%edi			# restore
 	pop	%ecx
 	jz 	2f			# Found word!
 4:
 	sub 	$NTAB_ENTRY_SIZE,%edx 	# Nope.. go back one entry
 	jmp 	1b
-2:
-
+2:	
 # We have found a word go and calculate index
 	sub 	$ntab,%edx
 	shr 	$5,%edx			# divide it by 32
 	mov	%edx,%eax
+	pop	%esi
 	clc				# clear fail flag
 	ret
 # Not found
 3:
+
 	xor 	%eax,%eax
+	pop	%esi
 	stc
 	ret
 
@@ -529,11 +541,10 @@ ifdef([DEBUG],[
 	call 	install_handlers
 	])
 interpret_loop:
-	K4_SAFE_CALL(_gettoken)	#get next token
+	call	_gettoken	#get next token
 
 	mov	$next_word,%ebp
 	movl	$token,	%edi
-	mov 	$(NTAB_ENTRY_SIZE),%ecx # Last byte is reserved for flags
 	call	_find_word	#find word
 	jc	2f		#if the word is not found, jump to get literal
 

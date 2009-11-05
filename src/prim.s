@@ -443,19 +443,19 @@ DEF_CODE(f_lower, "flt")
 	mov	%edx,(%ebx)
 END_CODE
 
-## DEF_CODE(dotf, ".f")
-## 	xchg	%esp,%ebx
-## 	flds 	(%esp)
-## 	push 	%eax
-## 	fstpl 	(%esp)
-## 	pushl 	$fmt_float
-## 	call	printf
-## 	mov	stdout_ptr, %eax
-## 	pushl	(%eax)
-## 	call	fflush
-## 	add	$ 16,%esp
-## 	xchg	%esp,%ebx
-## END_CODE
+DEF_CODE(dotf, ".f")
+	xchg	%esp,%ebx
+	flds 	(%esp)
+	push 	%eax
+	fstpl 	(%esp)
+	pushl 	$fmt_float
+	call	printf
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	call	fflush
+	add	$ 16,%esp
+	xchg	%esp,%ebx
+END_CODE
 DEF_CODE(save_image, "save-image")
 	call	_gettoken		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)

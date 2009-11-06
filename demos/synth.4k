@@ -106,7 +106,7 @@ frq bpm / const frame
 
 : sconst : sliteral postpone ; ;
 
-create track data: 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, data;
+create track data: 0 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, data;
 
 0 variable now
 
@@ -169,12 +169,12 @@ variable accum
 	Osc Clamp
 ;
 
+: play ( token -- ) finit 0 channel which-frame @ -1 <> if execute Out s>file tick ;; then 0.0 Out s>file tick drop ;
+
 : HiHat Noise 0.05 FConst 0.4 FConst Sr Mul ;
 : Add f+ ;
 
 : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
-
-
 
 : sound
     " test.wav" file:
@@ -182,11 +182,7 @@ variable accum
     0 sample !
     #samples 0
     do
-	finit
-	dup execute
-	Out
-	s>file
-	tick
+	dup play
     loop
     file;
 ;
@@ -215,7 +211,8 @@ variable accum
 |    0 exit
 |    begin
 |	render-noise
- |   again
+    |   again
+    HiHat
 ;
 
 | main

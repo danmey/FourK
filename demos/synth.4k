@@ -227,7 +227,7 @@ variable c
    0 sample !
     [ ' HiHat literal ]
     sound
-    " play test.wav" >cstr system
+    " play -q test1.wav" >cstr system
     0 exit
 ;
 

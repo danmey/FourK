@@ -12,7 +12,7 @@ mark
 7 ccall: fclose
 8 ccall: system
 9 ccall: rand
-
+10 ccall: powf
 
 
 2147483647 const rand-max 
@@ -42,6 +42,21 @@ PLAYERWAVE mywave={'R','I','F','F',
 		   2,16,'d','a','t','a',
 		   SAMPLESIZE,{0}
 };
+*)
+
+(*
+//Parameter calculation
+//cutoff and resonance are from 0 to 127
+
+  c = pow(0.5, (128-cutoff)   / 16.0);
+  r = pow(0.5, (resonance+24) / 16.0);
+
+//Loop:
+
+  v0 =  (1-r*c)*v0  -  (c)*v1  + (c)*input;
+  v1 =  (1-r*c)*v1  +  (c)*v0;
+
+  output = v1;
 *)
 
 variable stream
@@ -106,7 +121,7 @@ frq bpm / const frame
 
 : sconst : sliteral postpone ; ;
 
-create track data: 0 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, data;
+create track data: 0 c, 0 c, 0 c, 1 c, 1 c, 1 c, 1 c, 1 c, data;
 
 0 variable now
 
@@ -120,7 +135,7 @@ create track data: 0 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, data;
 
 : frame# sample @ frame speed * / ;
 : t-frame frame i>>f frq i>>f fswap f/ ;
-: trigger 0 channel which-frame ! track frame# + c@ 1 = if 0.0 0 channel time ! then  ;
+: trigger track frame# + c@ 1 = if 0.0 0 channel time ! 0 channel which-frame ! then  ;
 : play 0 channel which-frame @ frame# dup rot <> if trigger ;; then drop ;
 : tick 0 channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> 0 channel time ! 1 sample +! play ;
 
@@ -160,7 +175,10 @@ variable accum
     0 i>>f
 ;
 
-: Noise frand ;
+variable c
+
+: LowPass 1 1>>f 
+    
 
 : BassDrum
     	0.2 FConst 0.5 FConst Sr 2 IConst Mul         | Amplitude Envelope
@@ -168,13 +186,14 @@ variable accum
 	20 IConst                           | Pitch
 	Osc Clamp
 ;
+: Noise frand ;
 
-: play ( token -- ) finit 0 channel which-frame @ -1 <> if execute Out s>file tick ;; then 0.0 Out s>file tick drop ;
+: play ( token -- ) finit 0 channel which-frame @ -1 <> if execute Out s>file tick ;; then 0.0 >f Out s>file tick drop ;
 
 : HiHat Noise 0.05 FConst 0.4 FConst Sr Mul ;
 : Add f+ ;
 
-: Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
+| : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
 
 : sound
     " test.wav" file:
@@ -205,15 +224,13 @@ variable accum
 : main
     init
     reset
-    0 sample !
-    " HiHat" find sound
+   0 sample !
+    [ ' HiHat literal ]
+    sound
     " play test.wav" >cstr system
-|    0 exit
-|    begin
-|	render-noise
-    |   again
-    HiHat
+    0 exit
 ;
 
 | main
 
+| main

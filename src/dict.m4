@@ -8,7 +8,8 @@ define([EXECUTE_TOKEN],[6])dnl
 define([COMPILE_TOKEN],[5])dnl
 define([INTERPRET_TOKEN],[7])dnl
 define([END_TOKEN],[255])dnl
-define([PREFIX_TOKEN],[254])dnl
+define([EOD_TOKEN],[254])dnl
+define([PREFIX_TOKEN],[253])dnl
 define([LIT_TOKEN],[0])dnl
 define([NTAB_ENTRY_SIZE], 32)dnl
 define([MAX_WORDS],512)dnl

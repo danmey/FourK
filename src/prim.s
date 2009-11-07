@@ -68,7 +68,7 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
 	movl	var_here,%ecx
-	cmp	$ 255, %eax
+	cmp	$ PREFIX_TOKEN, %eax
 	jbe	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
@@ -83,7 +83,7 @@ DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
-	cmp	$ 255, %eax
+	cmp	$ PREFIX_TOKEN, %eax
 	jbe	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
 	sub	$ 256, %eax

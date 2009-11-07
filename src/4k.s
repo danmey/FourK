@@ -294,7 +294,7 @@ _vm_context_EBP:	.fill  4
 
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
-bootstrap_s:		.asciz "bootstrap.4k1"
+bootstrap_s:		.asciz "bootstrap.4k"
 
 libc_handle:	 .LONG 0
 

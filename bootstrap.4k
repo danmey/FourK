@@ -62,7 +62,10 @@ token : make
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
 
+
 : | begin key 10 = if ;; then repeat ; immediate
+: ; -1 c, -2 here @ c! last @ 1+ last !
+    last @ 253 = if 256 last ! then postpone [ ; immediate
 
 : c: key state @ 0 = if literal then ; immediate
 

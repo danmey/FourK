@@ -72,7 +72,7 @@ DEF_CODE(compile, "compile")
 	jbe	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
-	sub	$ 256,%eax
+	sub	$ PREFIX_TOKEN,%eax
 	incl	var_here
 1:	
 	movb	%al,(%ecx)
@@ -86,7 +86,7 @@ DEF_CODE(execute, "execute")
 	cmp	$ PREFIX_TOKEN, %eax
 	jbe	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ 256, %eax
+	sub	$ PREFIX_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
 	movb	$END_TOKEN,(ex_bytecode+2)
 	jmp	2f
@@ -208,6 +208,7 @@ DEF_CODE(make,"make")
 	rep	stosb
 
 	movl	var_last,%eax       	#load index (unneeded?)
+	
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$COMPILE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)

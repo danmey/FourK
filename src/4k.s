@@ -152,6 +152,11 @@ runbyte:
 	lodsb			# byte code in %eax
 	cmpb	$-1,%al		# if it is end of word, escape by returning
 	je	.fold		# the previous byte code pointer
+	cmpb	$-2,%al		# prefix word
+	jne	.regular	# not, then regular
+	lodsb
+	add	$256,	%eax
+.regular:
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
 	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
 	je	runbyte		     # if it is byte code then thread again
@@ -531,7 +536,7 @@ ifdef([DEBUG],[
 
 	mov	var_last,	%ebx
 	call 	build_dispatch
-
+	
  	mov	%esp,%ebx
 	sub	$ 4096,%ebx
 	mov	$bootstrap_s,%edi

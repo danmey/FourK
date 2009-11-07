@@ -506,6 +506,7 @@ END_CODE
 DEF_CODE(bye, "bye")
 	jmp _exit2
 END_CODE
+
 DEF_CODE(test2,"test")
 	jmp 1f
 lib_sdl:	.ASCIZ "libSDL.so"

@@ -150,9 +150,9 @@ runbyte:
 .fetchbyte:
 	xor	%eax,%eax	# fetch the byte, first clear up the %eax
 	lodsb			# byte code in %eax
-	cmpb	$-1,%al		# if it is end of word, escape by returning
+	cmpb	$ END_TOKEN,%al		# if it is end of word, escape by returning
 	je	.fold		# the previous byte code pointer
-	cmpb	$-2,%al		# prefix word
+	cmpb	$ PREFIX_TOKEN,%al		# prefix word
 	jne	.regular	# not, then regular
 	lodsb
 	add	$256,	%eax
@@ -584,7 +584,7 @@ interpret_loop:
 	jl	.dword_lit
 
 	mov	var_here,%ecx
-	movb	$0,(%ecx)	# token for literal
+	movb	$ LIT_TOKEN,(%ecx)	# token for literal
 	incl	%ecx		# increment here
 	movb	%al,(%ecx)	# store the actual literal (only byte literals allowed)
 				# TODO: allow different sizes of literals

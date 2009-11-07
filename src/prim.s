@@ -208,7 +208,7 @@ DEF_CODE(make,"make")
 	rep	stosb
 
 	movl	var_last,%eax       	#load index (unneeded?)
-	
+
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$COMPILE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)

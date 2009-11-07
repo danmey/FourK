@@ -121,7 +121,7 @@ frq bpm / const frame
 
 : sconst : sliteral postpone ; ;
 
-create track data: 0 c, 0 c, 0 c, 1 c, 1 c, 1 c, 1 c, 1 c, data;
+create track data: 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 1 c, data;
 
 0 variable now
 
@@ -228,9 +228,9 @@ variable c
     [ ' HiHat literal ]
     sound
     " play -q test1.wav" >cstr system
-    0 exit
+|    0 exit
 ;
 
-main
+| main
 
 | main

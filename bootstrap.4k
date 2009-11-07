@@ -64,10 +64,13 @@ token : make
 
 
 : | begin key 10 = if ;; then repeat ; immediate
-: ; -1 c, -2 here @ c! last @ 1+ last !
+
+| Taking into account prefix word
+: ; -1 here @ c! -2 here  @ 1+ c! last @ 1+ last !
     last @ 253 = if 256 last ! then postpone [ ; immediate
 
 : c: key state @ 0 = if literal then ; immediate
+: a 1 2 3 ;
 
 : ( 1
     begin
@@ -247,3 +250,5 @@ variable #ithere
 
 : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
 : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! ;; then drop ;
+
+save-image image.4ki

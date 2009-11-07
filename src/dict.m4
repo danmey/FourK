@@ -69,6 +69,7 @@ define([DEF_IMM],
 
 define([END_DICT],
 [
+	
 	here:
 	.BYTE EOD_TOKEN
 	.FILL DICT_SIZE

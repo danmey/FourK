@@ -276,7 +276,7 @@ module Words = struct
       let rec disassemble_word' =
 	function
 	  | []                           -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> Prefix (a, i)::(disassemble_word' xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 || a = 253 -> Prefix (a, i)::(disassemble_word' xs)
 	  | 1::b1::b2::b3::b4::xs                          -> Prefix32 (1, (dword b4 b3 b2 b1))::(disassemble_word' xs)
 	  | c::xs                                          -> Opcode c::(disassemble_word' xs)
       in
@@ -311,11 +311,12 @@ module Words = struct
 
 	let rec drop_bytecode n = function
 	  | [] -> [],n
-	  | 254::_                      -> [],n
-	  | x::_::_::_::_::xs when x = 1 -> drop_bytecode (n+5) xs
-	  | x::_::xs          when x < 5 -> drop_bytecode (n+2) xs
-	  | 255::xs as l                 -> l,n
-	  | x::xs                        -> drop_bytecode (n+1) xs in
+	  | 254::_                         -> [],n
+	  | x::_::_::_::_::xs when x = 1   -> drop_bytecode (n+5) xs
+	  | x::_::xs          when x < 5   -> drop_bytecode (n+2) xs
+	  | x::_::xs          when x = 253 -> drop_bytecode (n+2) xs
+	  | 255::xs as l                   -> l,n
+	  | x::xs                          -> drop_bytecode (n+1) xs in
 	let next = drop_bytecode 0 in
 	let rec offsets' prev offset = function
 	  | []                -> []
@@ -326,14 +327,15 @@ module Words = struct
       let ofs = offsets word_image in
 
 
-      let name i =
-	implode (List.rev (Array.fold_left
-			     (fun acc x ->
-				match x with
-				  | 0 -> acc
-				  | _ -> (char_of_int x)::acc) [] (Array.sub name_sec.Image.image (i*32) 32)))
+      let name = function
+	| i ->
+	    implode (List.rev (Array.fold_left
+				 (fun acc x ->
+				    match x with
+				      | 0 -> acc
+				      | _ -> (char_of_int x)::acc) [] (Array.sub name_sec.Image.image (i*32) 32)))
       in
-
+	
       let names =
 	let rec names' i =
 	  if i * 32 + 32 <= name_sec.Image.len then
@@ -344,8 +346,8 @@ module Words = struct
       in
 
 	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names);
-	let names = List.rev (drop (List.length names - List.length ofs) (List.rev names)) in
-
+	let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
+	  
 	let words_pre = List.combine ofs names in
 
 	let words_list = List.rev (snd (List.fold_left

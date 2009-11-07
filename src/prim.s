@@ -68,6 +68,13 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
 	movl	var_here,%ecx
+	cmp	$ 255, %eax
+	jbe	1f
+	movb	$ PREFIX_TOKEN, (%ecx)
+	inc	%ecx
+	sub	$ 256,%eax
+	incl	var_here
+1:	
 	movb	%al,(%ecx)
 	incl	var_here
 	xchg	%esp,%ebx

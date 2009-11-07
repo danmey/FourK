@@ -159,7 +159,8 @@ runbyte:
 	cmpb	$ PREFIX_TOKEN,%al		# prefix word
 	jne	.regular	# not, then regular
 	lodsb
-	add	$PREFIX_TOKEN,	%eax
+	add	$256,%eax
+#	add	$PREFIX_TOKEN,	%eax
 .regular:
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
 	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?

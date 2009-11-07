@@ -18,7 +18,7 @@ mark
 2147483647 const rand-max 
 44100 const frq
 
-frq 4 * const #samples
+frq 1 * const #samples
 
 2 const sample-size
 
@@ -90,7 +90,7 @@ variable temp
 : fswap f> f> swap >f >f ;
 
 | our sin (or cos I dunno) function
-: fcos fsincos fswap f> drop ;
+: fcos fsincos f> swap drop ;
 : frot f> f> f> rot >f >f >f ;
 
 ( f: a b -> b a -> b a a -> a b a )
@@ -108,7 +108,8 @@ variable temp
 
 
 3.1415 2.0 >f >f f* f> fconst pi2
-frq i>>f fconst fr
+3.1415 fconst pi
+frq i>>f f> fconst fr
 
 variable sample
 
@@ -117,11 +118,11 @@ variable sample
 
 120 const bpm
 frq bpm / const frame
-60 const speed
+30 const speed
 
 : sconst : sliteral postpone ; ;
 
-create track data: 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 1 c, data;
+create track data: 1 c, 0 c, 1 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, data;
 
 0 variable now
 
@@ -141,7 +142,7 @@ create track data: 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 1 c, data;
 
 : T 0 channel time @ >f ;
 variable accum
-: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) T fr f* pi2 f* f* f+ fcos f* ;
+: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) T pi2 f* f* f+ fcos ;
 : Lfo ( f: freq-in -- f: out ) T pi2 f* f* fcos ;
 : Out 20000 i>>f f* f>>i ;
 : IConst i>>f ;
@@ -158,54 +159,63 @@ variable accum
 0.0 accum !
 : Pitch accum @ >f f+ dupf f> accum ! ;
     
-: Sr ( f: S - v )
-    dupf T fl<= if dupf 1.0 >f f- fswap T f- f/ 1 i>>f f- ;; then
-    T f/
-;
-
-: Sr2 ( f: S - v )
-    dupf T fl<= if dupf 1.0 >f f- fswap T f- f/ 1 i>>f f- ;; then
-    dropf 1.0 >f
-;
-
-
 : Sr ( f: S -- v )
     fswap dupf T fswap fl<= if T f/ fswap dropf ;; then
     fover T fswap fl<= if dupf T f- frot fswap f- fswap f/ 1 i>>f f- ;; then
     0 i>>f
 ;
 
+(*
+Process loop (lowpass):
+out = a0*in - b1*tmp;
+tmp = out;
+
+Coefficient calculation:
+x = exp(-2.0*pi*freq/samplerate);
+a0 = 1.0-x;
+b1 = -x;
+*)
+
+
+variable tmp
+0.0 tmp !
+: exp 2 i>f swap powf ;
+: fx -2 i>>f pi f* fr fswap f/ 3000 i>>f f* f> exp ;
+: a0 fx 1 i>>f f- ;
+: b1 fx ;
+: LP a0 f* b1 tmp @ >f f* f+ f> dup tmp ! >f ;
+: HP dupf LP fswap f- ;
 variable c
 
-: LowPass 1 1>>f 
-    
 
 : BassDrum
-    	0.2 FConst 0.5 FConst Sr 2 IConst Mul         | Amplitude Envelope
-	0.2 FConst 0.5 FConst Sr Pitch 0.01 FConst Mul | Frequency Modulation
-	20 IConst                           | Pitch
-	Osc Clamp
+
+| 0.01 FConst 0.3 FConst Sr
+0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch 
+|        1 IConst
+55 IConst Osc
+0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
+Clamp
 ;
 : Noise frand ;
+: HiHat Noise HP 0.01 FConst 0.3 FConst Sr Mul ;
 
-: play ( token -- ) finit 0 channel which-frame @ -1 <> if execute Out s>file tick ;; then 0.0 >f Out s>file tick drop ;
+: play ( token -- ) finit 0 channel which-frame @ -1 <> if BassDrum Out s>file tick ;; then 0.0 >f Out s>file tick drop ;
 
-: HiHat Noise 0.05 FConst 0.4 FConst Sr Mul ;
 : Add f+ ;
 
 | : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
 
 : sound
-    " test1.wav" file:
+    " test.wav" file:
     >whdr
     0 sample !
     #samples 0
     do
-	dup play
+	play
     loop
     file;
 ;
-
 
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
@@ -215,7 +225,8 @@ variable c
     " libc.so" lib " fwrite" sym 4 rcells add-handle
     " libc.so" lib " fclose" sym  rcell add-handle
     " libc.so" lib " system" sym  rcell add-handle
-    " libc.so" lib " rand" sym  0 add-handle | need to think about something better
+    " libc.so" lib " rand" sym 0 add-handle | need to think about something better
+    " libm.so.6" lib " powf" sym 2 rcells add-handle | need to think about something better
 
     #samples cells malloc buffer !
 ;
@@ -225,9 +236,10 @@ variable c
     init
     reset
    0 sample !
-    [ ' HiHat literal ]
+    
+|    token HiHat find
     sound
-    " play -q test1.wav" >cstr system
+    " play test.wav" >cstr system
 |    0 exit
 ;
 

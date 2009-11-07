@@ -69,10 +69,10 @@ DEF_CODE(compile, "compile")
 	popl	%eax
 	movl	var_here,%ecx
 	cmp	$ PREFIX_TOKEN, %eax
-	jbe	1f
+	jb	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
-	sub	$ PREFIX_TOKEN,%eax
+	sub	$ 256,%eax
 	incl	var_here
 1:	
 	movb	%al,(%ecx)
@@ -84,9 +84,9 @@ DEF_CODE(execute, "execute")
 	popl	%eax
 	xchg 	%esp,%ebx
 	cmp	$ PREFIX_TOKEN, %eax
-	jbe	1f
+	jb	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ PREFIX_TOKEN,%eax
+	sub	$ 256,%eax
 	movb	%al,(ex_bytecode+1)
 	movb	$END_TOKEN,(ex_bytecode+2)
 	jmp	2f
@@ -417,6 +417,15 @@ END_CODE
 DEF_CODE(f_pop, "f>")
 	sub $ 4, %ebx
 	fstps (%ebx)
+END_CODE
+
+DEF_CODE(f_dpop, "d>")
+	sub $ 8, %ebx
+	fstpl (%ebx)
+END_CODE
+DEF_CODE(f_dpush, ">d")
+	fldl (%ebx)
+	add $ 8, %ebx
 END_CODE
 
 DEF_CODE(f_add, "f+")

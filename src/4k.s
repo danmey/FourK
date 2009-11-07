@@ -77,6 +77,8 @@ build_dispatch:
 	mov	%eax,%ecx
 	cmp	$-1,%al		#end of core dictionary?
 	je	.user_dictionary
+	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
+	je	.done
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
@@ -88,6 +90,8 @@ build_dispatch:
 .user_dictionary:
 	cmp	$-1,%al
 	je	.found_word
+	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
+	je	.done
 	cmp	$4,%al
 	jbe	.cont
 	jmp	.loop2

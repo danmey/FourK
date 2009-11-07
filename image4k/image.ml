@@ -311,7 +311,7 @@ module Words = struct
 
 	let rec drop_bytecode n = function
 	  | [] -> [],n
-	  | 255::255::_                  -> [],n
+	  | 254::_                      -> [],n
 	  | x::_::_::_::_::xs when x = 1 -> drop_bytecode (n+5) xs
 	  | x::_::xs          when x < 5 -> drop_bytecode (n+2) xs
 	  | 255::xs as l                 -> l,n
@@ -319,10 +319,9 @@ module Words = struct
 	let next = drop_bytecode 0 in
 	let rec offsets' prev offset = function
 	  | []                -> []
-	  | 255::255::_       -> []
+	  | 254::_            -> []
           | 255::xs           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
 	  | n::xs             ->                        (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
-	  (* Exclude last element *)
 	  offsets' false 0 lst in
       let ofs = offsets word_image in
 

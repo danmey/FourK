@@ -76,9 +76,17 @@ DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
-#	cmp	$ 254, %eax
+	cmp	$ 255, %eax
+	jbe	1f
+	movb	$ PREFIX_TOKEN, ex_bytecode
+	sub	$ 256, %eax
+	movb	%al,(ex_bytecode+1)
+	movb	$END_TOKEN,(ex_bytecode+2)
+	jmp	2f
+1:	
 	movb	%al,ex_bytecode
 	movb	$END_TOKEN,(ex_bytecode+1)
+2:	
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE

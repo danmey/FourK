@@ -196,7 +196,7 @@ variable c
 | : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
 
 : sound
-    " test.wav" file:
+    " test1.wav" file:
     >whdr
     0 sample !
     #samples 0
@@ -231,6 +231,6 @@ variable c
     0 exit
 ;
 
-| main
+main
 
 | main

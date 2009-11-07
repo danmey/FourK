@@ -223,16 +223,6 @@ variable #ithere
 : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
 
-(* ." 4K-0.0.1 
-An interactive tool for the non-interactive presentation.
-Idea at Function 2009.
-Greetings fly to everybody.
-Released under limited conditions, type `license' to see the text.
-Type `bye' to end the interaction. 
-
-4096 static cells pending.
-"
-*)
 
 
 | little alias to make 4k.el mode happier
@@ -254,3 +244,14 @@ Type `bye' to end the interaction.
 
 : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
 : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! ;; then drop ;
+
+
+." 4K-0.0.1 
+An interactive tool for the non-interactive presentation.
+Idea at Function 2009.
+Greetings fly to everybody.
+Released under limited conditions, type `license' to see the text.
+Type `bye' to end the interaction. 
+
+4096 static cells pending.
+"

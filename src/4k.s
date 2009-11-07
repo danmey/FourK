@@ -112,7 +112,7 @@ build_dispatch:
 #	K4_SAFE_CALL(printf, $fmt_hex, %esi)
 	ret
 
-ex_bytecode:		.BYTE  0,END_TOKEN
+ex_bytecode:		.BYTE  0,0,0 # to fit the prefix word
 
 ifdef([DEBUG],,[
 dlsym:

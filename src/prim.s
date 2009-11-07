@@ -76,6 +76,7 @@ DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
+#	cmp	$ 254, %eax
 	movb	%al,ex_bytecode
 	movb	$END_TOKEN,(ex_bytecode+1)
 	mov	$(ex_bytecode-1),%eax

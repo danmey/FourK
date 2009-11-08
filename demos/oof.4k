@@ -1,0 +1,6 @@
+forget
+mark
+
+: last-name last @ 1- 32 * ntab @ + dup count ;
+: does> ] last-name 2dup make find compile ; immediate
+

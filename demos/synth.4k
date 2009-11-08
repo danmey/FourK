@@ -18,9 +18,9 @@ mark
 2147483647 const rand-max 
 44100 const frq
 
-frq 1 * const #samples
+frq 4 * const #samples
 
-2 const sample-size
+1 const sample-size
 
 : samples sample-size * ;
 
@@ -121,26 +121,40 @@ frq bpm / const frame
 30 const speed
 
 : sconst : sliteral postpone ; ;
+variable current-song
 
-create track data: 1 c, 0 c, 1 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, 0 c, data;
+: song there @ current-song ! 4 rcells allot 0 data: ;
+: pattern here @  ;
+: endp over current-song @ + ! rcell +  ;
+: end-song data; drop ;
+
+create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, data;
+
+song
+pattern 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
+pattern 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+end-song
 
 0 variable now
 
 2 rcells const channel 
 4 channel * create channels allot
+variable current
+0 current !
+: current-channel current @ channel   ;
+: current-track  current-song @ current @ rcells  + @ ;
 
-: time ( #ch -- F:t )  * channels + ;
+: time ( #ch -- F:t ) * channels + ;
 : which-frame time rcell + ;
 
 : reset 3 0 do 0.0 i channel time ! -1 i channel which-frame ! loop ;
 
 : frame# sample @ frame speed * / ;
-: t-frame frame i>>f frq i>>f fswap f/ ;
-: trigger track frame# + c@ 1 = if 0.0 0 channel time ! 0 channel which-frame ! then  ;
-: play 0 channel which-frame @ frame# dup rot <> if trigger ;; then drop ;
-: tick 0 channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> 0 channel time ! 1 sample +! play ;
+: trigger current-track frame# + c@ 1 = if 0.0 current-channel time ! current-channel which-frame ! ;; then drop ;
+: play current-channel which-frame @ frame# dup rot <> if trigger drop ;; then drop  ;
+: tick current-channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> current-channel time ! play  ;
 
-: T 0 channel time @ >f ;
+: T current-channel time @ >f ;
 variable accum
 : Osc ( f: amp-in  pitch-in  freq-in -- f: out ) T pi2 f* f* f+ fcos ;
 : Lfo ( f: freq-in -- f: out ) T pi2 f* f* fcos ;
@@ -170,8 +184,8 @@ Process loop (lowpass):
 out = a0*in - b1*tmp;
 tmp = out;
 
-Coefficient calculation:
-x = exp(-2.0*pi*freq/samplerate);
+Coefficient calculation:x
+ = exp(-2.0*pi*freq/samplerate);
 a0 = 1.0-x;
 b1 = -x;
 *)
@@ -195,12 +209,22 @@ variable c
 |        1 IConst
 55 IConst Osc
 0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
-Clamp
+Clamp 0.5 FConst Mul
 ;
 : Noise frand ;
 : HiHat Noise HP 0.01 FConst 0.3 FConst Sr Mul ;
+create Instruments data:  ' HiHat , ' BassDrum , data;
 
-: play ( token -- ) finit 0 channel which-frame @ -1 <> if BassDrum Out s>file tick ;; then 0.0 >f Out s>file tick drop ;
+| : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
+: play1 ( token -- ) finit current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick ;; then 0.0 >f tick ;
+: play ( token -- )
+    0 i>f
+    1 0
+    do
+	i current !
+	play1 >f f+ f>
+    loop
+;
 
 : Add f+ ;
 
@@ -213,6 +237,8 @@ Clamp
     #samples 0
     do
 	play
+	>f Out s>file
+	1 sample +!
     loop
     file;
 ;

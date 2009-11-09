@@ -1,6 +1,15 @@
 forget
 mark
 
-: last-name last @ 1- 32 * ntab @ + dup count ;
-: does> ] last-name 2dup make find compile ; immediate
+: create create here @ ;
 
+: last-name last @ 1- 32 * ntab @ + dup count ;
+: does> here @ swap here ! 0 ;
+: ; postpone dup 0 literal postpone = postpone if postpone here postpone ! postpone ;; postpone then postpone drop postpone ; ; immediate
+
+: rcell+ rcell + ;
+: class create 1 rcells allot does> @ ;
+variable current-class
+: method dup const rcell+ ;
+| : last-token last @ rcells 2 * vtab @ ;
+: implements token execute current-class @ + last @ swap ! ;

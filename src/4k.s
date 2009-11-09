@@ -296,7 +296,7 @@ bytecode:		.BYTE  0,INTERPRET_TOKEN
 _vm_context_reg:	.FILL 36
 _vm_context_ESP:	.FILL  4
 _vm_context_EBP:	.fill  4
-
+_org_ESP:		.LONG	0
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
 bootstrap_s:		.asciz "bootstrap.4k"
@@ -541,13 +541,16 @@ ifdef([DEBUG],[
 
 	mov	var_last,	%ebx
 	call 	build_dispatch
-	
+	mov	%esp,_org_ESP
  	mov	%esp,%ebx
 	sub	$ 4096,%ebx
 	mov	$bootstrap_s,%edi
 	K4_SAFE_CALL(file_nest)
 ifdef([DEBUG],[
 	K4_SAFE_CALL(_setjmp, $mainloop)
+ 	movl	_org_ESP,%esp
+ 	mov	%esp,%ebx
+	sub	$ 4096,%ebx
 	call 	install_handlers
 	])
 interpret_loop:

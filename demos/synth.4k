@@ -90,7 +90,7 @@ variable temp
 : fswap f> f> swap >f >f ;
 
 | our sin (or cos I dunno) function
-: fcos fsincos f> swap drop ;
+: fcos fsincos f> drop ;
 : frot f> f> f> rot >f >f >f ;
 
 ( f: a b -> b a -> b a a -> a b a )
@@ -132,7 +132,8 @@ create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0
 
 song
 pattern 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
-pattern 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
 end-song
 
 0 variable now
@@ -141,17 +142,17 @@ end-song
 4 channel * create channels allot
 variable current
 0 current !
-: current-channel current @ channel   ;
+: current-channel current @ channel *   ;
 : current-track  current-song @ current @ rcells  + @ ;
 
-: time ( #ch -- F:t ) * channels + ;
+: time ( #ch -- F:t ) channels + ;
 : which-frame time rcell + ;
 
 : reset 3 0 do 0.0 i channel time ! -1 i channel which-frame ! loop ;
 
 : frame# sample @ frame speed * / ;
-: trigger current-track frame# + c@ 1 = if 0.0 current-channel time ! current-channel which-frame ! ;; then drop ;
-: play current-channel which-frame @ frame# dup rot <> if trigger drop ;; then drop  ;
+: trigger ( frame -- ) current-track frame# + c@ 1 = if 0.0 current-channel time ! current-channel which-frame ! ;; then drop ;
+: play ( frame -- ) current-channel which-frame @ frame# dup rot <> if trigger ;; then drop  ;
 : tick current-channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> current-channel time ! play  ;
 
 : T current-channel time @ >f ;
@@ -207,7 +208,7 @@ variable c
 | 0.01 FConst 0.3 FConst Sr
 0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch 
 |        1 IConst
-55 IConst Osc
+55 IConst Osc 
 0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
 Clamp 0.5 FConst Mul
 ;
@@ -216,14 +217,13 @@ Clamp 0.5 FConst Mul
 create Instruments data:  ' HiHat , ' BassDrum , data;
 
 | : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
-: play1 ( token -- ) finit current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick ;; then 0.0 >f tick ;
+: play1 ( token -- )  current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick ;; then 0.0 >f tick ;
 : play ( token -- )
-    0 i>f
-    1 0
-    do
-	i current !
-	play1 >f f+ f>
-    loop
+    finit
+    0 current ! play1 f>
+    1 current ! play1
+    >f
+    f+ f>
 ;
 
 : Add f+ ;

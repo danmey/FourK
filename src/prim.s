@@ -533,16 +533,22 @@ DEF_CODE(bye, "bye")
 	jmp _exit2
 END_CODE
 
-DEF_CODE(test2,"test")
-	jmp 1f
-lib_sdl:	.ASCIZ "libSDL.so"
-1:
-	xchg	%ebx,%esp
-	push	$ 2
-	push	$ lib_sdl
-	K4_SAFE_CALL(dlopen,$ lib_sdl,$ 2)
-	push	%eax
-	xchg	%ebx,%esp
+DEF_CODE(cback, "cback")
+	xor	%eax,%eax
+	lodsl
+	cmp	$ PREFIX_TOKEN, %eax
+	jb	1f
+	movb	$ PREFIX_TOKEN, ex_bytecode
+	sub	$ 256,%eax
+	movb	%al,(ex_bytecode+1)
+	movb	$END_TOKEN,(ex_bytecode+2)
+	jmp	2f
+1:	
+	movb	%al,ex_bytecode
+	movb	$END_TOKEN,(ex_bytecode+1)
+2:	
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
 END_CODE
 
 DEF_VAR(vtab, dsptch)

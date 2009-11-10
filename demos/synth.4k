@@ -131,7 +131,7 @@ variable current-song
 create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, data;
 
 song
-pattern 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
+pattern 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
 pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
 pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
 end-song
@@ -194,13 +194,13 @@ b1 = -x;
 
 variable tmp
 0.0 tmp !
+
 : exp 2 i>f swap powf ;
 : fx -2 i>>f pi f* fr fswap f/ 3000 i>>f f* f> exp ;
 : a0 fx 1 i>>f f- ;
 : b1 fx ;
 : LP a0 f* b1 tmp @ >f f* f+ f> dup tmp ! >f ;
 : HP dupf LP fswap f- ;
-variable c
 
 
 : BassDrum
@@ -213,13 +213,13 @@ variable c
 Clamp 0.5 FConst Mul
 ;
 : Noise frand ;
-: HiHat Noise HP 0.01 FConst 0.3 FConst Sr Mul ;
+: HiHat Noise HP 0.1 FConst 0.3 FConst Sr Mul ;
 create Instruments data:  ' HiHat , ' BassDrum , data;
 
 | : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
 : play1 ( token -- )  current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick ;; then 0.0 >f tick ;
 : play ( token -- )
-    finit
+
     0 current ! play1 f>
     1 current ! play1
     >f

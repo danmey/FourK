@@ -117,8 +117,39 @@ comment
 
 : allot there @ + there ! ;
 
+
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
+
+: inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
+
+| Not 100% correct (but works with overlapping blocks )
+: cmove> ( src dst c -- )
+    >r 2dup <
+    if
+	2dup swap r + <
+	if
+	    r 1- inc
+	    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! -1 inc again
+	then
+    then
+    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
+;
+	    
+	    
+| Sections support
+32 const size
+: th size * ;
+: pointer size + rcell - ;
+variable sections
+0 #section !
+create table 16 size * allot
+
+: new-section 
+
+
+
+
 
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate

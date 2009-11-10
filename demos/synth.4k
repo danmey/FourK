@@ -272,3 +272,15 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
 | main
 
 | main
+
+: cmove> ( ptr1 ptr2 c -- )
+    >r 2dup >
+    if
+	2dup swap r + <
+	if
+	    r 1- inc
+	    begin >r dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! -1 inc again
+	then
+    then
+    begin >r dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
+;

@@ -128,7 +128,6 @@ module Image = struct
 
   let save image nm =
     let file = open_out_bin nm in
-    let nm n = "@@-" ^ n ^ "-@@" in
     let write_section sec =
       (* write header *)
       seek_out file sec.offset;
@@ -188,6 +187,7 @@ module Image = struct
 	    ofs+i+1, implode (List.rev acc)
 	  else
 	    strsz' ((char_of_int b)::acc) (i+1) ofs in
+
       let strsz = strsz' [] 0 in
       let rec loop acc ofs =
 	let ofs',n = strsz ofs in
@@ -485,7 +485,7 @@ module Words = struct
     let u = swap_ids used' in
       List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used';
 	u
-
+	  
 end
 module FourkImage = struct
 
@@ -518,6 +518,10 @@ module FourkImage = struct
 (*      Image.relocate (image, ref_image) (Image.find_section base_image "dict") (Image.find_section base_image "interpret"); *)
       ()
 
+  let sections image =
+    let there = Image.find_section image "there"  in
+    let number = BinaryArray.get_dword there.Image.image 256 in
+      number
 
 end
 
@@ -593,7 +597,10 @@ module Options = struct
 			     List.iter (fun x ->
 					  match x.Words.code with
 					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
-					    | _ -> ()) words),
+					    | _ -> ()) words;
+			     Printf.printf "Sections: %ld" (FourkImage.sections image)
+			),
+      
       "Disassemble user dictionary";
       "-wrelocs",
       (let ref_name = ref "" in

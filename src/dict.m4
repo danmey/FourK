@@ -74,7 +74,8 @@ define([END_DICT],
 	.BYTE EOD_TOKEN
 	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
-
+	
+	.align 4
 	SECTION(there)
 	ccall_tab:
 	.LONG dlopen,8

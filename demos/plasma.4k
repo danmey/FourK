@@ -1,4 +1,5 @@
-
+forget
+mark
 : fconst : rliteral postpone >f postpone ; ;
 : i>>f i>f >f ;
 
@@ -222,7 +223,7 @@ repeat
     video screen !
     draw
     render-loop
-    0 exit
+|    0 exit
 ;
 
 

@@ -68,6 +68,13 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
 	movl	var_here,%ecx
+	cmp	$ PREFIX_TOKEN, %eax
+	jb	1f
+	movb	$ PREFIX_TOKEN, (%ecx)
+	inc	%ecx
+	sub	$ 256,%eax
+	incl	var_here
+1:	
 	movb	%al,(%ecx)
 	incl	var_here
 	xchg	%esp,%ebx
@@ -76,8 +83,17 @@ DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
+	cmp	$ PREFIX_TOKEN, %eax
+	jb	1f
+	movb	$ PREFIX_TOKEN, ex_bytecode
+	sub	$ 256,%eax
+	movb	%al,(ex_bytecode+1)
+	movb	$END_TOKEN,(ex_bytecode+2)
+	jmp	2f
+1:	
 	movb	%al,ex_bytecode
 	movb	$END_TOKEN,(ex_bytecode+1)
+2:	
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE
@@ -192,6 +208,7 @@ DEF_CODE(make,"make")
 	rep	stosb
 
 	movl	var_last,%eax       	#load index (unneeded?)
+
 	lea	semantic(,%eax,2),%edi 	#store semantic actions (two dwords)
 	movb	$COMPILE_TOKEN, (%edi)
 	movb	$EXECUTE_TOKEN, 1(%edi)
@@ -402,6 +419,15 @@ DEF_CODE(f_pop, "f>")
 	fstps (%ebx)
 END_CODE
 
+DEF_CODE(f_dpop, "d>")
+	sub $ 8, %ebx
+	fstpl (%ebx)
+END_CODE
+DEF_CODE(f_dpush, ">d")
+	fldl (%ebx)
+	add $ 8, %ebx
+END_CODE
+
 DEF_CODE(f_add, "f+")
 	faddp
 END_CODE
@@ -443,19 +469,19 @@ DEF_CODE(f_lower, "flt")
 	mov	%edx,(%ebx)
 END_CODE
 
-## DEF_CODE(dotf, ".f")
-## 	xchg	%esp,%ebx
-## 	flds 	(%esp)
-## 	push 	%eax
-## 	fstpl 	(%esp)
-## 	pushl 	$fmt_float
-## 	call	printf
-## 	mov	stdout_ptr, %eax
-## 	pushl	(%eax)
-## 	call	fflush
-## 	add	$ 16,%esp
-## 	xchg	%esp,%ebx
-## END_CODE
+DEF_CODE(dotf, ".f")
+	xchg	%esp,%ebx
+	flds 	(%esp)
+	push 	%eax
+	fstpl 	(%esp)
+	pushl 	$fmt_float
+	call	printf
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	call	fflush
+	add	$ 16,%esp
+	xchg	%esp,%ebx
+END_CODE
 DEF_CODE(save_image, "save-image")
 	call	_gettoken		#fetch next word from the stream
 	K4_SAFE_CALL(fopen, $token,$str_wb)
@@ -506,16 +532,23 @@ END_CODE
 DEF_CODE(bye, "bye")
 	jmp _exit2
 END_CODE
-DEF_CODE(test2,"test")
-	jmp 1f
-lib_sdl:	.ASCIZ "libSDL.so"
-1:
-	xchg	%ebx,%esp
-	push	$ 2
-	push	$ lib_sdl
-	K4_SAFE_CALL(dlopen,$ lib_sdl,$ 2)
-	push	%eax
-	xchg	%ebx,%esp
+
+DEF_CODE(cback, "cback")
+	xor	%eax,%eax
+	lodsl
+	cmp	$ PREFIX_TOKEN, %eax
+	jb	1f
+	movb	$ PREFIX_TOKEN, ex_bytecode
+	sub	$ 256,%eax
+	movb	%al,(ex_bytecode+1)
+	movb	$END_TOKEN,(ex_bytecode+2)
+	jmp	2f
+1:	
+	movb	%al,ex_bytecode
+	movb	$END_TOKEN,(ex_bytecode+1)
+2:	
+	mov	$(ex_bytecode-1),%eax
+	jmp	runbyte
 END_CODE
 
 DEF_VAR(vtab, dsptch)

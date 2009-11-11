@@ -1,0 +1,15 @@
+forget
+mark
+
+
+: last-name last @ 1- 32 * ntab @ + dup count ;
+
+: make2 " *a*" make ;
+: does> postpone make2 postpone ; ; immediate
+
+: rcell+ rcell + ;
+| : class create 1 rcells allot does> @ ;
+| variable current-class
+| : method dup const rcell+ ;
+| : last-token last @ rcells 2 * vtab @ ;
+| : implements token execute current-class @ + last @ swap ! ;

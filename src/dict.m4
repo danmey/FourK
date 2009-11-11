@@ -7,10 +7,12 @@ define([MARKER],[
 define([EXECUTE_TOKEN],[6])dnl
 define([COMPILE_TOKEN],[5])dnl
 define([INTERPRET_TOKEN],[7])dnl
-define([END_TOKEN],[-1])dnl
+define([END_TOKEN],[255])dnl
+define([EOD_TOKEN],[254])dnl
+define([PREFIX_TOKEN],[253])dnl
 define([LIT_TOKEN],[0])dnl
 define([NTAB_ENTRY_SIZE], 32)dnl
-define([MAX_WORDS],256)dnl
+define([MAX_WORDS],512)dnl
 define([DICT_SIZE], 4*1024)dnl
 define([NEXT_WORD], [jmp *%ebp])dnl
 define([CORE_COUNT],[0])dnl
@@ -67,12 +69,13 @@ define([DEF_IMM],
 
 define([END_DICT],
 [
+	
 	here:
-	.BYTE -1
-	.BYTE -1
+	.BYTE EOD_TOKEN
 	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
-
+	
+	.align 4
 	SECTION(there)
 	ccall_tab:
 	.LONG dlopen,8
@@ -80,7 +83,7 @@ define([END_DICT],
 	.FILL 256-16
 	undivert(3)
 	there:
-       .FILL 4096
+       .FILL 8192
 	SECTION(name)
 	ntab:
 	undivert(1)

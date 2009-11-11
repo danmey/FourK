@@ -34,7 +34,7 @@ $(BIN)/4k-debug: $(SRC)
 	m4 -DDEBUG -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.s
-	gcc -ldl -lsigsegv $(BIN)/t.s -o $@
+	gcc -ggdb3 -ldl -lsigsegv $(BIN)/t.s -o $@
 	cp $@ $(PREFIX)
 
 $(PROGRAM)$(REF_SUFFIX): $(SRC_FILES)

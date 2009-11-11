@@ -77,6 +77,8 @@ build_dispatch:
 	mov	%eax,%ecx
 	cmp	$-1,%al		#end of core dictionary?
 	je	.user_dictionary
+	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
+	je	.done
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
@@ -88,6 +90,8 @@ build_dispatch:
 .user_dictionary:
 	cmp	$-1,%al
 	je	.found_word
+	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
+	je	.done
 	cmp	$4,%al
 	jbe	.cont
 	jmp	.loop2
@@ -112,7 +116,7 @@ build_dispatch:
 #	K4_SAFE_CALL(printf, $fmt_hex, %esi)
 	ret
 
-ex_bytecode:		.BYTE  0,END_TOKEN
+ex_bytecode:		.BYTE  0,0,0 # to fit the prefix word
 
 ifdef([DEBUG],,[
 dlsym:
@@ -150,8 +154,14 @@ runbyte:
 .fetchbyte:
 	xor	%eax,%eax	# fetch the byte, first clear up the %eax
 	lodsb			# byte code in %eax
-	cmpb	$-1,%al		# if it is end of word, escape by returning
+	cmpb	$ END_TOKEN,%al		# if it is end of word, escape by returning
 	je	.fold		# the previous byte code pointer
+	cmpb	$ PREFIX_TOKEN,%al		# prefix word
+	jne	.regular	# not, then regular
+	lodsb
+	add	$256,%eax
+#	add	$PREFIX_TOKEN,	%eax
+.regular:
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
 	cmpb	$-1, (%eax)	     # table. Check if it is bytecode or asm code?
 	je	runbyte		     # if it is byte code then thread again
@@ -286,10 +296,10 @@ bytecode:		.BYTE  0,INTERPRET_TOKEN
 _vm_context_reg:	.FILL 36
 _vm_context_ESP:	.FILL  4
 _vm_context_EBP:	.fill  4
-
+_org_ESP:		.LONG	0
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
-bootstrap_s:		.asciz "bootstrap.4k1"
+bootstrap_s:		.asciz "bootstrap.4k"
 
 libc_handle:	 .LONG 0
 
@@ -531,13 +541,16 @@ ifdef([DEBUG],[
 
 	mov	var_last,	%ebx
 	call 	build_dispatch
-
+	mov	%esp,_org_ESP
  	mov	%esp,%ebx
 	sub	$ 4096,%ebx
 	mov	$bootstrap_s,%edi
 	K4_SAFE_CALL(file_nest)
 ifdef([DEBUG],[
 	K4_SAFE_CALL(_setjmp, $mainloop)
+ 	movl	_org_ESP,%esp
+ 	mov	%esp,%ebx
+	sub	$ 4096,%ebx
 	call 	install_handlers
 	])
 interpret_loop:
@@ -579,7 +592,7 @@ interpret_loop:
 	jl	.dword_lit
 
 	mov	var_here,%ecx
-	movb	$0,(%ecx)	# token for literal
+	movb	$ LIT_TOKEN,(%ecx)	# token for literal
 	incl	%ecx		# increment here
 	movb	%al,(%ecx)	# store the actual literal (only byte literals allowed)
 				# TODO: allow different sizes of literals

@@ -15,7 +15,7 @@ postpone @
 postpone c!
 
 postpone lit
--1 c,
+-2 c,
 postpone here
 postpone @
 postpone lit
@@ -62,9 +62,15 @@ token : make
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
 
+
 : | begin key 10 = if ;; then repeat ; immediate
 
+| Taking into account prefix word
+: ; -1 here @ c! -2 here  @ 1+ c! last @ 1+ last !
+    last @ 253 = if 256 last ! then postpone [ ; immediate
+
 : c: key state @ 0 = if literal then ; immediate
+: a 1 2 3 ;
 
 : ( 1
     begin
@@ -92,7 +98,7 @@ comment
 : <= > invert ;
 : >= < invert ;
 : +! swap >r dup @ r> + swap ! ;
-
+: 1+! 1 +! ;
 : data: here there @ here@ there ! swap ! ;
 : data; data: ;
 
@@ -111,11 +117,18 @@ comment
 
 : allot there @ + there ! ;
 
+
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 
+| Section table comes first
+| variable #section
+| 0 #section !
+create table 16 32 * allot
 
-: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+
 
 | strings
 
@@ -223,16 +236,6 @@ variable #ithere
 : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 
 
-(* ." 4K-0.0.1 
-An interactive tool for the non-interactive presentation.
-Idea at Function 2009.
-Greetings fly to everybody.
-Released under limited conditions, type `license' to see the text.
-Type `bye' to end the interaction. 
-
-4096 static cells pending.
-"
-*)
 
 
 | little alias to make 4k.el mode happier
@@ -252,5 +255,38 @@ Type `bye' to end the interaction.
     again
 ;
 
-: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
-: forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! ;; then drop ;
+
+: inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
+
+| Not 100% correct (but works with overlapping blocks )
+: cmove> ( src dst c -- )
+    >r 2dup <
+    if
+	2dup swap r + <
+	if
+	    r 1- inc
+	    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! -1 inc again
+	then
+    then
+    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
+;
+
+
+
+
+	    
+| Sections support
+32 const section
+| : th section * ;
+| : pointer section + rcell - ;
+| : 1+! 1 swap +! ;
+| : in + ;
+| : new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
+| : dump #section @ 0 do i th table in dup count type cr loop ;
+| : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
+| : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
+| : section token new ;
+
+
+| save-image image.4ki
+

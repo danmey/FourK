@@ -1,4 +1,3 @@
-| require" src/strings.4k"
 forget
 mark
 4 #ithere !
@@ -13,17 +12,15 @@ mark
 7 ccall: fclose
 8 ccall: system
 9 ccall: rand
-(*
-5 ccall: open
-6 ccall: ioctl
-7 ccall: write
-*)
+10 ccall: powf
+
+
 2147483647 const rand-max 
-44100 const sample/second
+44100 const frq
 
-44100 4 * const #samples
+frq 4 * const #samples
 
-2 const sample-size
+1 const sample-size
 
 : samples sample-size * ;
 
@@ -45,6 +42,21 @@ PLAYERWAVE mywave={'R','I','F','F',
 		   2,16,'d','a','t','a',
 		   SAMPLESIZE,{0}
 };
+*)
+
+(*
+//Parameter calculation
+//cutoff and resonance are from 0 to 127
+
+  c = pow(0.5, (128-cutoff)   / 16.0);
+  r = pow(0.5, (resonance+24) / 16.0);
+
+//Loop:
+
+  v0 =  (1-r*c)*v0  -  (c)*v1  + (c)*input;
+  v1 =  (1-r*c)*v1  +  (c)*v0;
+
+  output = v1;
 *)
 
 variable stream
@@ -78,7 +90,7 @@ variable temp
 : fswap f> f> swap >f >f ;
 
 | our sin (or cos I dunno) function
-: fcos fsincos fswap f> drop ;
+: fcos fsincos f> drop ;
 : frot f> f> f> rot >f >f >f ;
 
 ( f: a b -> b a -> b a a -> a b a )
@@ -96,58 +108,127 @@ variable temp
 
 
 3.1415 2.0 >f >f f* f> fconst pi2
-44100.0 fconst fr
-
+3.1415 fconst pi
+frq i>>f f> fconst fr
 
 variable sample
 
+0 sample !
 : +1! 1 swap +! ;
 
-1 const bpm
+120 const bpm
+frq bpm / const frame
+30 const speed
 
-1 i>>f bpm i>>f fswap f/ f> fconst frame
+: sconst : sliteral postpone ; ;
+variable current-song
 
-: Tf sample @ i>>f #samples i>>f fswap f/ 15 i>>f f* ;
+: song there @ current-song ! 4 rcells allot 0 data: ;
+: pattern here @  ;
+: endp over current-song @ + ! rcell +  ;
+: end-song data; drop ;
+
+create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, data;
+
+song
+pattern 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+end-song
+
+0 variable now
+
+2 rcells const channel 
+4 channel * create channels allot
+variable current
+0 current !
+: current-channel current @ channel *   ;
+: current-track  current-song @ current @ rcells  + @ ;
+
+: time ( #ch -- F:t ) channels + ;
+: which-frame time rcell + ;
+
+: reset 3 0 do 0.0 i channel time ! -1 i channel which-frame ! loop ;
+
+: frame# sample @ frame speed * / ;
+: trigger ( frame -- ) current-track frame# + c@ 1 = if 0.0 current-channel time ! current-channel which-frame ! ;; then drop ;
+: play ( frame -- ) current-channel which-frame @ frame# dup rot <> if trigger ;; then drop  ;
+: tick current-channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> current-channel time ! play  ;
+
+: T current-channel time @ >f ;
 variable accum
-: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) Tf fr f* pi2 f* f* f+ fcos f* ;
-: Lfo ( f: freq-in -- f: out ) Tf pi2 f* f* fcos ;
+: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) T pi2 f* f* f+ fcos ;
+: Lfo ( f: freq-in -- f: out ) T pi2 f* f* fcos ;
 : Out 20000 i>>f f* f>>i ;
 : IConst i>>f ;
 : IConst2 swap i>>f i>>f ;
 : FConst >f ;
 : fl> flt ;
-: fl< fl> invert ;
+: fl<= fl> invert ;
+
 : Mul ( f: in val -- out ) f* ;
 : SimpleOsc f> 1 IConst 1 IConst >f Osc ;
 
-: Clamp ( f: in -- cut ) dupf 1 i>>f fl> if dropf 1 i>>f ;; then dupf -1 i>>f fl< if dropf -1 i>>f ;; then ;
+: Clamp ( f: in -- cut ) dupf 1 i>>f fl> if dropf 1 i>>f ;; then dupf -1 i>>f fl<= if dropf -1 i>>f ;; then ;
 
 0.0 accum !
 : Pitch accum @ >f f+ dupf f> accum ! ;
     
-: Sr ( f: S - v )
-    dupf Tf fl< if dupf 1.0 >f f- fswap Tf f- f/ 1 i>>f f- ;; then
-    Tf f/
+: Sr ( f: S -- v )
+    fswap dupf T fswap fl<= if T f/ fswap dropf ;; then
+    fover T fswap fl<= if dupf T f- frot fswap f- fswap f/ 1 i>>f f- ;; then
+    0 i>>f
 ;
 
-: Sr2 ( f: S - v )
-    dupf Tf fl< if dupf 1.0 >f f- fswap Tf f- f/ 1 i>>f f- ;; then
-    dropf 1.0 >f
-;
+(*
+Process loop (lowpass):
+out = a0*in - b1*tmp;
+tmp = out;
 
-: Noise frand ;
+Coefficient calculation:x
+ = exp(-2.0*pi*freq/samplerate);
+a0 = 1.0-x;
+b1 = -x;
+*)
+
+
+variable tmp
+0.0 tmp !
+
+: exp 2 i>f swap powf ;
+: fx -2 i>>f pi f* fr fswap f/ 3000 i>>f f* f> exp ;
+: a0 fx 1 i>>f f- ;
+: b1 fx ;
+: LP a0 f* b1 tmp @ >f f* f+ f> dup tmp ! >f ;
+: HP dupf LP fswap f- ;
+
 
 : BassDrum
-    	0.5 FConst Sr2 2 IConst Mul         | Amplitude Envelope
-	0.5 FConst Sr Pitch 0.02 FConst Mul | Frequency Modulation
-	20 IConst                           | Pitch
-	Osc Clamp
+
+| 0.01 FConst 0.3 FConst Sr
+0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch 
+|        1 IConst
+55 IConst Osc 
+0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
+Clamp 0.5 FConst Mul
+;
+: Noise frand ;
+: HiHat Noise HP 0.1 FConst 0.3 FConst Sr Mul ;
+create Instruments data:  ' HiHat , ' BassDrum , data;
+
+| : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
+: play1 ( token -- )  current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick ;; then 0.0 >f tick ;
+: play ( token -- )
+
+    0 current ! play1 f>
+    1 current ! play1
+    >f
+    f+ f>
 ;
 
-: HiHat Noise 0.2 FConst Sr2 Mul 2 IConst Mul ;
 : Add f+ ;
 
-: Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
+| : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
 
 : sound
     " test.wav" file:
@@ -155,12 +236,9 @@ variable accum
     0 sample !
     #samples 0
     do
-	finit
-	Tf 1.0 >f fl> if 0 sample ! then
-	dup execute
-	Out
-	s>file
-	sample +1!
+	play
+	>f Out s>file
+	1 sample +!
     loop
     file;
 ;
@@ -173,19 +251,24 @@ variable accum
     " libc.so" lib " fwrite" sym 4 rcells add-handle
     " libc.so" lib " fclose" sym  rcell add-handle
     " libc.so" lib " system" sym  rcell add-handle
-    " libc.so" lib " rand" sym  0 add-handle | need to think about something better
+    " libc.so" lib " rand" sym 0 add-handle | need to think about something better
+    " libm.so.6" lib " powf" sym 2 rcells add-handle | need to think about something better
+
+    #samples cells malloc buffer !
 ;
 
 
 : main
     init
-    " BassDrum" find sound
+    reset
+   0 sample !
+    
+|    token HiHat find
+    sound
     " play test.wav" >cstr system
 |    0 exit
-|    begin
-|	render-noise
- |   again
 ;
 
-main
+| main
 
+| main

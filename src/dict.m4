@@ -82,7 +82,7 @@ define([END_DICT],
 	.FILL 256-16
 	undivert(3)
 	there:
-       .FILL 4096
+       .FILL 8192
 	SECTION(name)
 	ntab:
 	undivert(1)

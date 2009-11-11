@@ -98,7 +98,7 @@ comment
 : <= > invert ;
 : >= < invert ;
 : +! swap >r dup @ r> + swap ! ;
-
+: 1+! 1 +! ;
 : data: here there @ here@ there ! swap ! ;
 : data; data: ;
 
@@ -117,42 +117,15 @@ comment
 
 : allot there @ + there ! ;
 
+| Section table comes first
+create table 16 32 * allot
+
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 
-: inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
 
-| Not 100% correct (but works with overlapping blocks )
-: cmove> ( src dst c -- )
-    >r 2dup <
-    if
-	2dup swap r + <
-	if
-	    r 1- inc
-	    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! -1 inc again
-	then
-    then
-    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
-;
-	    
-	    
-| Sections support
-32 const size
-: th size * ;
-: pointer size + rcell - ;
-variable sections
-0 #section !
-create table 16 size * allot
-
-: new-section 
-
-
-
-
-
-
-: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
 | strings
 
@@ -279,8 +252,38 @@ variable #ithere
     again
 ;
 
+
+: inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
+
+| Not 100% correct (but works with overlapping blocks )
+: cmove> ( src dst c -- )
+    >r 2dup <
+    if
+	2dup swap r + <
+	if
+	    r 1- inc
+	    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! -1 inc again
+	then
+    then
+    begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
+;
+
+
+
+	    
+| Sections support
+32 const section
+: th section * ;
+: pointer section + rcell - ;
+variable #section
+0 #section !
+: 1+! 1 swap +! ;
+: in + ;
+: new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
+: dump #section @ 0 do i th table in dup count type cr loop ;
 : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
 : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
+: section token new ;
 
 
 | save-image image.4ki

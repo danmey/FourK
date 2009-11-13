@@ -1,9 +1,12 @@
 token ; make
-postpone lit 1 c, postpone state postpone !
+
+postpone lit 1 c,
+postpone state
+postpone !
+
 postpone last
 postpone @
-postpone lit
-1 c,
+postpone lit 1 c,
 postpone +
 postpone last
 postpone !
@@ -12,6 +15,9 @@ postpone lit
 -1 c,
 postpone here
 postpone @
+postpone lit
+0 c,
+postpone +
 postpone c!
 
 postpone lit
@@ -21,6 +27,7 @@ postpone @
 postpone lit
 1 c,
 postpone +
+
 postpone c!
 
 immediate
@@ -36,16 +43,36 @@ token : make
     postpone !
 ;
 
+
+
+
 : [ 1 state ! ; immediate
 : ] 0 state ! ;
 
+
+
 : here@ here @ ;
+
 
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
 : sliteral swap rliteral literal ;
+: allot there @ + there ! ;
+: rcell 4 ;
+: rcells rcell * ;
+: rcells+ rcells + ;
+
+
+: variable : there @ rliteral postpone ; rcell allot ;
+: const : rliteral postpone ; ;
+
+: a ;
+variable #ithere
+
+4 #ithere !
 
 : 2dup swap dup rot dup rot swap ;
+
 
 : 1+ 1 + ;
 : 1- 1 - ;
@@ -106,25 +133,18 @@ comment
 
 : create token make there @ rliteral postpone ; ;
 
+
+
 | to verbose but will make optimisations later
 | by default we will use byte cells, as it is meant to be 4kb tool
 : cell 1 ;
 : cells cell * ;
 | ref cells
-: rcell 4 ;
-: rcells rcell * ;
-: rcells+ rcells + ;
 
-: allot there @ + there ! ;
 
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
-: variable : there @ rliteral postpone ; rcell allot ;
-: const : rliteral postpone ; ;
-
-| Section table comes first
-| variable #section
 | 0 #section !
 create table 16 32 * allot
 
@@ -164,6 +184,7 @@ create #str
    sliteral then
 ; immediate
 
+
 : ." postpone " state @ 0 = if postpone type ;; then type ; immediate
 
 
@@ -178,8 +199,7 @@ create #str
 
 : sym >cstr swap dlsym ;
 
-variable #ithere
-4 #ithere !
+
 
 : add-handle ( handle stackfix -- )
   ithere @ 1 #ithere @ + rcells+ !
@@ -233,7 +253,8 @@ variable #ithere
 | Hmmmm this does inteerupt compiling
 -1 const c-1
     
-: require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+| : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+: require" \" over over find -1 = if over over make postpone ; include ;; then  ;
 
 
 

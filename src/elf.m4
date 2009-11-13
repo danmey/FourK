@@ -5,7 +5,7 @@ define([SECTION], [
  	.LONG sec_$1
 	divert(7)
 	.ASCIZ "$1"
-	divert(0)
+	divert
 ])
 
 define([ELF_HEADER],[

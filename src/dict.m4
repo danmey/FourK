@@ -58,7 +58,7 @@ define([DEF_VAR],[
 	movl	$var_$1,(%ebx)
 	divert(3)
 	var_$1:	.long $2
-	STD_DIVERT
+	divert
 	END_CODE dnl
 ])
 define([DEF_IMM],
@@ -69,7 +69,6 @@ define([DEF_IMM],
 
 define([END_DICT],
 [
-	
 	here:
 	.BYTE EOD_TOKEN
 	.FILL DICT_SIZE
@@ -83,7 +82,7 @@ define([END_DICT],
 	.FILL 256-16
 	undivert(3)
 	there:
-       .FILL 8192
+       	.FILL 8192
 	SECTION(name)
 	ntab:
 	undivert(1)

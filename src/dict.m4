@@ -75,12 +75,12 @@ define([END_DICT],
 	.equ NCORE_WORDS, CORE_COUNT
 	
 	.align 4
-	SECTION(there)
 	ccall_tab:
 	.LONG dlopen,8
 	.LONG dlsym,8
 	.FILL 256-16
 	undivert(3)
+	SECTION(there)
 	there:
        	.FILL 8192
 	SECTION(name)

@@ -62,11 +62,15 @@ token : make
 : rcells rcell * ;
 : rcells+ rcells + ;
 
+: create token make there @ rliteral postpone ; ;
 
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
+variable #section
+0 #section !
+create table 16 32 * allot
 
-: a ;
+
 variable #ithere
 
 4 #ithere !
@@ -131,7 +135,6 @@ comment
 
 | output words
 
-: create token make there @ rliteral postpone ; ;
 
 
 
@@ -145,8 +148,6 @@ comment
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
-| 0 #section !
-create table 16 32 * allot
 
 
 
@@ -295,19 +296,20 @@ create #str
 
 
 
-	    
+
 | Sections support
 32 const section
-| : th section * ;
-| : pointer section + rcell - ;
-| : 1+! 1 swap +! ;
-| : in + ;
-| : new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
-| : dump #section @ 0 do i th table in dup count type cr loop ;
-| : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
-| : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
-| : section token new ;
+: th section * ;
+: pointer section + rcell - ;
+: 1+! 1 swap +! ;
+: in + ;
+: new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
+: dump #section @ 0 do i th table in dup count type cr loop ;
+: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
+: forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
+: section token new ;
 
+section data
 
 | save-image image.4ki
 

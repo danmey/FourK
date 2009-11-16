@@ -269,6 +269,6 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
 |    0 exit
 ;
 
-| main
+main
 
 | main

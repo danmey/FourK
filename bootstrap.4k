@@ -180,6 +180,32 @@ create #str
 ;
 
 
+: inc ( adr -- ) dup @ 1+ swap ! ;
+: dec ( adr -- ) dup @ 1- swap ! ;
+
+| exit current word if TOS is zero
+: 0; ( n -- ) postpone = postpone if 
+              postpone ;; postpone then 
+; immediate 
+
+
+: next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
+: ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
+
+variable flag
+| compare two zero terminated strings, the strings are assumed to be 
+| of the same size (no size checking ) 
+: compare ( str str -- t/f ) -1 flag ! 
+  begin 
+   2dup ch@ 2dup = invert if 0 flag ! then 
+   and 0 = if 2drop flag @ ;; then next-set 
+  repeat 
+;
+
+| compare two counted strings ( so with size checking ) 
+: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
+
+
 | pimped ", it now compiles the string to there @compile time
 : " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
    sliteral then
@@ -219,6 +245,7 @@ create #str
     postpone begin
 ; immediate
 
+: leave postpone r> postpone r> postpone drop postpone drop ; immediate
 
 : loop
     postpone r>
@@ -308,8 +335,14 @@ create #str
 : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
 : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
 : section token new ;
+: data: here there @ here@ there ! swap ! ;
+: find-section #section @ 0 do 2dup i th table in dup count str= if drop drop i leave ;; then loop -1 ;
+
+: section: token find-section 
+
 
 section data
+
 
 | save-image image.4ki
 

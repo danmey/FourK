@@ -48,8 +48,8 @@ $(BIN)/4k-debug: $(SRC_FILES)
 
 
 $(BIN)/boot.4ki: $(BASIC_FILES) 
-	cp ../bootstrap.4k $(BIN)/bootstrap.4k
-	echo "save-image $(BIN)/boot.4ki" >> $(BIN)/bootstrap.4k
+	cp ../bootstrap.4k bootstrap.4k
+	echo "save-image $(BIN)/boot.4ki" >> bootstrap.4k
 	$(PROGRAM) < /dev/null
 	cp $@ $(PREFIX)
 

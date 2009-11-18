@@ -266,10 +266,9 @@ DEF_IMM(postpone,"postpone")
 
 1:
 	mov	var_here,%edi
-	movb	$ 0, (%edi)
-	movb	%al, 1(%edi)
-	incl 	var_here
-	incl 	var_here
+	movb	$ 1, (%edi)
+	movl	%eax, 1(%edi)
+	addl	$5,	var_here
 	mov	%eax,%ecx
 	xor	%eax,%eax
 	movb	semantic(,%ecx,2), %al	#load the semantics

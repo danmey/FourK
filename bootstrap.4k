@@ -337,11 +337,14 @@ variable flag
 : section token new ;
 : data: here there @ here@ there ! swap ! ;
 : find-section #section @ 0 do 2dup i th table in dup count str= if drop drop i leave ;; then loop -1 ;
-
-: section: token find-section 
+: there! th table in pointer  @ there @ swap there ! ;
+: section: token find-section literal postpone there! postpone >r ; immediate
+: section; postpone r> postpone there postpone ! ; immediate
 
 
 section data
+64 allot
+
 
 
 | save-image image.4ki

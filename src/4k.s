@@ -6,12 +6,12 @@ define([PREFIX_WORDS_INDEX], 5)
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there
 
-ifdef([DEBUG],
+ifdef([PARTY],,
 [	.TEXT
 	.align 4096
 ])
 
-ifdef([DEBUG],,
+ifdef([PARTY],
 [
 	ELF_HEADER()
 ])
@@ -26,7 +26,9 @@ main:
 ],
 [
 _start:
-])
+]
+)
+
 define([PROT_READ],	0x1)		/* Page can be read.  */
 define([PROT_WRITE],	0x2)		/* Page can be written.  */
 define([PROT_EXEC],	0x4)		/* Page can be executed.  */
@@ -118,7 +120,7 @@ build_dispatch:
 
 ex_bytecode:		.BYTE  0,0,0 # to fit the prefix word
 
-ifdef([DEBUG],,[
+ifdef([PARTY],[
 dlsym:
 .byte 0xff,0x25
 .LONG dlsym_
@@ -126,7 +128,7 @@ dlsym_:
 .LONG 0
 ])
 
-ifdef([DEBUG],,[
+ifdef([PARTY],[
 dlopen:
 .byte 0xff,0x25
 .LONG dlopen_
@@ -189,7 +191,7 @@ K4_IMPORT(_exit)
 K4_IMPORT(fwrite)
 K4_IMPORT(fclose)
 K4_IMPORT(fread)
-ifdef([DEBUG],, [K4_IMPORT(mprotect)])
+ifdef([PARTY], [K4_IMPORT(mprotect)])
 K4_INIT_IMPORTS(init_imports)
 
 
@@ -521,8 +523,7 @@ _find_word:
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
-
-ifdef([DEBUG],[
+ifdef([PARTY],,[
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
 	call	init_imports
@@ -638,8 +639,8 @@ include(prim.s)
 
 # TODO: For real usage maybe we need malloced heap
 ELF_CODE_END()
-ifdef([DEBUG],,[
-ELF_DATA_END()
-])
 	.ALIGN 4096
 _image_end:
+ifdef([PARTY],[
+ELF_DATA_END()
+])

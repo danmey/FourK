@@ -1,9 +1,12 @@
 token ; make
-postpone lit 1 c, postpone state postpone !
+
+postpone lit 1 c,
+postpone state
+postpone !
+
 postpone last
 postpone @
-postpone lit
-1 c,
+postpone lit 1 c,
 postpone +
 postpone last
 postpone !
@@ -12,6 +15,9 @@ postpone lit
 -1 c,
 postpone here
 postpone @
+postpone lit
+0 c,
+postpone +
 postpone c!
 
 postpone lit
@@ -21,6 +27,7 @@ postpone @
 postpone lit
 1 c,
 postpone +
+
 postpone c!
 
 immediate
@@ -36,16 +43,40 @@ token : make
     postpone !
 ;
 
+
+
+
 : [ 1 state ! ; immediate
 : ] 0 state ! ;
 
+
+
 : here@ here @ ;
+
 
 : literal 0 c, c, ;
 : rliteral 1 c, , ;
 : sliteral swap rliteral literal ;
+: allot there @ + there ! ;
+: rcell 4 ;
+: rcells rcell * ;
+: rcells+ rcells + ;
+
+: create token make there @ rliteral postpone ; ;
+
+: variable : there @ rliteral postpone ; rcell allot ;
+: const : rliteral postpone ; ;
+variable #section
+0 #section !
+create table 16 32 * allot
+
+
+variable #ithere
+
+4 #ithere !
 
 : 2dup swap dup rot dup rot swap ;
+
 
 : 1+ 1 + ;
 : 1- 1 - ;
@@ -104,29 +135,19 @@ comment
 
 | output words
 
-: create token make there @ rliteral postpone ; ;
+
+
 
 | to verbose but will make optimisations later
 | by default we will use byte cells, as it is meant to be 4kb tool
 : cell 1 ;
 : cells cell * ;
 | ref cells
-: rcell 4 ;
-: rcells rcell * ;
-: rcells+ rcells + ;
 
-: allot there @ + there ! ;
 
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
 
-: variable : there @ rliteral postpone ; rcell allot ;
-: const : rliteral postpone ; ;
-
-| Section table comes first
-| variable #section
-| 0 #section !
-create table 16 32 * allot
 
 
 
@@ -159,10 +180,37 @@ create #str
 ;
 
 
+: inc ( adr -- ) dup @ 1+ swap ! ;
+: dec ( adr -- ) dup @ 1- swap ! ;
+
+| exit current word if TOS is zero
+: 0; ( n -- ) postpone = postpone if 
+              postpone ;; postpone then 
+; immediate 
+
+
+: next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
+: ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
+
+variable flag
+| compare two zero terminated strings, the strings are assumed to be 
+| of the same size (no size checking ) 
+: compare ( str str -- t/f ) -1 flag ! 
+  begin 
+   2dup ch@ 2dup = invert if 0 flag ! then 
+   and 0 = if 2drop flag @ ;; then next-set 
+  repeat 
+;
+
+| compare two counted strings ( so with size checking ) 
+: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
+
+
 | pimped ", it now compiles the string to there @compile time
 : " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
    sliteral then
 ; immediate
+
 
 : ." postpone " state @ 0 = if postpone type ;; then type ; immediate
 
@@ -178,8 +226,7 @@ create #str
 
 : sym >cstr swap dlsym ;
 
-variable #ithere
-4 #ithere !
+
 
 : add-handle ( handle stackfix -- )
   ithere @ 1 #ithere @ + rcells+ !
@@ -198,6 +245,7 @@ variable #ithere
     postpone begin
 ; immediate
 
+: leave postpone r> postpone r> postpone drop postpone drop ; immediate
 
 : loop
     postpone r>
@@ -233,7 +281,8 @@ variable #ithere
 | Hmmmm this does inteerupt compiling
 -1 const c-1
     
-: require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+| : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+: require" \" over over find -1 = if over over make postpone ; include ;; then  ;
 
 
 
@@ -274,18 +323,28 @@ variable #ithere
 
 
 
-	    
+
 | Sections support
 32 const section
-| : th section * ;
-| : pointer section + rcell - ;
-| : 1+! 1 swap +! ;
-| : in + ;
-| : new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
-| : dump #section @ 0 do i th table in dup count type cr loop ;
-| : mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
-| : forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
-| : section token new ;
+: th section * ;
+: pointer section + rcell - ;
+: 1+! 1 swap +! ;
+: in + ;
+: new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
+: dump #section @ 0 do i th table in dup count type cr loop ;
+: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
+: forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
+: section token new ;
+: data: here there @ here@ there ! swap ! ;
+: find-section #section @ 0 do 2dup i th table in dup count str= if drop drop i leave ;; then loop -1 ;
+: there! th table in pointer  @ there @ swap there ! ;
+: section: token find-section literal postpone there! postpone >r ; immediate
+: section; postpone r> postpone there postpone ! ; immediate
+
+
+section data
+64 allot
+
 
 
 | save-image image.4ki

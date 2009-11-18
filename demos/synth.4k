@@ -266,7 +266,7 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
 |    token HiHat find
     sound
     " play test.wav" >cstr system
-|    0 exit
+    0 exit
 ;
 
 | main

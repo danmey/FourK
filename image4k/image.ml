@@ -1,6 +1,9 @@
 open Arg
 module Ni = Int32
 
+let ($) f v = f v
+let (%) f g = fun x -> f (g x)
+
 let implode lst =
   let str = String.create (List.length lst) in
   let rec loop i = function [] -> str | x::xs -> String.set str i x; loop (i+1) xs
@@ -519,10 +522,22 @@ module FourkImage = struct
       ()
 
   let sections image =
-    let there = Image.find_section image "there"  in
-    let number = BinaryArray.get_dword there.Image.image 256 in
-      number
-
+    let there = Image.find_section image "there" in
+    let number = Int32.to_int $ BinaryArray.get_dword there.Image.image 0 in
+    let rec section_name' acc i = 
+      let ch = there.Image.image.(i) in
+      if ch <> 0 then
+	section_name' ((char_of_int ch)::acc) $ i + 1
+      else
+	implode $ List.rev acc 
+    in
+    let rec loop acc ofs i =
+      if i < number then
+	let nm = section_name' [] ofs in loop (nm::acc) (ofs+32) $ i + 1
+      else List.rev acc 
+    in
+      loop [] 4 0
+	
 end
 
 module Options = struct
@@ -598,7 +613,7 @@ module Options = struct
 					  match x.Words.code with
 					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
 					    | _ -> ()) words;
-			     Printf.printf "Sections: %ld" (FourkImage.sections image)
+			     Printf.printf "Sections:\n%s\n" $ (String.concat "\n" $ FourkImage.sections image) 
 			),
       
       "Disassemble user dictionary";

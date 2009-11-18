@@ -20,6 +20,12 @@ debug:
 basic: 
 	$(MAKE) -C src basic
 
+4k: 
+	$(MAKE) -C src bin/4k
+
+party:
+	$(MAKE) -C src party
+
 boot: 
 	$(MAKE) -C src boot
 

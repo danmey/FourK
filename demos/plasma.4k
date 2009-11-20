@@ -218,13 +218,14 @@ repeat
 ;
 
 : main
-    init
-    init-pallete
-    video screen !
-    draw
-    render-loop
+|    init
+|   init-pallete
+|    video screen !
+|    draw
+|    render-loop
 |    0 exit
 ;
+
 
 
 

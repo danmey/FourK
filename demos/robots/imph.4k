@@ -24,3 +24,5 @@
 25 ccall: SDL_SetVideoMode 
 26 ccall: glColor4f 
 27 ccall: glMaterialfv 
+28 ccall: gluQuadricDrawStyle 
+29 ccall: gluQuadricNormals 

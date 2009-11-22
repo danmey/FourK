@@ -29,6 +29,9 @@ variable cylinder
 : Prim 
     -0.5 0 0 glTranslatef drop
     1 10 1.0 f>d 1.0 f>d 1.0 f>d cylinder @ gluCylinder drop
+    GLU_FILL cylinder @ gluQuadricDrawStyle drop
+    GLU_FLAT cylinder @ gluQuadricDrawStyle drop
+    
 ;
 
 : End glPopMatrix drop ;

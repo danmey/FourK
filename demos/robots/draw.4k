@@ -3,7 +3,11 @@ mark
 
 4 #ithere !
 
+100012 const GLU_FILL
+100001 const GLU_FLAT
+
 require" demos/robots/gl.4k"
+
 require" demos/robots/stack.4k"
 
 $00000100 const GL_DEPTH_BUFFER_BIT			
@@ -38,28 +42,34 @@ $1202 const GL_SPECULAR
 
 create solid
 data:
-$f0 255  ,
-$80 ,
-0 , 255 ,
+0.94 , 0.5 , 0.0 , 1.0 ,
 data;
-create light data: 1.0 , 0 , 0 , 0 , data;
-
+create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
+create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
+create light_pos data: 0.0 , 5.0 , 5.0 , 1.0 , data;
+$1203 const GL_POSITION
 
 : let-there-be-light
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
     | GL_CULL_FACE glDisable drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
-
+    light_pos GL_POSITION GL_LIGHT1 glLightfv drop
     GL_COLOR_MATERIAL glEnable drop
     GL_NORMALIZE glEnable drop
     GL_AMBIENT_AND_DIFFUSE GL_FRONT_AND_BACK glColorMaterial drop
     1.0 0.0 0.5 0.94 glColor4f drop
-|    solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
- |   solid GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
+    solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
+|    solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
     
-: Scene 4 0 do (* -3 Z By *) Begin 1 X i 90 * Rot 5 Z By Prim End loop ;
+: Scene 4 0 do (* -3 Z By *)
+	Begin
+	    1 X i 90 * Rot
+	    5 Z By
+	    Prim
+	End
+loop ;
 
 
 : render
@@ -83,9 +93,10 @@ create light data: 1.0 , 0 , 0 , 0 , data;
 : a
     video
     lookat
-;    
+;
+
+imports
 : main
-    imports
     video
     lookat
     init

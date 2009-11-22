@@ -72,7 +72,7 @@ DEF_CODE(compile, "compile")
 	jb	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
-	sub	$ 256,%eax
+	sub	$ PREFIX_TOKEN,%eax
 	incl	var_here
 1:	
 	movb	%al,(%ecx)
@@ -86,7 +86,7 @@ DEF_CODE(execute, "execute")
 	cmp	$ PREFIX_TOKEN, %eax
 	jb	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ 256,%eax
+	sub	$ PREFIX_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
 	movb	$END_TOKEN,(ex_bytecode+2)
 	jmp	2f
@@ -537,7 +537,7 @@ DEF_CODE(cback, "cback")
 	cmp	$ PREFIX_TOKEN, %eax
 	jb	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ 256,%eax
+	sub	$ PREFIX_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
 	movb	$END_TOKEN,(ex_bytecode+2)
 	jmp	2f

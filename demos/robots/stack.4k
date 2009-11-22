@@ -1,7 +1,4 @@
-: vars: begin token 2dup 1 = if c: ; swap c@ = if drop drop ;; then else drop then (create) postpone ; rcell allot repeat ;
-
-
-
+| : vars: begin token 2dup 1 = if c: ; swap c@ = if drop drop ;; then else drop then (create) postpone ; rcell allot repeat ;
 
 variable cylinder
 0 cylinder !
@@ -36,5 +33,5 @@ variable cylinder
 
 : End glPopMatrix drop ;
 
-: Connect 
+
 

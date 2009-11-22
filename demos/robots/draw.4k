@@ -59,7 +59,7 @@ create light data: 1.0 , 0 , 0 , 0 , data;
  |   solid GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
     
-: Scene 4 0 do (* -3 Z By *) Begin 1 X i 90 * Rot 5 Z By Prim End loop 9 0 do End loop ;
+: Scene 4 0 do (* -3 Z By *) Begin 1 X i 90 * Rot 5 Z By Prim End loop ;
 
 
 : render
@@ -80,14 +80,19 @@ create light data: 1.0 , 0 , 0 , 0 , data;
     again
 ;
 
-
-: main
+: a
     video
+    lookat
+;    
+: main
+    imports
+    video
+    lookat
     init
     let-there-be-light
     render-loop
     SDL_Quit drop
-    cylinder @ .
+|    cylinder @ .
 ;
 
 save-image im.4ki

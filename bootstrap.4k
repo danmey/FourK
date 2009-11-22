@@ -62,10 +62,7 @@ token : make
 : rcells rcell * ;
 : rcells+ rcells + ;
 
-: (create) make there @ rliteral postpone ; ;
-
-: create token (create) ;
-
+: create token make there @ rliteral postpone ; ;
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 variable #section

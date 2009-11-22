@@ -7,9 +7,8 @@ mark
 | : does>> postpone branch here@ 1 c, ;
 | : does> does>> postpone ;; postpone then immediate ; immediate
 
-
-: create create postpone there@ postpone branch here@ - c, postpone ;; ;
-: does> postpone ;; here@ immediate ; 
+: does>> postpone there@ postpone branch here@ - c, postpone ;; ;
+: does> postpone does>> postpone ;; here@ immediate ; 
 : test create does> . ;
 test a
 

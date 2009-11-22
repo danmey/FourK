@@ -12,24 +12,37 @@
 	between the two
 *)
 section libraries 
-100 allot
+100 allot | why 100 bytes? because that's 5*20
+          | I assumed, that a library name is about 20 bytes long
 
 section functions 
 512 allot
 
-section libsTofuncs
+section relations
 256 rcell * allot 
+
+| index variables for the specific sections
+variable libIndex
+variable funcIndex
+variable relIndex
+
+
+variable last-symbol 
+variable symbols
 
 : symbol ( str c -- ) 
   there @ >r last-symbol @ there !  
   1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
 ;
-: symbol" ( -- ) c: " parse symbol ;
 
-: next-symbol ( symbol -- symbol+1 ) 
-  dup count + 1+ 
-; 
-: search ( str c -- index ) 0 >r symbols >r
+| 
+: func" ( -- ) \"  ;
+: lib" ( -- ) \" ; 
+
+: next-symbol ( symbol -- symbol+1 ) dup count + 1+ ; 
+: set-symbols ( section -- )   symbols ! ; 
+
+: search ( str c -- index ) 0 >r symbols @ >r
   begin
    2dup r count 0 = if r> 2drop 2drop r> 2drop -1 ;; then 
    r dup count str= if 2drop r> drop r> ;; then 
@@ -37,11 +50,4 @@ section libsTofuncs
   repeat 
 ;
 
-
-variable library 
-
-: lib" ( -- ) c: " parse lib library ! ;
-: func" ( stackfix  -- ) library @ c: " parse 2dup symbol sym add-handle ;
-
-lib" libc.so.6"
-rcell func" printf"
+functions @ . cr 

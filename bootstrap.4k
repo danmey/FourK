@@ -328,7 +328,7 @@ variable flag
 | Sections support
 32 const section
 : th section * ;
-: pointer ( section -- ptr-to-next-section ) section + rcell - ;
+: pointer ( section -- ptr ) section + rcell - ;
 : 1+! ( -- ) 1 swap +! ;
 : in ( -- ) + ;
 : new ( str c -- ) 
@@ -346,11 +346,11 @@ variable flag
 ;
 : section ( -- ) token new ;
 : data: ( -- )  here there @ here@ there ! swap ! ;
-: find-section ( str c -- section-ptr )
+: find-section ( str c -- index )
    #section @ 0 do 2dup i th 
    table in dup count str= if drop drop i leave ;; then loop -1 
 ;
-: there! ( -- ) th table in pointer  @ there @ swap there ! ;
+: there! ( element -- ) th table in pointer @ there @ swap there ! ;
 
 : section: ( -- ) 
   token find-section literal postpone there! postpone >r 

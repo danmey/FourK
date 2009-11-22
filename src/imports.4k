@@ -18,7 +18,7 @@ section functions
 512 allot
 
 section libsTofuncs
-512 allot 
+256 rcell * allot 
 
 : symbol ( str c -- ) 
   there @ >r last-symbol @ there !  

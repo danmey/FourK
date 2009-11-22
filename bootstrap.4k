@@ -62,7 +62,9 @@ token : make
 : rcells rcell * ;
 : rcells+ rcells + ;
 
-: create token make there @ rliteral postpone ; ;
+: (create) make there @ rliteral postpone ; ;
+
+: create token (create) ;
 
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
@@ -92,6 +94,7 @@ variable #ithere
 
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
+: else >r postpone branch here@ 0 c, r> postpone then ; immediate
 
 
 : | begin key 10 = if ;; then repeat ; immediate

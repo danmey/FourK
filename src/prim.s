@@ -417,7 +417,6 @@ DEF_CODE(f_pop, "f>")
 	sub $ 4, %ebx
 	fstps (%ebx)
 END_CODE
-
 DEF_CODE(f_dpop, "d>")
 	sub $ 8, %ebx
 	fstpl (%ebx)

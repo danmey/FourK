@@ -1,0 +1,100 @@
+forget
+mark
+: fconst : rliteral postpone >f postpone ; ;
+: i>>f i>f >f ;
+
+| Let's bind some C library symbols
+
+
+
+
+: i>>f i>f >f ;
+
+
+2 ccall: exit
+3 ccall: SDL_SetVideoMode
+4 ccall: SDL_PollEvent
+5 ccall: SDL_Flip
+6 ccall: SDL_LockSurface
+7 ccall: SDL_UnlockSurface
+8 ccall: malloc |  should be in bss section
+9 ccall: printf
+10 ccall: open
+11 ccall: ioctl
+12 ccall: write
+
+
+: >/dev/dsp ( ctl val -- ) temp ! temp swap audio @ ioctl drop ;
+: init ( -- )
+    " libc.so" lib " _exit" sym rcell add-handle
+    
+    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 4 rcells add-handle
+
+    " /usr/lib/libSDL.so" lib " SDL_PollEvent" sym rcell add-handle
+
+    " /usr/lib/libSDL.so" lib " SDL_Flip" sym rcell add-handle
+
+    " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym rcell add-handle
+
+    " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
+
+    init-synth
+;
+
+
+| this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
+: \ postpone | ; immediate
+
+\ some constants
+800 const width
+600 const height
+32  const bpp
+bpp 8 / const point
+
+\ SDL constants
+27  const Esc
+2   const Keydown
+
+\ SDL structure dispatch
+: e>type c@ ;
+: e>key 8 + c@ ;
+: s>pixels 20 + @ ;
+
+\ out screen surface
+variable screen
+\ allot needed stuff for SDL
+create event 20 cells allot
+\ and for pallete
+create pallete 256 rcells allot
+
+\ set the video mode
+: video 0 bpp height width SDL_SetVideoMode ;
+
+: draw
+    screen @ SDL_LockSurface drop
+    draw
+    screen @ SDL_UnlockSurface drop
+    screen @ SDL_Flip drop
+;
+
+: render-loop
+    begin
+	render-noise
+	event SDL_PollEvent drop
+	event e>type Keydown = if event e>key Esc = if ;; then then
+    again
+;
+
+: main
+    init
+    init-pallete
+    video screen !
+    draw
+    render-loop
+    0 exit
+;
+
+| save-image im.4ki
+
+
+

@@ -2,10 +2,11 @@ forget
 mark
 
 : there@ there @ ;
-: create create postpone there@ postpone branch here@ - c, postpone ;; ;
-
-: does> postpone ;; here@ immediate ; immediate
-
+: create create postpone there@ ;
+: does>> postpone branch 1 c, postpone ;; ;
+: does> does>> ; immediate
+: test create does> .  ;
+test a
 
 | : rcell+ rcell + ;
 | : class create 1 rcells allot does> @ ;

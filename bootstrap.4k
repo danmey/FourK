@@ -308,6 +308,7 @@ variable flag
 : inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
 
 | Not 100% correct (but works with overlapping blocks )
+| @spec, what does this thing do??? 
 : cmove> ( src dst c -- )
     >r 2dup <
     if

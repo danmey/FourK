@@ -1,2 +1,0 @@
-grep lib gl.4k | grep '\"' |  awk '{ print $5 }' | sed 's/\(^.*\)\"/\1/g' | awk '{ print line " ccall: " $1 " "; line++ } '
-

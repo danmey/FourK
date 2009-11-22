@@ -1,11 +1,16 @@
 forget
 mark
 
+
 : there@ there @ ;
-: create create postpone there@ ;
-: does>> postpone branch 1 c, postpone ;; ;
-: does> does>> ; immediate
-: test create does> .  ;
+| : create token make there @ rliteral ;
+| : does>> postpone branch here@ 1 c, ;
+| : does> does>> postpone ;; postpone then immediate ; immediate
+
+
+: create create postpone there@ postpone branch here@ - c, postpone ;; ;
+: does> postpone ;; here@ immediate ; 
+: test create does> . ;
 test a
 
 | : rcell+ rcell + ;

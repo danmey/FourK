@@ -1,14 +1,24 @@
 
-variable last-symbol
+(* 
+	sections for the imports	
+	------------------------
 
+	As the imports have some kind of a 
+	relational association of elements,
+	they are are split into three sections
+	one is for the names of libraries,
+	another for the names of functions 
+	and the last is for the relation
+	between the two
+*)
+section libraries 
+100 allot
 
-create symbols
-1024 allot
+section functions 
+512 allot
 
-symbols last-symbol ! 
-
-
-
+section libsTofuncs
+512 allot 
 
 : symbol ( str c -- ) 
   there @ >r last-symbol @ there !  

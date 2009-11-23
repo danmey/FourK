@@ -63,7 +63,6 @@ token : make
 : rcells+ rcells + ;
 
 : create token make there @ rliteral postpone ; ;
-
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
 variable #section
@@ -92,6 +91,7 @@ variable #ithere
 
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
+: else >r postpone branch here@ 0 c, r> postpone then ; immediate
 
 
 : | begin key 10 = if ;; then repeat ; immediate
@@ -308,6 +308,7 @@ variable flag
 : inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
 
 | Not 100% correct (but works with overlapping blocks )
+| @spec, what does this thing do??? 
 : cmove> ( src dst c -- )
     >r 2dup <
     if
@@ -327,19 +328,36 @@ variable flag
 | Sections support
 32 const section
 : th section * ;
-: pointer section + rcell - ;
-: 1+! 1 swap +! ;
-: in + ;
-: new ( str c -- ) >r #section @ th table in dup r + 0 swap c! dup pointer there @ swap ! #section 1+! r> cmove>  ;
-: dump #section @ 0 do i th table in dup count type cr loop ;
-: mark ( -- )  here @ there @ " *marker*" make rliteral rliteral postpone ; ; immediate
-: forget " *marker*" find dup -1 <> if dup last ! execute there ! here ! -1 here @ c! -1 -2 here @ 1+ c! ;; then drop ;
-: section token new ;
-: data: here there @ here@ there ! swap ! ;
-: find-section #section @ 0 do 2dup i th table in dup count str= if drop drop i leave ;; then loop -1 ;
-: there! th table in pointer  @ there @ swap there ! ;
-: section: token find-section literal postpone there! postpone >r ; immediate
-: section; postpone r> postpone there postpone ! ; immediate
+: pointer ( section -- ptr ) section + rcell - ;
+: 1+! ( -- ) 1 swap +! ;
+: in ( -- ) + ;
+: new ( str c -- ) 
+  >r #section @ th table in dup r + 0 swap c! 
+  dup pointer there @ swap ! #section 1+! r> cmove>  
+;
+: dump ( -- ) #section @ 0 do i th table in dup count type cr loop ;
+: mark ( -- )  here @ there @ 
+  " *marker*" make rliteral rliteral postpone ; 
+; immediate
+: forget ( -- ) 
+  " *marker*" find 
+  dup -1 <> if dup last ! execute there ! here ! 
+  -1 here @ c! -1 -2 here @ 1+ c! ;; then drop 
+;
+: section ( -- ) token new ;
+: data: ( -- )  here there @ here@ there ! swap ! ;
+: find-section ( str c -- index )
+   #section @ 0 do 2dup i th 
+   table in dup count str= if drop drop i leave ;; then loop -1 
+;
+: there! ( element -- ) th table in pointer @ there @ swap there ! ;
+
+: section: ( -- ) 
+  token find-section literal postpone there! postpone >r 
+; immediate
+: section; ( -- ) 
+  postpone r> postpone there postpone ! 
+; immediate
 
 
 section data

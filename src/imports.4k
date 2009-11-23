@@ -1,0 +1,53 @@
+
+(* 
+	sections for the imports	
+	------------------------
+
+	As the imports have some kind of a 
+	relational association of elements,
+	they are are split into three sections
+	one is for the names of libraries,
+	another for the names of functions 
+	and the last is for the relation
+	between the two
+*)
+section libraries 
+100 allot | why 100 bytes? because that's 5*20
+          | I assumed, that a library name is about 20 bytes long
+
+section functions 
+512 allot
+
+section relations
+256 rcell * allot 
+
+| index variables for the specific sections
+variable libIndex
+variable funcIndex
+variable relIndex
+
+
+variable last-symbol 
+variable symbols
+
+: symbol ( str c -- ) 
+  there @ >r last-symbol @ there !  
+  1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
+;
+
+| 
+: func" ( -- ) \"  ;
+: lib" ( -- ) \" ; 
+
+: next-symbol ( symbol -- symbol+1 ) dup count + 1+ ; 
+: set-symbols ( section -- )   symbols ! ; 
+
+: search ( str c -- index ) 0 >r symbols @ >r
+  begin
+   2dup r count 0 = if r> 2drop 2drop r> 2drop -1 ;; then 
+   r dup count str= if 2drop r> drop r> ;; then 
+    r> next-symbol r> 1+ >r >r r r count type cr  
+  repeat 
+;
+
+functions @ . cr 

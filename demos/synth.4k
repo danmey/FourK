@@ -205,13 +205,14 @@ variable tmp
 
 : BassDrum
 
-| 0.01 FConst 0.3 FConst Sr
-0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch 
-|        1 IConst
-55 IConst Osc 
-0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
-Clamp 0.5 FConst Mul
+    | 0.01 FConst 0.3 FConst Sr
+    0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch 
+    |        1 IConst
+    55 IConst Osc 
+    0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
+    Clamp 0.5 FConst Mul
 ;
+
 : Noise frand ;
 : HiHat Noise HP 0.1 FConst 0.3 FConst Sr Mul ;
 create Instruments data:  ' HiHat , ' BassDrum , data;
@@ -245,7 +246,7 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
 
 : init ( -- )
     " libc.so" lib " _exit" sym rcell add-handle
-    " libc.so" lib " malloc" sym rcell add-handle
+    " libc.so" lib " malloc" sym rcell add-handlee
     " libc.so" lib " printf" sym 2 rcells add-handle
     " libc.so" lib " fopen" sym 2 rcells add-handle
     " libc.so" lib " fwrite" sym 4 rcells add-handle
@@ -269,6 +270,7 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
     0 exit
 ;
 
+save-image im.4ki
 | main
 
 | main

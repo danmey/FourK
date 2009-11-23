@@ -1,15 +1,17 @@
 forget
 mark
 
+: there@ there @ ;
+: create create postpone there@ ;
+: does>> postpone branch 1 c, postpone ;; ;
+: does> does>> ; immediate
+: test create does> .  ;
+test a
 
-: last-name last @ 1- 32 * ntab @ + dup count ;
-
-: make2 " *a*" make ;
-: does> postpone make2 postpone ; ; immediate
-
-: rcell+ rcell + ;
+| : rcell+ rcell + ;
 | : class create 1 rcells allot does> @ ;
 | variable current-class
 | : method dup const rcell+ ;
 | : last-token last @ rcells 2 * vtab @ ;
 | : implements token execute current-class @ + last @ swap ! ;
+save-image im.4ki

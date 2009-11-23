@@ -158,16 +158,18 @@ create #str
 
 
 : parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
-  begin key dup [ there @ rliteral ] c@ = if drop #str here @ #str - 0 c, r> here ! ;; then
+  begin key dup [ there @ rliteral ] 
+  c@ = if drop #str here @ #str - 0 c, r> here ! ;; then
   c, repeat
 ;
 1 allot
 
 : \" c: " parse ;
-
+| "
 
 | inlines a counted list of bytes to there
-: inline ( str c -- str c ) here @ >r there @ here ! here @ + >r
+: inline ( str c -- str c ) 
+  here @ >r there @ here ! here @ + >r
   begin r here @ = if drop there @ r> there @ - here @ there ! r> here ! ;; then
   dup c@ c, 1+ repeat
 ;
@@ -212,7 +214,9 @@ variable flag
 ; immediate
 
 
-: ." postpone " state @ 0 = if postpone type ;; then type ; immediate
+: ." ( -- ) postpone " 
+  state @ 0 = if postpone type ;; then type 
+; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -280,7 +284,7 @@ variable flag
 : include" \" include ; immediate
 | Hmmmm this does inteerupt compiling
 -1 const c-1
-    
+| "    
 | : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 : require" \" over over find -1 = if over over make postpone ; include ;; then  ;
 
@@ -323,19 +327,34 @@ variable flag
 
 
 
+| "
+
+(*
+	Sections, lenght 32 bytes 
+	----------------------
+	| string < 1-23 byte > + 1 Byte |
+	| offset < 4 byte >   | 
+	| pointer < 4 byte>  | 
+	----------------------
+*)
 
 
 | Sections support
 32 const section
 : th section * ;
-: pointer ( section -- ptr ) section + rcell - ;
+: :pointer ( section -- adr-ptr ) section + rcell - ;
+: :offset ( section -- adr-offset ) :pointer rcell - ; 
 : 1+! ( -- ) 1 swap +! ;
 : in ( -- ) + ;
 : new ( str c -- ) 
-  >r #section @ th table in dup r + 0 swap c! 
-  dup pointer there @ swap ! #section 1+! r> cmove>  
+  >r #section @ th table in 
+ | dup r + 0 swap c! 
+  dup :pointer there @ swap ! #section 1+! r> cmove>  
 ;
-: dump ( -- ) #section @ 0 do i th table in dup count type cr loop ;
+: forall ( -- max min ) #section @ 0 ; 
+
+
+: dump ( -- ) forall do i th table in dup count type cr loop ;
 : mark ( -- )  here @ there @ 
   " *marker*" make rliteral rliteral postpone ; 
 ; immediate
@@ -345,24 +364,29 @@ variable flag
   -1 here @ c! -1 -2 here @ 1+ c! ;; then drop 
 ;
 : section ( -- ) token new ;
-: data: ( -- )  here there @ here@ there ! swap ! ;
+
 : find-section ( str c -- index )
-   #section @ 0 do 2dup i th 
-   table in dup count str= if drop drop i leave ;; then loop -1 
+   forall do 2dup i th table in dup 
+   count str= if 2drop i leave ;; then loop -1 
 ;
-: there! ( element -- ) th table in pointer @ there @ swap there ! ;
+: there! ( element -- oldthere ) th table in :pointer @ there @ swap there ! ;
+
 
 : section: ( -- ) 
-  token find-section literal postpone there! postpone >r 
+  token find-section literal postpone dup postpone >r 
+  postpone there! postpone >r 
 ; immediate
-: section; ( -- ) 
-  postpone r> postpone there postpone ! 
+: update-offset ( section -- ) th table in dup :pointer @ there @ swap - swap :offset ! ;
+: ;section ( -- ) 
+  postpone r> postpone r> postpone update-offset 
+  postpone there postpone ! 
 ; immediate
 
+: there: ( -- )  here there @ here @ there ! swap ! ; immediate
+: ;there ( -- )  there here @ there @ here ! swap ! ; immediate
 
 section data
 64 allot
-
 
 
 | save-image image.4ki

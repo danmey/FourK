@@ -382,9 +382,8 @@ variable flag
   postpone there postpone ! 
 ; immediate
 
-: there: ( -- )  here there @ here @ there ! swap ! ; immediate
-: ;there ( -- )  there here @ there @ here ! swap ! ; immediate
-
+: there: ( -- )  here there @ here @ there ! swap ! ; 
+: ;there ( -- )  there here @ there @ here ! swap ! ; 
 section data
 64 allot
 

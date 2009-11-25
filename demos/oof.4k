@@ -8,8 +8,8 @@ mark
 | : does> does>> postpone ;; postpone then immediate ; immediate
 
 : does>> postpone there@ postpone branch here@ - c, postpone ;; ;
-: does> postpone does>> postpone ;; here@ immediate ; 
-: test create does> . ;
+: does> postpone does>>  postpone ;; here@ immediate ; 
+: test create data: 1 , data; does> @ . ;
 test a
 
 | : rcell+ rcell + ;

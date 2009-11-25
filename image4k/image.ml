@@ -1,4 +1,4 @@
-open Arg
+2open Arg
 module Ni = Int32
 
 let ($) f v = f v
@@ -355,6 +355,7 @@ module Words = struct
 
 	let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
+					     Printf.printf "%d %d\n" o l;
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
 					       (i+1), (make_word i (o,l) name code)::acc

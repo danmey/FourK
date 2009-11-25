@@ -12,36 +12,85 @@
 	between the two
 *)
 section libraries 
-100 allot
+100 allot | why 100 bytes? because that's 5*20
+          | I assumed, that a library name is about 20 bytes long
 
 section functions 
 512 allot
 
-section libsTofuncs
-512 allot 
+section relations
+256 rcell * allot 
+
+variable #functions
+variable #libraries
+variable relIndex
+
+
+variable symbols-ptr | offset, let be offsets in the future begin with $
+variable symbols
 
 : symbol ( str c -- ) 
-  there @ >r last-symbol @ there !  
-  1+ inline 2drop there @ last-symbol ! r> there ! 0 last-symbol @ 1+ c!
+  there @ >r symbols-ptr @ there !  
+  1+ inline 2drop there @ symbols-ptr ! r> there ! 0 symbols-ptr @ 1+ c!
 ;
-: symbol" ( -- ) c: " parse symbol ;
+ 
+: next-symbol ( symbol -- symbol+1 ) dup count + 1+ ; 
+: in-section ( n -- ) th table in :pointer @ symbols ! ; | search in nth-section
 
-: next-symbol ( symbol -- symbol+1 ) 
-  dup count + 1+ 
-; 
-: search ( str c -- index ) 0 >r symbols >r
+: search ( str c -- index ) 0 >r symbols @ >r
   begin
    2dup r count 0 = if r> 2drop 2drop r> 2drop -1 ;; then 
    r dup count str= if 2drop r> drop r> ;; then 
-    r> next-symbol r> 1+ >r >r r r count type cr  
+    r> next-symbol r> 1+ >r >r       
   repeat 
 ;
 
+: new-sym-in-section ( str c str c -- ) 
+  find-section th table in >r r :pointer @ r :offset @ +  
+  symbols-ptr ! symbol symbols-ptr @ r :pointer @ - r> :offset !
+;
 
-variable library 
+(* relations
+   ---------
+   consists of three valuse, one index of the lib section,
+   one index of the func section and one stackfix
 
-: lib" ( -- ) c: " parse lib library ! ;
-: func" ( stackfix  -- ) library @ c: " parse 2dup symbol sym add-handle ;
+  stackfix | function index | library index
 
-lib" libc.so.6"
-rcell func" printf"
+*)
+
+: add-relation ( lindx findx stackfix -- ) 
+  " relations" find-section th table in >r r :pointer @ r :offset @ + 
+  r :offset @ 3 + r> :offset ! there @ >r there ! 
+  there: c, c, c, ;there r> there ! 
+;
+
+: new-func ( str c -- ) 
+  " functions" new-sym-in-section 
+;
+: new-lib ( str c -- ) 
+  " libraries" new-sym-in-section
+;
+
+: search-funcs ( str c -- index ) 
+  " functions" find-section in-section search 
+;
+
+: search-libs ( str c -- index )
+  " libraries" find-section in-section search
+;
+
+(* | test code
+" foo" new-func
+" and" new-func
+" boom" new-func
+" and-boom" new-func
+" developers" new-func 
+
+" functions" find-section th table in :pointer @ .  
+" developers" search-funcs . 
+*)
+
+1 2 3 add-relation
+4 5 6 add-relation 
+" relations" find-section th table in dup :pointer @ over :offset @ + 1- c@ .

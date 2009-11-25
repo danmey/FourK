@@ -91,6 +91,6 @@ variable symbols
 " developers" search-funcs . 
 *)
 
-1 2 3 add-relation
-4 5 6 add-relation 
-" relations" find-section th table in dup :pointer @ over :offset @ + 1- c@ .
+| standard settings, as WE NEED them
+" dlopen" new-func
+" dlsym" new-func

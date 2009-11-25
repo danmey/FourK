@@ -326,8 +326,14 @@ variable flag
 ;
 
 
+: copy ( src c dst -- ) 
+  there @ >r there ! inline 2drop r> there ! 
+;
+
 
 | "
+: there: ( -- )  here there @ here @ there ! swap ! ; 
+: ;there ( -- )  there here @ there @ here ! swap ! ; 
 
 (*
 	Sections, lenght 32 bytes 
@@ -347,9 +353,8 @@ variable flag
 : 1+! ( -- ) 1 swap +! ;
 : in ( -- ) + ;
 : new ( str c -- ) 
-  >r #section @ th table in 
- | dup r + 0 swap c! 
-  dup :pointer there @ swap ! #section 1+! r> cmove>  
+  1+ #section @ th table in 
+  dup :pointer there @ swap ! #section 1+! copy 
 ;
 : forall ( -- max min ) #section @ 0 ; 
 
@@ -382,8 +387,6 @@ variable flag
   postpone there postpone ! 
 ; immediate
 
-: there: ( -- )  here there @ here @ there ! swap ! ; 
-: ;there ( -- )  there here @ there @ here ! swap ! ; 
 section data
 64 allot
 

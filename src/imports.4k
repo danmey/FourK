@@ -59,17 +59,21 @@ variable symbols
 
 *)
 
-: add-relation ( lindx findx stackfix -- ) 
+2 rcell + const $relentry | size of a rel entry
+
+: add-relation ( stackfix findx lindx -- ) 
   " relations" find-section th table in >r r :pointer @ r :offset @ + 
-  r :offset @ 3 + r> :offset ! there @ >r there ! 
-  there: c, c, c, ;there r> there ! 
+  r :offset @ $relentry + r> :offset ! there @ >r there ! 
+  there: c, c, , ;there r> there ! 
 ;
 
 : new-func ( str c -- ) 
   " functions" new-sym-in-section 
 ;
+
+
 : new-lib ( str c -- ) 
-  " libraries" new-sym-in-section
+  " libraries" new-sym-in-section  
 ;
 
 : search-funcs ( str c -- index ) 
@@ -91,6 +95,24 @@ variable symbols
 " developers" search-funcs . 
 *)
 
-1 2 3 add-relation
-4 5 6 add-relation 
-" relations" find-section th table in dup :pointer @ over :offset @ + 1- c@ .
+| standard settings, as WE NEED them
+
+variable library | current library index, important for def. funcs
+
+: lib: ( -- ) 
+  token 2dup search-libs 
+  dup -1 = if drop 2dup new-lib search-libs library ! ;; then 
+  library ! 2drop 
+;
+
+: func: ( stackfix -- ) 
+  token 2dup search-funcs dup 
+  -1 = if drop 2dup new-func search-funcs library @ add-relation ;; then
+  2drop drop 
+;
+
+lib: libdl
+0 func: dlopen
+0 func: dlsym
+
+" relations" find-section th table in :pointer @ $relentry + 1+ c@ .

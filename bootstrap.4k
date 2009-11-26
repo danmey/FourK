@@ -372,6 +372,8 @@ variable #ithere
    forall do 2dup i th table in dup 
    count str= if 2drop i leave ;; then loop -1 
 ;
+: section-adr ( str c -- adr-of-section ) find-section th table in ;
+
 : there! ( element -- oldthere ) th table in :pointer @ there @ swap there ! ;
 
 

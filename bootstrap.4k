@@ -70,10 +70,6 @@ variable #section
 create table 16 32 * allot
 
 
-variable #ithere
-
-4 #ithere !
-
 : 2dup swap dup rot dup rot swap ;
 
 
@@ -97,7 +93,7 @@ variable #ithere
 : | begin key 10 = if ;; then repeat ; immediate
 
 | Taking into account prefix word
-: ; -1 here @ c! -2 here  @ 1+ c! last @ 1+ last !
+: ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
     last @ 253 = if 256 last ! then postpone [ ; immediate
 
 : c: key state @ 0 = if literal then ; immediate
@@ -214,9 +210,9 @@ variable flag
 ; immediate
 
 
-: ." ( -- ) postpone " 
+ : ." ( -- ) postpone " 
   state @ 0 = if postpone type ;; then type 
-; immediate
+ ; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -232,13 +228,15 @@ variable flag
 
 
 
+variable #ithere
+4 #ithere !
+
 : add-handle ( handle stackfix -- )
-  ithere @ 1 #ithere @ + rcells+ !
+
+    ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !
 ;
-
-
 
 | do loops
 

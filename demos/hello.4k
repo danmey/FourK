@@ -6,15 +6,19 @@
 
 : load-libc
  " libc.so.6" lib " printf" sym 
-  rcell add-handle
+|  ccall_tab @ 8 rcells+ !
+| rcell  add-handle
   " libc.so.6" lib " _exit" sym 
-   rcell add-handle
+|   rcell add-handle
  ;
 
 
  : main
+    4 #ithere !
+
+|  init-ithere	
    load-libc
-  | " hello world!!
-  | " >cstr printf 
+|   " hello world!!
+|   " >cstr printf 
   0 exit 
 ;

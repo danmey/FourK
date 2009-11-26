@@ -56,7 +56,17 @@ DEF_CODE(ccall,"ccall")
 	mov	%eax,%ecx
 	mov	ccall_tab(,%ecx,8),%eax
 	K4_SAVE_CONTEXT()
+#	cmp	$1,%ecx
+#	jne	1f
+#	pop	%eax
+#	pop	%eax
+#	K4_SAFE_CALL(printf, $msg3, %eax)
+
+#1:	
 	call	*%eax
+	push	%eax
+	K4_SAFE_CALL(printf, $fmt_dec, %eax)
+	pop	%eax
 	K4_RESTORE_CONTEXT()
 	add	(ccall_tab+4)(,%ecx,8),%esp
 	push	%eax

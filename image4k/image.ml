@@ -207,7 +207,8 @@ module Image = struct
 	       let o = image_start + ofs' in
 		 if len > 0 && o >= 0 then
 		   begin
-		     let sec_im = Array.sub array o len in
+		     Printf.printf "%s:: %x\n" name ofs;
+		     let  sec_im = Array.sub array o len in
 		       ofs,name, (let s =
 				    { offset   = o;
 				      name     = name';
@@ -503,7 +504,7 @@ module FourkImage = struct
 (* 92 *)
   let strip image =
   (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Image.name)) acc) image.Image.sections removed_sections in *)
-    List.iter (fun x -> if (List.mem x.Image.name stripped_sections) then Image.zero x) image.Image.sections;
+    List.iter (fun x -> if (List.mem x.Image.name stripped_sections) then Image.zero x ) image.Image.sections;
       image
 (*
       { image with Image.sections = secs }
@@ -513,12 +514,12 @@ module FourkImage = struct
 
   let link base_image image word_count =
     let dict_section = Image.find_section base_image "dict" in
-      Array.fill dict_section.Image.image 0 5 0x90;
+      Array.fill dict_section.Image.image 0 5 0x90; 
       BinaryArray.set_dword dict_section.Image.image 6 word_count;
       List.iter (fun nm ->
 		   let src = Image.find_section image nm in
 		   let dst = Image.find_section base_image nm in
-		     Image.copy src dst) copied_sections;
+		      Image.copy src dst ) copied_sections;
 (*      Image.relocate (image, ref_image) (Image.find_section base_image "dict") (Image.find_section base_image "interpret"); *)
       ()
 

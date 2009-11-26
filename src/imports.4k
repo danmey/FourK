@@ -35,7 +35,9 @@ variable symbols
 ;
  
 : next-symbol ( symbol -- symbol+1 ) dup count + 1+ ; 
-: in-section ( n -- ) th table in :pointer @ symbols ! ; | search in nth-section
+: in-section ( str c -- ) 
+  find-section th table in :pointer @ symbols ! 
+; 
 
 : search ( str c -- index ) 0 >r symbols @ >r
   begin
@@ -77,11 +79,11 @@ variable symbols
 ;
 
 : search-funcs ( str c -- index ) 
-  " functions" find-section in-section search 
+  " functions" in-section search 
 ;
 
 : search-libs ( str c -- index )
-  " libraries" find-section in-section search
+  " libraries" in-section search
 ;
 
 (* | test code
@@ -111,8 +113,48 @@ variable library | current library index, important for def. funcs
   2drop drop 
 ;
 
-lib: libdl
+lib: 4k
 0 func: dlopen
 0 func: dlsym
 
-" relations" find-section th table in :pointer @ $relentry + 1+ c@ .
+lib: libSDL.so
+4 rcells func: SDL_SetVideoMode
+rcell    func: SDL_Flip
+
+| inlines a call to a function, if the function was imported
+: call: ( -- ) 
+  token search-funcs dup -1 = if drop ;; then postpone ccall c,
+; immediate
+
+variable libhandle
+
+| returns the nth function symbol 
+: nth-func ( n -- symbol ) 
+  " functions" section-adr :pointer @ >r 0
+  begin 
+   r count 0 = if 2drop r> ;; then  
+   2dup = if 2drop r> ;; then 
+   r> next-symbol >r 1+
+  repeat 
+;
+
+: dorel ( rel-adr -- ) 
+  1+ dup c@ swap 1+ @ . . 
+;
+
+: load-rels ( index -- ) 
+  " relations" section-adr dup :pointer @ >r :offset @ 
+  begin dup 0 < if 2drop r> drop ;; then 
+   2dup r + c@ = if dup r + dorel then 
+   $relentry - 
+  repeat
+;
+
+: load-functions ( -- ) 
+  " libraries" section-adr :pointer @ >r 0
+  begin 
+   r count 0 = if r> 2drop ;; then 
+   dup 0 > if dup r $2 swap dlopen libhandle ! load-rels then r> next-symbol >r 1+ 
+  repeat
+;
+

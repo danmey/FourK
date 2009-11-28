@@ -210,9 +210,9 @@ variable flag
 ; immediate
 
 
- : ." ( -- ) postpone " 
-  state @ 0 = if postpone type ;; then type 
- ; immediate
+| : ." ( -- ) postpone " 
+|  state @ 0 = if postpone type ;; then type 
+| ; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -232,7 +232,6 @@ variable #ithere
 4 #ithere !
 
 : add-handle ( handle stackfix -- )
-
     ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !

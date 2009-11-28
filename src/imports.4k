@@ -117,12 +117,12 @@ lib: 4k
 0 func: dlopen
 0 func: dlsym
 
-lib: libc.so
-2 rcells func: printf
+| lib: libc.so
+| 2 rcells func: printf
 
 | inlines a call to a function, if the function was imported
 : call: ( -- ) 
-  token search-funcs dup -1 = if drop ;; then postpone ccall c,
+  token search-funcs dup -1 = if drop ;; then postpone ccall c, 
 ; immediate
 
 variable libhandle
@@ -158,7 +158,11 @@ variable libhandle
    dup 0 > if dup r $2 swap dlopen libhandle ! load-rels then r> next-symbol >r 1+ 
   repeat
 ;
-load-functions
+| load-functions
 
-: moo 666 " %d Fuck I did it\n" drop call: printf ; 
-moo 
+
+| : moo 666 " %d Fuck I did it
+| " drop call: printf ; 
+|  moo 
+
+

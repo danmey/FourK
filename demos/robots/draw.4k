@@ -1,7 +1,7 @@
-forget
-mark
+| forget
+| mark
 
-4 #ithere !
+| 4 #ithere !
 
 100012 const GLU_FILL
 100001 const GLU_FLAT
@@ -90,21 +90,16 @@ loop ;
     again
 ;
 
-: a
-    video
-    lookat
-;
-
-imports
 : main
+  bye
+    imports
     video
     lookat
     init
     let-there-be-light
     render-loop
-    SDL_Quit drop
+   SDL_Quit drop
+    bye
 |    cylinder @ .
 ;
-
-save-image im.4ki
-main
+| main

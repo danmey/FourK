@@ -280,10 +280,10 @@ module Words = struct
       let rec disassemble_word' =
 	function
 	  | []                           -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> Prefix (a, i)::(disassemble_word' xs)
-	  | 253::i::xs -> Opcode (253 + i)::(disassemble_word' xs)
-	  | 1::b1::b2::b3::b4::xs                          -> Prefix32 (1, (dword b4 b3 b2 b1))::(disassemble_word' xs)
-	  | c::xs                                          -> Opcode c::(disassemble_word' xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> Prefix (a, i)                     ::(disassemble_word' xs)
+	  | 253::i::xs                                     -> Opcode (253 + i)                  ::(disassemble_word' xs)
+	  | 1::b1::b2::b3::b4::xs                          -> Prefix32 (1, (dword b4 b3 b2 b1)) ::(disassemble_word' xs)
+	  | c::xs                                          -> Opcode c                          ::(disassemble_word' xs)
       in
 	match lst with
 	  | 255::xs -> Bytecode (disassemble_word' xs)
@@ -357,7 +357,7 @@ module Words = struct
 
 	let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
-					     Printf.printf "%d %d\n" o l;
+(*					     Printf.printf "%d %d\n" o l; *)
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
 					       (i+1), (make_word i (o,l) name code)::acc
@@ -384,7 +384,7 @@ module Words = struct
 
 	let last_word = words_ar.(Array.length words_ar-1) in
 	  traverse words_ar last_word;
-	  words_list
+	  words_list 
 
   let string_of_bytecode word_arr code =
     let rec loop =
@@ -422,30 +422,30 @@ module Words = struct
     let rec emit_bytecode =
       function
 	| [] -> []
-	| (Prefix   (i,v))::xs -> i::v::(emit_bytecode xs)
-	| (Prefix32 (i,v))::xs -> (i::(dw v))@(emit_bytecode xs)
-	| (Opcode i      )::xs -> i::(emit_bytecode xs) in
+	| (Prefix   (i,v)) ::xs ->  i::v::      (emit_bytecode xs)
+	| (Prefix32 (i,v)) ::xs -> (i::(dw v))@ (emit_bytecode xs)
+	| (Opcode i      ) ::xs -> i::          (emit_bytecode xs) in
 
     let rec emit_words i =
       function
 	| [] -> i
 	| x::xs ->
 	    (match x.code with
-	       | Core im -> section.Image.image.(i) <- (Array.length im);
+	       | Core im -> 
+		   section.Image.image.(i) <- Array.length im;
 		   Array.blit im 0 section.Image.image (i+1) (Array.length im);
 		   emit_words (i+1+(Array.length im)) xs
 	       | Bytecode bc ->
-		   let im = Array.of_list (emit_bytecode bc) in
+		   let im = Array.of_list (emit_bytecode bc) 
+		   in
 		     section.Image.image.(i) <- 255;
 		     Array.blit im 0 section.Image.image (i+1) (Array.length im);
-		     emit_words (i+1+(Array.length im)) xs) in
+		     emit_words (i+1+(Array.length im)) xs) 
+    in
     let i = emit_words 0 words in
-      emit_names words name_section;
+      emit_names words name_section; 
       Printf.printf "%d\n\n" i;
-      section.Image.image.(i) <- 255;
-      section.Image.image.(i+1) <- 255;
-      section.Image.image.(i+2) <- 255
-
+      section.Image.image.(i) <- 254
 
 
   let optimise words_list =
@@ -500,8 +500,8 @@ module FourkImage = struct
     let word_sec = Image.find_section image "words" in
       Words.words (word_sec,name_sec)
 
-  let stripped_sections = ["interpret";"name";"dsptch";"semantic";]
-  let removed_sections = ["name";"dsptch";"semantic"]
+    let stripped_sections =  ["interpret";"name";"dsptch";"semantic";] 
+    (* let stripped_sections =  [] *)
 (* 92 *)
   let strip image =
   (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Image.name)) acc) image.Image.sections removed_sections in *)
@@ -584,12 +584,12 @@ module Options = struct
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
 				   let words = Words.optimise (FourkImage.words image) in
-(*				   let words = FourkImage.words image in *)
+(*				   let words = (FourkImage.words image) in *)
 				   let sec = Image.find_section image "words" in
 				   let nsec = Image.find_section image "name" in
-				     Image.zero sec;
-				     Image.zero nsec;
-				     Words.emit words nsec sec;
+				     Image.zero sec; 
+				     Image.zero nsec; 
+				     Words.emit words nsec sec; 
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
 				     Image.save base_image core_name)]
 	       ),

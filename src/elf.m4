@@ -207,5 +207,5 @@ define([ELF_DATA_END],
 
 .equ dataorg, 	beg + ((filesz + 16) & ~15)
 
-.equ memsz, 	0x1000+dataorg - beg
+.equ memsz, 	0x4000+dataorg - beg
 ])

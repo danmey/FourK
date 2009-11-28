@@ -55,10 +55,18 @@ define([END_CODE],
 define([DEF_VAR],[
 	DEF_CODE($1,"$1")dnl
 	sub	$ 4,%ebx
-	movl	$var_$1,(%ebx)
-	divert(3)
-	var_$1:	.long $2
-	divert
+	call	1f
+1:
+	pop	%eax
+	add	$(1f-1b),%eax
+	mov	%eax,(%ebx)
+	jmp	*%ebp
+1:
+var_$1:
+	.long	$2
+#	divert(3)
+#	var_$1:	.long $2
+#	divert
 	END_CODE dnl
 ])
 define([DEF_IMM],

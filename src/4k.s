@@ -37,7 +37,8 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	jmp 	entry_point
 	mov	$0,	%ebx
 	push	%ebx
-
+	call	init_imports
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
@@ -45,8 +46,6 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	call	dlsym
 	add	$8,%esp
 	mov	%eax,dlopen_
-
-	call	init_imports
 	
 #		movl $1,%eax
 #	xor %ebx,%ebx 
@@ -76,7 +75,8 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	jmp	runbyte
 dlopen_s:	.asciz "dlopen"
 msg3:			.ASCIZ "%s\n"
-		ccall_tab:
+
+ccall_tab:
 	.LONG dlopen,8
 	.LONG dlsym,8
 	.FILL 256-16
@@ -158,7 +158,7 @@ dlopen_:
 # Function escapes to main text interpreter loop throuh `interpret' token
 # In: %eax - contains a word pointer
 runbyte:
-	ifdef([DEBUG],[
+ifdef([DEBUG],[
 	push	%eax
 	cmpl	$ 0, interrtupted
 	je	1f
@@ -311,7 +311,7 @@ msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
 			.LONG 0
-_vm_context_reg:	.FILL 36
+_vm_context_reg:	.FILL 42
 _vm_context_ESP:	.FILL  4
 _vm_context_EBP:	.fill  4
 _org_ESP:		.LONG	0

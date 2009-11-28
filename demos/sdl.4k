@@ -1,9 +1,18 @@
-include" src/debug.4k"
-
 2 ccall: exit
 3 ccall: printf
 4 ccall: dlerror
 5 ccall: video
+6 ccall: SDL_PollEvent
+
+| SDL constants
+27  const Esc
+2   const Keydown
+create event 20 cells allot
+
+| SDL structure dispatch
+: e>type c@ ;
+: e>key 8 + c@ ;
+: s>pixels 20 + @ ;
 
 : sdl-init ( -- )
     " libc.so" lib " _exit" sym
@@ -17,11 +26,20 @@ include" src/debug.4k"
     
     " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 
     4 rcells add-handle
+    " /usr/lib/libSDL.so" lib " SDL_PollEvent"         sym 1 rcells add-handle
+;
+
+: render-loop
+    begin
+	event SDL_PollEvent drop
+	event e>type Keydown = if event e>key Esc = if ;; then then
+    again
 ;
 
 : yeah ( -- )
     sdl-init
     2 0 600 800 video
+    render-loop
     0 exit
 ; 
 

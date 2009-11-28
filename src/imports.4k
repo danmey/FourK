@@ -123,7 +123,6 @@ lib: 4k
 0 func: dlopen
 0 func: dlsym
 
-
 | inlines a call to a function, if the function was imported
 : call: ( -- ) 
   token over >r search-funcs dup ." callindex: " .  cr 
@@ -183,7 +182,6 @@ lib: libc.so.6
 rcell func: printf
 rcell func: exit
 
-here @ .
 : moo ." no I'm not sleeping!!!" cr 
 " hello world!!
 " drop   
@@ -193,4 +191,4 @@ here @ .
 " drop 
   call: printf dup . 
 ; 
-
+moo 

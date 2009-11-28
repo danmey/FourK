@@ -34,8 +34,6 @@ immediate
 
 last @ 1 + last !
 
-there @ .
-
 token : make
     postpone token
     postpone make
@@ -72,10 +70,6 @@ variable #section
 create table 16 32 * allot
 
 
-variable #ithere
-
-4 #ithere !
-
 : 2dup swap dup rot dup rot swap ;
 
 
@@ -99,7 +93,7 @@ variable #ithere
 : | begin key 10 = if ;; then repeat ; immediate
 
 | Taking into account prefix word
-: ; -1 here @ c! -2 here  @ 1+ c! last @ 1+ last !
+: ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
     last @ 253 = if 256 last ! then postpone [ ; immediate
 
 : c: key state @ 0 = if literal then ; immediate
@@ -109,6 +103,7 @@ variable #ithere
     begin
 	c: ) key dup rot = if swap 1- dup 0= if drop drop ;; then swap then
 	c: (             = if 1+ then
+
     repeat ; immediate
 
 
@@ -217,7 +212,7 @@ variable flag
 
 
 : ." ( -- ) postpone " 
-  state @ 0 = if postpone type ;; then type 
+ state @ 0 = if postpone type ;; then type 
 ; immediate
 
 
@@ -232,6 +227,7 @@ variable flag
 
 : sym >cstr swap dlsym ;
 
+variable #ithere
 
 : add-handle ( handle stackfix -- )
   ." index: " #ithere @ 2 / . cr 

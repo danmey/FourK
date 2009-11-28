@@ -37,23 +37,33 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	jmp 	entry_point
 	mov	$0,	%ebx
 	push	%ebx
+	call	init_imports
+	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
 	call	dlsym
 	add	$8,%esp
 	mov	%eax,dlopen_
-	call	init_imports
+	
+#		movl $1,%eax
+#	xor %ebx,%ebx 
+#	int $128 
 
 ################################################################################
 # This will be supplied with the last word by linker
 	call 	build_dispatch
 	pop	%eax
 	dec	%eax
-#	K4_SAFE_CALL(printf, $fmt_dec,	%eax)
-#	movl $1,%eax
-#	xor %ebx,%ebx
-#	int $128
+
+	 ## mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+	 ## xor	%ecx,%ecx
+	 ## movb	13(%eax),%cl
+	 ## K4_SAFE_CALL(printf, $fmt_dec,	%ecx)
+	 ## movl $1,%eax
+	 ## xor %ebx,%ebx
+	 ## int $128
 
 	mov	%esp,%ebx
 	sub	$4096,%ebx
@@ -61,9 +71,15 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	mov	%al,ex_bytecode
 	movb	$-1,(ex_bytecode+1)
 	mov	$(ex_bytecode-1),%eax
-
+	
 	jmp	runbyte
 dlopen_s:	.asciz "dlopen"
+msg3:			.ASCIZ "%s\n"
+
+ccall_tab:
+	.LONG dlopen,8
+	.LONG dlsym,8
+	.FILL 256-16
 
 ################################################################################
 # Build the dispatch table
@@ -142,15 +158,15 @@ dlopen_:
 # Function escapes to main text interpreter loop throuh `interpret' token
 # In: %eax - contains a word pointer
 runbyte:
+ifdef([DEBUG],[
 	push	%eax
-	ifdef([DEBUG],[
 	cmpl	$ 0, interrtupted
 	je	1f
 	movl	$ 0, interrtupted
 	K4_SAFE_CALL(longjmp,$mainloop)
 1:	
-])
 	pop	%eax
+])
 	push	%esi		# push the current word address on the return stack
 	lea	1(%eax),%esi	# load the byte code pointer
 .fetchbyte:
@@ -295,7 +311,7 @@ msg_test3:		.ASCIZ "Test3\n"
 whites:                 .BYTE  4,9,10,12,13,0
 bytecode:		.BYTE  0,INTERPRET_TOKEN
 			.LONG 0
-_vm_context_reg:	.FILL 36
+_vm_context_reg:	.FILL 42
 _vm_context_ESP:	.FILL  4
 _vm_context_EBP:	.fill  4
 _org_ESP:		.LONG	0

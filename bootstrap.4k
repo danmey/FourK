@@ -34,6 +34,8 @@ immediate
 
 last @ 1 + last !
 
+there @ .
+
 token : make
     postpone token
     postpone make
@@ -231,13 +233,20 @@ variable flag
 : sym >cstr swap dlsym ;
 
 
-
 : add-handle ( handle stackfix -- )
+  ." index: " #ithere @ 2 / . cr 
+  over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
   ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !
 ;
 
+
+
+." ithere: " ithere @ .
+." there: " there @ . 
+." here: " here @ . 
+." last: " last @ . 
 
 
 | do loops

@@ -280,7 +280,8 @@ module Words = struct
       let rec disassemble_word' =
 	function
 	  | []                           -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 || a = 253 -> Prefix (a, i)::(disassemble_word' xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> Prefix (a, i)::(disassemble_word' xs)
+	  | 253::i::xs -> Opcode (253 + i)::(disassemble_word' xs)
 	  | 1::b1::b2::b3::b4::xs                          -> Prefix32 (1, (dword b4 b3 b2 b1))::(disassemble_word' xs)
 	  | c::xs                                          -> Opcode c::(disassemble_word' xs)
       in

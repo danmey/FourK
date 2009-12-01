@@ -250,6 +250,8 @@ module Words = struct
     | Opcode of int 
     | Label of int
     | Branch of int
+    | Branch0 of int
+
   type cflow = CFnext | CFlabel of int | CFbranch of int | CFbranch0 of int
   type code = Bytecode of opcode list | Core of int array
     
@@ -270,8 +272,9 @@ module Words = struct
       | Prefix (id,_) -> id
       | Prefix32 (id,_) -> id
       | Opcode id -> id
-      | Label id -> 10
-      | Branch id -> 10
+      | Label id -> -1
+      | Branch id -> -1
+      | Branch0 id -> -1
 	  
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
@@ -311,43 +314,24 @@ module Words = struct
       let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
       let rec pass1' ass = function
 	| [] -> ass
-	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 -> begin let o = offset + ofs + 1 in pass1' (add o ass) xs end
-	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 3 -> begin let o = offset + ofs + 1 in pass1' (add o ass) xs end
+	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 || opcode = 3 -> let o = offset + ofs + 1 in pass1' (add o ass) xs
 	| (ofs, Prefix(_))              :: xs -> pass1' ass xs
 	| (ofs, Prefix32(_))            :: xs -> pass1' ass xs
 	| (ofs, x)                      :: xs -> pass1' ass xs 
       in
       let pass1 = pass1' [] in
-(*
-      let rec blocks0 = function
-	| [] -> []
-	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 -> let o = offset + ofs+1 in Printf.printf "%d\n" o; (ofs, o) :: (blocks0 xs)
-	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 3 -> let o = offset + ofs+1 in Printf.printf "%d\n" o; (ofs, o) :: (blocks0 xs)
-	| (ofs, Prefix(_))              :: xs -> blocks0 xs
-	| (ofs, Preffix32(_))            :: xs -> blocks0 xs
-	| (ofs, x)                      :: xs -> blocks0 xs
-      in
-*)
-(*
-      let rec pass2 bc labels = 
-	let bc' = List.map (fun x -> x,CFnext) bc in
-	List.fold_left 
-	  (fun (new_bc, base_label_index) (branch_index, label_index) -> 
-	     List.fold_left
-	       (fun (out_code, current_label) ((current_index, bytecode),byte_code_label) -> 
-		  if current_index = label_index then 
-		    out_code @ [(current_index,bytecode),CFlabel current_label], current_label + 1
-		  else
-		    out_code @ [(current_index,bytecode), byte_code_label], current_label) ([], base_label_index) new_bc) ( bc',0) labels
-      in
-*)
       let rec pass2 labels = 
 	List.fold_left 
 	  (fun acc (index, bytecode) ->
 	     match bytecode with
-	       | Prefix(opcode, offset) when opcode = 2 -> 
+	       | Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> 
 		   let offset' = offset + index + 1 in
-		     acc @ [(index, Branch (List.assoc offset' labels))]
+		     begin
+		       try
+		       let lab = List.assoc offset' labels in
+			 acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
+		     with Not_found -> acc@[index,Prefix(opcode, offset)]
+		     end
 	       | a -> acc@[index,a]) []
       in
       let insert_labels labels = List.fold_left 
@@ -451,12 +435,14 @@ module Words = struct
 	      | Bytecode b -> List.iter
 		  (fun x ->
 		     let id = bytecode_id x in
-		     let word' = words.(id) in
-		       if not word'.used then
-			 begin
-			   word'.used <- true;
-			   traverse' words word'
-			 end
+		       if id != -1 then begin
+			 let word' = words.(id) in
+			   if not word'.used then
+			     begin
+			       word'.used <- true;
+			       traverse' words word'
+			     end
+		       end
 		  ) b in
 	    word.used <- true;
 	    traverse' words word in
@@ -474,18 +460,45 @@ module Words = struct
 	| (Opcode i      )::xs -> word_arr.(i).name                              :: (loop xs) 
 	| (Label l)       ::xs -> (Printf.sprintf "label%d" l)                   :: (loop xs)
 	| (Branch l)      ::xs -> (Printf.sprintf "goto(label%d)" l  )           :: (loop xs)
+	| (Branch0 l)      ::xs -> (Printf.sprintf "ifgoto(label%d)" l  )           :: (loop xs)
     in
       String.concat " " (loop code)
 	
-
-  
-  let emit words name_section section =
     let dw dword =
       let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
       let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
       let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 8)  (Ni.of_int 255)) in
       let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
-	b1::b2::b3::b4::[] in
+	b1::b2::b3::b4::[]
+
+    let tag bc = snd (List.fold_left (fun (i,acc) bc ->
+				match bc with
+				  | Prefix32 (opc,v) ->  i+5, acc @ [i, bc]
+				  | Opcode opc       ->  i+1, acc @ [i, bc] 
+				  | Prefix   (opc,v) ->  i+2, acc @ [i, bc]
+				  | Branch ofs       ->  i+2, acc @ [i, bc]
+				  | Branch0 ofs      ->  i+2, acc @ [i, bc]
+				  | Label l          ->  i+0, acc @ [i, bc]) 
+      (0,[]) bc)
+    let collect_labels = List.fold_left (fun acc (t, bc) ->
+					 match bc with
+					   | Label l -> acc@[(l,t)]
+					   | _ -> acc) []
+    let rec emit_bytecode bc =
+      let pass0 = tag bc in
+      let labels = collect_labels pass0 in
+	List.iter (fun (a,b) -> Printf.printf "%d -> %d\n" a b) labels;
+	List.fold_left (fun acc (t,op) ->
+			  match op with
+			    | Prefix   (i,v) -> acc @ [i;v] 
+			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
+			    | Opcode i       -> acc @ [i]
+			    | Label i -> acc
+			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]
+      			    | Branch i -> acc @ [2;List.assoc i labels - t-1]) [] pass0
+      	  
+  
+  let emit words name_section section =
 
     let emit_names w sec =
       let explode str =
@@ -502,14 +515,6 @@ module Words = struct
 	       Array.blit arr 0 sec.Image.image (32*w.index) 32; i+1) 0 w)
 	  in
       
-    
-    let rec emit_bytecode =
-      function
-	| [] -> []
-	| (Prefix   (i,v)) ::xs ->  i::v::      (emit_bytecode xs)
-	| (Prefix32 (i,v)) ::xs -> (i::(dw v))@ (emit_bytecode xs)
-	| (Opcode i      ) ::xs -> i::          (emit_bytecode xs) in
-
     let rec emit_words i =
       function
 	| [] -> i
@@ -697,9 +702,15 @@ module Options = struct
 			   let words = FourkImage.words image in
 			   let wordsa = Array.of_list words in
 			     List.iter (fun x ->
-					  match x.Words.code with
-					    | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
-					    | _ -> ()) words;
+					    match x.Words.code with
+					      | Words.Bytecode lst' -> 
+						  begin
+						    let x' = Words.disassemble_word (255::(Words.emit_bytecode lst')) in
+						    match x' with
+						      | Words.Bytecode lst -> 
+							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
+						  end
+					      | _ -> ()) words;
 			     Printf.printf "Sections:\n%s\n" $ (String.concat "\n" $ FourkImage.sections image) 
 			),
       

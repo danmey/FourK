@@ -363,14 +363,14 @@ module Words = struct
     let rec strip = List.fold_left 
       (fun acc -> 
 	 function 
-	   | Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> acc
-	   | a -> acc@[a]) []
+	   | i,Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> acc
+	   | i,a -> acc@[i,a]) []
       in
 	match lst with
 	  | 255::xs -> Bytecode 
 	      (let bc = pass0 0 xs in  
 	       let lb = pass1 bc in
-		strip (untag (insert_labels lb (pass2 lb bc(*(tag bc)*)))))
+		untag (strip (insert_labels lb (pass2 lb bc(*(tag bc)*)))))
 	  | s::xs   -> Core (Array.of_list xs)
 	  | []      -> Core (Array.make 0 0)
 
@@ -476,8 +476,9 @@ module Words = struct
 	| (Branch l)      ::xs -> (Printf.sprintf "goto(label%d)" l  )           :: (loop xs)
     in
       String.concat " " (loop code)
+	
 
-
+  
   let emit words name_section section =
     let dw dword =
       let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in

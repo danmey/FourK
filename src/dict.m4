@@ -83,10 +83,12 @@ define([END_DICT],
 	.equ NCORE_WORDS, CORE_COUNT
 	
 	.align 4
+
 	undivert(3)
 	SECTION(there)
 	there:
        	.FILL 8192
+
 	SECTION(name)
 	ntab:
 	undivert(1)

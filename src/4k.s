@@ -112,6 +112,8 @@ build_dispatch:
 	je	.done
 	cmp	$4,%al
 	jbe	.cont
+	cmp	$ PREFIX_TOKEN,%al
+	je	.cont
 	jmp	.loop2
 .found_word:
 	cmpb	$-1,(%esi)

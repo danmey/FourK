@@ -83,23 +83,25 @@ loop ;
     
 : render-loop
     begin
-	event SDL_PollEvent drop
-	event e>type Keydown = if event e>key Esc = if ;; then then
-	render
-	SDL_GL_SwapBuffers drop
+	event SDL_PollEvent 0= invert
+	if
+	    event e>type Keydown = if event e>key Esc = if ;; then then
+	    render
+	    SDL_GL_SwapBuffers drop
+	then
     again
 ;
 
 : main
-  bye
     imports
     video
     lookat
     init
     let-there-be-light
     render-loop
-   SDL_Quit drop
+    SDL_Quit drop
     bye
 |    cylinder @ .
 ;
-| main
+
+save-image im.4ki

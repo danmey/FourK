@@ -51,6 +51,7 @@ token : make
 
 
 
+
 : here@ here @ ;
 
 
@@ -89,7 +90,6 @@ create table 16 32 * allot
 : then dup here@ swap - swap  c! ; immediate
 : else >r postpone branch here@ 0 c, r> postpone then ; immediate
 
-
 : | begin key 10 = if ;; then repeat ; immediate
 
 | Taking into account prefix word
@@ -97,6 +97,7 @@ create table 16 32 * allot
     last @ 253 = if 256 last ! then postpone [ ; immediate
 
 : c: key state @ 0 = if literal then ; immediate
+
 : a 1 2 3 ;
 
 : ( 1

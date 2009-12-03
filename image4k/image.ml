@@ -252,7 +252,6 @@ module Words = struct
     | Branch of int
     | Branch0 of int
 
-  type cflow = CFnext | CFlabel of int | CFbranch of int | CFbranch0 of int
   type code = Bytecode of opcode list | Core of int array
     
   type t =
@@ -306,7 +305,9 @@ module Words = struct
       let rec pass0 ofs =
 	function
 	  | []                                             -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> (ofs, Prefix (a, ext_sign i))           ::(pass0 (ofs + 2) xs)
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> 
+	    Printf.printf "Label: %d ->>>b %d\n" a i;
+	      (ofs, Prefix (a, ext_sign i))           ::(pass0 (ofs + 2) xs)
 	  | 253::i::xs                                     -> (ofs, Opcode (253 + i))                 ::(pass0 (ofs + 2) xs)
 	  | 1::b1::b2::b3::b4::xs                          -> (ofs, Prefix32 (1, (dword b4 b3 b2 b1)))::(pass0 (ofs + 5) xs)
 	  | c::xs                                          -> (ofs, Opcode c)                         ::(pass0 (ofs + 1) xs)
@@ -314,7 +315,13 @@ module Words = struct
       let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
       let rec pass1' ass = function
 	| [] -> ass
-	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 || opcode = 3 -> let o = offset + ofs + 1 in pass1' (add o ass) xs
+	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 || opcode = 3 -> 
+	    begin
+	    flush stdout;
+	    let o = offset + ofs + 1 in 
+	      Printf.printf "Offset: >>>a %d\n" o;
+	      pass1' (add o ass) xs;
+	    end
 	| (ofs, Prefix(_))              :: xs -> pass1' ass xs
 	| (ofs, Prefix32(_))            :: xs -> pass1' ass xs
 	| (ofs, x)                      :: xs -> pass1' ass xs 
@@ -330,31 +337,28 @@ module Words = struct
 		       try
 		       let lab = List.assoc offset' labels in
 			 acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
-		     with Not_found -> acc@[index,Prefix(opcode, offset)]
+		       with _ -> acc
 		     end
 	       | a -> acc@[index,a]) []
       in
-      let insert_labels labels = List.fold_left 
-	(fun acc (ofs,a) -> 
-	   try let l = (List.assoc ofs labels) in acc @ [ofs,Label l] @ [ofs,a]
-	   with Not_found -> acc @ [ofs,a]) []
+      let insert_labels labels =
+	List.fold_left 
+	  (fun acc (ofs,a) -> 
+	       Printf.printf "Label:->>>e %d\n" ofs;
+	     try let l = (List.assoc ofs labels) in 
+	       acc @ [ofs,Label l] @ [ofs,a]
+	     with Not_found -> acc @ [ofs,a]) []
       in
 
       let rec untag = function
 	| [] -> []
 	| (_,a)     ::xs ->           a::(untag xs) 
       in
-    let rec strip = List.fold_left 
-      (fun acc -> 
-	 function 
-	   | i,Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> acc
-	   | i,a -> acc@[i,a]) []
-      in
-	match lst with
+ 	match lst with
 	  | 255::xs -> Bytecode 
 	      (let bc = pass0 0 xs in  
 	       let lb = pass1 bc in
-		untag (strip (insert_labels lb (pass2 lb bc(*(tag bc)*)))))
+ 		untag (insert_labels lb (pass2 lb bc)))
 	  | s::xs   -> Core (Array.of_list xs)
 	  | []      -> Core (Array.make 0 0)
 
@@ -480,10 +484,12 @@ module Words = struct
 				  | Branch0 ofs      ->  i+2, acc @ [i, bc]
 				  | Label l          ->  i+0, acc @ [i, bc]) 
       (0,[]) bc)
-    let collect_labels = List.fold_left (fun acc (t, bc) ->
-					 match bc with
-					   | Label l -> acc@[(l,t)]
-					   | _ -> acc) []
+    let collect_labels bc = 
+      Printf.printf "Collect labels\n"; List.iter (fun (t,bc) -> match bc with _ -> ()|  Label i -> Printf.printf "l: %d" i) bc;
+      List.fold_left (fun acc (t, bc) ->
+			match bc with
+			  | Label l -> acc@[(l,t)]
+			  | _ -> acc) [] bc
     let rec emit_bytecode bc =
       let pass0 = tag bc in
       let labels = collect_labels pass0 in
@@ -494,12 +500,11 @@ module Words = struct
 			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
 			    | Opcode i       -> acc @ [i]
 			    | Label i -> acc
-			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]
-      			    | Branch i -> acc @ [2;List.assoc i labels - t-1]) [] pass0
+			    | Branch0 i -> Printf.printf ">>%d\n" (List.length labels); Printf.printf "Label: %d ->>>c %d\n" t i; acc @ [3;List.assoc i labels - t-1]
+      			    | Branch i -> Printf.printf "Label: %d ->>> %d\n" t i; acc @ [2;List.assoc i labels - t-1]) [] pass0
       	  
   
   let emit words name_section section =
-
     let emit_names w sec =
       let explode str =
 	let rec loop i acc =
@@ -514,7 +519,6 @@ module Words = struct
 	       ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
 	       Array.blit arr 0 sec.Image.image (32*w.index) 32; i+1) 0 w)
 	  in
-      
     let rec emit_words i =
       function
 	| [] -> i

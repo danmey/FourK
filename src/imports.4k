@@ -182,13 +182,13 @@ lib: libc.so.6
 rcell func: printf
 rcell func: exit
 
-: moo ." no I'm not sleeping!!!" cr 
+: moo  
 " hello world!!
 " drop   
-  call: printf dup . cr 
+  call: printf  
   0 call: exit
   " hello world!!
 " drop 
-  call: printf dup . 
+  call: printf
 ; 
 moo 

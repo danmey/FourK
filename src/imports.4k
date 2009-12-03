@@ -12,7 +12,7 @@
 	between the two
 *)
 section libraries 
-100 allot | why 100 bytes? because that's 5*20
+5 20 * allot | why 100 bytes? because that's 5*20
           | I assumed, that a library name is about 20 bytes long
 
 section functions 
@@ -101,28 +101,33 @@ variable symbols
 
 variable library | current library index, important for def. funcs
 
-: lib: ( -- ) 
-  token 2dup search-libs 
+: lib-add ( str c -- ) 
+  2dup search-libs 
   dup -1 = if drop 2dup new-lib search-libs library ! ;; then 
   library ! 2drop 
 ;
 
-: func: ( stackfix -- ) 
-  token 2dup search-funcs dup 
+: func-add ( stackfix str c -- ) 
+  2dup search-funcs dup 
   -1 = if drop 2dup new-func search-funcs library @ add-relation ;; then
   2drop drop 
 ;
+
+: func" ( stackfix -- ) c: " parse func-add ;
+: lib" ( -- ) c: " parse lib-add ; 
+: func: ( stackfix -- ) token func-add ;
+: lib: ( -- ) token lib-add ; 
+
 
 lib: 4k
 0 func: dlopen
 0 func: dlsym
 
-| lib: libc.so
-| 2 rcells func: printf
-
 | inlines a call to a function, if the function was imported
 : call: ( -- ) 
-  token search-funcs dup -1 = if drop ;; then postpone ccall c, 
+  token over >r search-funcs dup ." callindex: " .  cr 
+  dup -1 = if ." WARNING: Called function not found: " r> dup count type cr drop ;; then 
+  postpone ccall c, r> drop 
 ; immediate
 
 variable libhandle
@@ -149,20 +154,41 @@ variable libhandle
   repeat
 ;
 
+
+: load-lib ( cstr -- ) 
+  >r r $2 swap dlopen libhandle ! 
+  libhandle @ 0 = if ." dlopen couldn't load: " r r count type cr then 
+  r> drop 
+; 
 | this word loads all defined functions into ithere and must be called
 | after defining functions, before using them
-: load-functions ( -- ) 
+: load-all ( -- ) 4 #ithere !
   " libraries" section-adr :pointer @ >r 0
   begin 
    r count 0 = if r> 2drop ;; then 
-   dup 0 > if dup r $2 swap dlopen libhandle ! load-rels then r> next-symbol >r 1+ 
+   dup 0 > if dup r load-lib
+   load-rels then r> next-symbol >r 1+ 
   repeat
 ;
-| load-functions
+
+." ithere: " ithere @ .
+." there: " there @ . 
+." here: " here @ . 
+." last: " last @ . 
 
 
-| : moo 666 " %d Fuck I did it
-| " drop call: printf ; 
-|  moo 
+lib: libc.so.6
 
+rcell func: printf
+rcell func: exit
 
+: moo  
+" hello world!!
+" drop   
+  call: printf  
+  0 call: exit
+  " hello world!!
+" drop 
+  call: printf
+; 
+moo 

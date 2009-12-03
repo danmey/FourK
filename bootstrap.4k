@@ -104,6 +104,7 @@ create table 16 32 * allot
     begin
 	c: ) key dup rot = if swap 1- dup 0= if drop drop ;; then swap then
 	c: (             = if 1+ then
+
     repeat ; immediate
 
 
@@ -211,9 +212,9 @@ variable flag
 ; immediate
 
 
-| : ." ( -- ) postpone " 
-|  state @ 0 = if postpone type ;; then type 
-| ; immediate
+: ." ( -- ) postpone " 
+ state @ 0 = if postpone type ;; then type 
+; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -227,16 +228,23 @@ variable flag
 
 : sym >cstr swap dlsym ;
 
-
-
 variable #ithere
-4 #ithere !
 
 : add-handle ( handle stackfix -- )
-    ithere @ 1 #ithere @ + rcells+ !
+  ." index: " #ithere @ 2 / . cr 
+  over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
+  ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !
 ;
+
+
+
+." ithere: " ithere @ .
+." there: " there @ . 
+." here: " here @ . 
+." last: " last @ . 
+
 
 | do loops
 

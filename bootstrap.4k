@@ -92,7 +92,6 @@ create table 16 32 * allot
 
 : | begin key 10 = if ;; then repeat ; immediate
 
-: a if then ;
 
 | Taking into account prefix word
  : ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
@@ -214,9 +213,9 @@ variable flag
 ; immediate
 
 
-: ." ( -- ) postpone " 
- state @ 0 = if postpone type ;; then type 
-; immediate
+| : ." ( -- ) postpone " 
+| state @ 0 = if postpone type ;; then type 
+| ; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -231,6 +230,8 @@ variable flag
 : sym >cstr swap dlsym ;
 
 variable #ithere
+
+4 #ithere !
 
 : add-handle ( handle stackfix -- )
 |  ." index: " #ithere @ 2 / . cr 

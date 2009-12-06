@@ -1,4 +1,4 @@
-2open Arg
+open Arg
 module Ni = Int32
 
 let ($) f v = f v
@@ -301,27 +301,32 @@ module Words = struct
 	| x::xs when n > 0 -> x::(take (n-1) xs)
 	| xs               -> [] 
 
-    let disassemble_word lst =
+  let string_of_bytecode names_arr = function
+	| Prefix   (i,v) -> Printf.sprintf "%s(%d)"  names_arr.(i) v
+	| Prefix32 (i,v) -> Printf.sprintf "%s(%lx)" names_arr.(i) v
+	| Opcode i       -> names_arr.(i)                             
+	| Label l        -> Printf.sprintf "label%d" l                  
+	| Branch l       -> Printf.sprintf "goto(label%d)" l          
+	| Branch0 l      -> Printf.sprintf "ifgoto(label%d)" l       
+      
+  let string_of_bytecodes word_arr code = String.concat " " (List.fold_left (fun acc el -> acc@[string_of_bytecode word_arr el]) [] code)
+
+    let disassemble_word name word_arr lst =
       let rec pass0 ofs =
+	let adv n = pass0 (ofs+n) in
 	function
-	  | []                                             -> []
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> 
-	    Printf.printf "Label: %d ->>>b %d\n" a i;
-	      (ofs, Prefix (a, ext_sign i))           ::(pass0 (ofs + 2) xs)
-	  | 253::i::xs                                     -> (ofs, Opcode (253 + i))                 ::(pass0 (ofs + 2) xs)
-	  | 1::b1::b2::b3::b4::xs                          -> (ofs, Prefix32 (1, (dword b4 b3 b2 b1)))::(pass0 (ofs + 5) xs)
-	  | c::xs                                          -> (ofs, Opcode c)                         ::(pass0 (ofs + 1) xs)
+	  | []                                             -> [],ofs
+	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
+	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (253 + i))                  :: bc, ofs'
+	  | 1::b1::b2::b3::b4::xs                          -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
+	  | c::xs                                          -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
       in
       let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
       let rec pass1' ass = function
 	| [] -> ass
 	| (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 || opcode = 3 -> 
-	    begin
-	    flush stdout;
-	    let o = offset + ofs + 1 in 
-	      Printf.printf "Offset: >>>a %d\n" o;
-	      pass1' (add o ass) xs;
-	    end
+	    let o = offset + ofs+1 in 
+	      pass1' (add o ass) xs
 	| (ofs, Prefix(_))              :: xs -> pass1' ass xs
 	| (ofs, Prefix32(_))            :: xs -> pass1' ass xs
 	| (ofs, x)                      :: xs -> pass1' ass xs 
@@ -344,7 +349,6 @@ module Words = struct
       let insert_labels labels =
 	List.fold_left 
 	  (fun acc (ofs,a) -> 
-	       Printf.printf "Label:->>>e %d\n" ofs;
 	     try let l = (List.assoc ofs labels) in 
 	       acc @ [ofs,Label l] @ [ofs,a]
 	     with Not_found -> acc @ [ofs,a]) []
@@ -356,18 +360,27 @@ module Words = struct
       in
  	match lst with
 	  | 255::xs -> Bytecode 
-	      (let bc = pass0 0 xs in  
+	      (let bc',ofs = (pass0 0 xs) in
+	       let bc = bc'@[ofs, Label 10] in
 	       let lb = pass1 bc in
- 		untag (insert_labels lb (pass2 lb bc)))
+ 	       let bc'' = (snd (List.split (insert_labels lb (pass2 lb bc)))) in
+(*
+		 Printf.printf "Word: %s\n" name;
+		 List.iter (fun (a,b) -> Printf.printf "%d,%d\n" a b) lb;
+		 print_endline "";
+		 List.iter (fun (ofs, el) -> Printf.printf "%d|%s " ofs (string_of_bytecode word_arr el)) bc;
+		 print_endline "";
+*)
+	       bc'')
 	  | s::xs   -> Core (Array.of_list xs)
 	  | []      -> Core (Array.make 0 0)
 
-    let make_word i (o,l) name code =
+    let make_word i (o,l) word_arr name code =
       { name   =name;
         index  = i  ;
 	offset = o  ;
 	len    = l  ;
-	code   = disassemble_word code;
+	code   = disassemble_word name word_arr code;
 	used   = false;
 	called_by = [];
 	prefix = i < 5;
@@ -421,13 +434,12 @@ module Words = struct
 	let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
 	  
 	let words_pre = List.combine ofs names in
-
 	let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
 (*					     Printf.printf "%d %d\n" o l; *)
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
-					       (i+1), (make_word i (o,l) name code)::acc
+					       (i+1), (make_word i (o,l) (Array.of_list names) name code)::acc
 					  )
 					  (0,[]) words_pre)) in
 	let words_ar = Array.of_list words_list in
@@ -455,25 +467,13 @@ module Words = struct
 	  traverse words_ar last_word;
 	  words_list 
 
-  let string_of_bytecode word_arr code =
-    let rec loop =
-      function
-	| []              -> []
-	| (Prefix (i,v)  )::xs -> (Printf.sprintf "%s(%d)"  word_arr.(i).name v) :: (loop xs)
-	| (Prefix32 (i,v))::xs -> (Printf.sprintf "%s(%lx)" word_arr.(i).name v) :: (loop xs)
-	| (Opcode i      )::xs -> word_arr.(i).name                              :: (loop xs) 
-	| (Label l)       ::xs -> (Printf.sprintf "label%d" l)                   :: (loop xs)
-	| (Branch l)      ::xs -> (Printf.sprintf "goto(label%d)" l  )           :: (loop xs)
-	| (Branch0 l)      ::xs -> (Printf.sprintf "ifgoto(label%d)" l  )           :: (loop xs)
-    in
-      String.concat " " (loop code)
 	
-    let dw dword =
-      let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
-      let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
-      let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 8)  (Ni.of_int 255)) in
-      let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
-	b1::b2::b3::b4::[]
+  let dw dword =
+    let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
+    let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
+    let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 8)  (Ni.of_int 255)) in
+    let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
+      b1::b2::b3::b4::[]
 
     let tag bc = snd (List.fold_left (fun (i,acc) bc ->
 				match bc with
@@ -485,7 +485,6 @@ module Words = struct
 				  | Label l          ->  i+0, acc @ [i, bc]) 
       (0,[]) bc)
     let collect_labels bc = 
-      Printf.printf "Collect labels\n"; List.iter (fun (t,bc) -> match bc with _ -> ()|  Label i -> Printf.printf "l: %d" i) bc;
       List.fold_left (fun acc (t, bc) ->
 			match bc with
 			  | Label l -> acc@[(l,t)]
@@ -493,7 +492,6 @@ module Words = struct
     let rec emit_bytecode bc =
       let pass0 = tag bc in
       let labels = collect_labels pass0 in
-	List.iter (fun (a,b) -> Printf.printf "%d -> %d\n" a b) labels;
 	List.fold_left (fun acc (t,op) ->
 			  match op with
 			    | Prefix   (i,v) -> acc @ [i;v] 
@@ -707,13 +705,17 @@ module Options = struct
 			   let wordsa = Array.of_list words in
 			     List.iter (fun x ->
 					    match x.Words.code with
+(*						Words.Bytecode lst' -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst') *)
+
 					      | Words.Bytecode lst' -> 
 						  begin
-						    let x' = Words.disassemble_word (255::(Words.emit_bytecode lst')) in
+						    let x' = Words.disassemble_word x.Words.name (Array.map (fun el -> el.Words.name) wordsa) (255::(Words.emit_bytecode lst')) in
+
 						    match x' with
 						      | Words.Bytecode lst -> 
-							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
+							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst)
 						  end
+
 					      | _ -> ()) words;
 			     Printf.printf "Sections:\n%s\n" $ (String.concat "\n" $ FourkImage.sections image) 
 			),
@@ -763,7 +765,7 @@ module Options = struct
 		 let wordsa = Array.of_list words in
 		   List.iter (fun x ->
 				match x.Words.code with
-				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecode wordsa lst)
+				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst)
 				  | _ -> ()) (Words.optimise words))
       ,"Show optimised dictionary layout"
     ]

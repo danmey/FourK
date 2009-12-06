@@ -41,7 +41,8 @@ require" demos/robots/imph.4k"
     " /usr/lib/libGL.so" lib " glMaterialfv"           sym 3 rcells add-handle
     " /usr/lib/libglut.so" lib " gluQuadricDrawStyle"  sym 2 rcells add-handle
     " /usr/lib/libglut.so" lib " gluQuadricNormals" sym 2 rcells add-handle
-
+    " /usr/lib/libglut.so" lib " gluQuadricOrientation" sym 2 rcells add-handle
+    " /usr/lib/libglut.so" lib " gluDisk" sym 7 rcells add-handle
 ;
 
 

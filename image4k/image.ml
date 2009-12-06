@@ -484,15 +484,17 @@ module Words = struct
     let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
       b1::b2::b3::b4::[]
 
-    let tag bc = snd (List.fold_left (fun (i,acc) bc ->
-				match bc with
-				  | Prefix32 (opc,v) ->  i+5, acc @ [i, bc]
-				  | Opcode opc       ->  i+1, acc @ [i, bc] 
-				  | Prefix   (opc,v) ->  i+2, acc @ [i, bc]
-				  | Branch ofs       ->  i+2, acc @ [i, bc]
-				  | Branch0 ofs      ->  i+2, acc @ [i, bc]
-				  | Label l          ->  i+0, acc @ [i, bc]) 
-      (0,[]) bc)
+    let tag bc = snd 
+      (List.fold_left (fun (i,acc) bc ->
+			 match bc with
+			   | Prefix32 (opc,v) ->  i+5, acc @ [i, bc]
+			   | Opcode opc       ->  i+1, acc @ [i, bc] 
+			   | Prefix   (opc,v) ->  i+2, acc @ [i, bc]
+			   | Branch ofs       ->  i+2, acc @ [i, bc]
+			   | Branch0 ofs      ->  i+2, acc @ [i, bc]
+			   | Label l          ->  i+0, acc @ [i, bc])
+	 (0,[]) bc)
+
     let collect_labels bc = 
       List.fold_left (fun acc (t, bc) ->
 			match bc with
@@ -506,9 +508,9 @@ module Words = struct
 			    | Prefix   (i,v) -> acc @ [i;v] 
 			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
 			    | Opcode i       -> acc @ [i]
-			    | Label i -> acc
-			    | Branch0 i -> Printf.printf ">>%d\n" (List.length labels); Printf.printf "Label: %d ->>>c %d\n" t i; acc @ [3;List.assoc i labels - t-1]
-      			    | Branch i -> Printf.printf "Label: %d ->>> %d\n" t i; acc @ [2;List.assoc i labels - t-1]) [] pass0
+			    | Label i   -> acc
+			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]
+      			    | Branch i  ->  acc @ [2;List.assoc i labels - t-1]) [] pass0
       	  
   
   let emit words name_section section =
@@ -568,7 +570,7 @@ module Words = struct
 		  let i,w' = List.find (fun (i',w') -> id = w'.index) words 
 		  in
 		    (replace_opcode i w)::(loop ws)
-	      | None -> loop ws in
+	      | None -> w::(loop ws) in
 
       let words' = List.map
 	(fun (i,w) ->
@@ -680,18 +682,23 @@ module Options = struct
 			       Image.print_sections image
 			  ),
       "List sections";
-
+      "-opt", String (fun x ->
+			let image = Image.load x in
+			let words = Words.optimise (FourkImage.words image) in
+			let sec = Image.find_section image "words" in
+			let nsec = Image.find_section image "name" in
+			  Image.zero sec; 
+			  Image.zero nsec; 
+			  Words.emit words nsec sec; 
+			  Image.save image x ), "Optimise";
+		   
       "-link", (let image_name = ref "" in
 	(*	let ref_name = ref "" in *)
 		  Tuple [Set_string image_name;
 			 String (fun core_name ->
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
-				     print_endline "a----";
 				   let words = Words.optimise (FourkImage.words image) in
-				     print_endline "b----";
-
-(*				   let words = (FourkImage.words image) in *)
 				   let sec = Image.find_section image "words" in
 				   let nsec = Image.find_section image "name" in
 				     Image.zero sec; 
@@ -710,9 +717,7 @@ module Options = struct
       "Strip sections";
 
       "-words", String (fun x ->
-			  print_endline "e-----";
 			  let image = Image.load x in
-			  print_endline "f-----";
 			  let words = FourkImage.words image in
 			    List.iter (fun x -> print_endline (Words.to_string x)) words
 		       ),

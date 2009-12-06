@@ -268,12 +268,12 @@ module Words = struct
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %b" w.name w.offset w.len w.index w.used
 
     let bytecode_id = function
-      | Prefix (id,_) -> id
-      | Prefix32 (id,_) -> id
-      | Opcode id -> id
-      | Label id -> -1
-      | Branch id -> -1
-      | Branch0 id -> -1
+      | Prefix (id,_) -> Some id
+      | Prefix32 (id,_) -> Some id
+      | Opcode id -> Some id
+      | Label id -> None
+      | Branch id -> None
+      | Branch0 id -> None
 	  
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
@@ -432,16 +432,16 @@ module Words = struct
 
 	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names);
 	let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
-	  
 	let words_pre = List.combine ofs names in
 	let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
-(*					     Printf.printf "%d %d\n" o l; *)
+					     Printf.printf "%d %d\n" o l;
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
 					       (i+1), (make_word i (o,l) (Array.of_list names) name code)::acc
 					  )
 					  (0,[]) words_pre)) in
+	  print_endline "----";
 	let words_ar = Array.of_list words_list in
 
 	let traverse words word =
@@ -450,22 +450,31 @@ module Words = struct
 	      | Core a -> word.used <- true
 	      | Bytecode b -> List.iter
 		  (fun x ->
-		     let id = bytecode_id x in
-		       if id != -1 then begin
-			 let word' = words.(id) in
-			   if not word'.used then
+		     begin
+		       match bytecode_id x with
+			 | Some id ->
 			     begin
-			       word'.used <- true;
-			       traverse' words word'
+			       if id != -1 then begin
+				 let word' = words.(id) in
+				   if not word'.used then
+				     begin
+				       word'.used <- true;
+				       traverse' words word'
+				     end
+			       end
 			     end
-		       end
-		  ) b in
+			 |  None -> ()
+		     end
+		     ) b in
 	    word.used <- true;
 	    traverse' words word in
+	  print_endline "----";
 
 	let last_word = words_ar.(Array.length words_ar-1) in
+	  print_endline "----";
 	  traverse words_ar last_word;
-	  words_list 
+	  print_endline "----";
+	  words_list
 
 	
   let dw dword =
@@ -547,28 +556,32 @@ module Words = struct
     let replace_opcode new_op = function
 	| Prefix   (_,v) -> Prefix   (new_op,v)
 	| Prefix32 (_,v) -> Prefix32 (new_op,v)
-	| Opcode    _    -> Opcode new_op in
+	| Opcode    _    -> Opcode new_op
+	| a -> a in
 
     let rec swap_ids words =
       let rec loop = function
 	| [] -> []
 	| w::ws ->
-	    let id    = bytecode_id w in
-	    let i,w' = List.find (fun (i',w') -> id = w'.index) words in
-	      (replace_opcode i w)::(loop ws) in
+	    match bytecode_id w with
+	      | Some id ->
+		  let i,w' = List.find (fun (i',w') -> id = w'.index) words 
+		  in
+		    (replace_opcode i w)::(loop ws)
+	      | None -> loop ws in
 
       let words' = List.map
 	(fun (i,w) ->
 	   match w.code with
 	     | Core _ -> i,w
 	     | Bytecode b -> i, { w with code=Bytecode (loop b) }) words in
-
-      let words' = List.map
-	(fun (i,w) ->
+	  
+	let words' = List.map
+	(fun  (i,w) ->
 	   w.index <- i;
-	   words_ar.(i) <- w; w) words' in
-
-	List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words'))
+	 words_ar.(i) <- w; w) words' in
+	  
+	  List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words'))
     in
 
     let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
@@ -592,7 +605,7 @@ module FourkImage = struct
       Words.words (word_sec,name_sec)
 
     let stripped_sections =  ["interpret";"name";"dsptch";"semantic";] 
-    let stripped_sections =  ["semantic";]
+    let stripped_sections =  []
 (* 92 *)
   let strip image =
   (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Image.name)) acc) image.Image.sections removed_sections in *)
@@ -674,7 +687,10 @@ module Options = struct
 			 String (fun core_name ->
 				   let base_image = Image.load core_name in
 				   let image = Image.load !image_name in
+				     print_endline "a----";
 				   let words = Words.optimise (FourkImage.words image) in
+				     print_endline "b----";
+
 (*				   let words = (FourkImage.words image) in *)
 				   let sec = Image.find_section image "words" in
 				   let nsec = Image.find_section image "name" in
@@ -694,7 +710,9 @@ module Options = struct
       "Strip sections";
 
       "-words", String (fun x ->
+			  print_endline "e-----";
 			  let image = Image.load x in
+			  print_endline "f-----";
 			  let words = FourkImage.words image in
 			    List.iter (fun x -> print_endline (Words.to_string x)) words
 		       ),

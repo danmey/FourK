@@ -233,8 +233,8 @@ variable flag
 variable #ithere
 
 : add-handle ( handle stackfix -- )
-  ." index: " #ithere @ 2 / . cr 
-  over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
+|  ." index: " #ithere @ 2 / . cr 
+ | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
   ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !
@@ -242,10 +242,6 @@ variable #ithere
 
 
 
-." ithere: " ithere @ .
-." there: " there @ . 
-." here: " here @ . 
-." last: " last @ . 
 
 
 | do loops
@@ -401,5 +397,4 @@ section data
 64 allot
 
 
-save-image im.4ki
 

@@ -101,8 +101,10 @@ loop ;
 |    let-there-be-light
     render-loop
     SDL_Quit drop
-    bye
+|    bye
 |    cylinder @ .
 ;
+
+main
 
 save-image im.4ki

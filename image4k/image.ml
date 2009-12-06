@@ -607,7 +607,7 @@ module FourkImage = struct
       Words.words (word_sec,name_sec)
 
     let stripped_sections =  ["interpret";"name";"dsptch";"semantic";] 
-    let stripped_sections =  []
+(*    let stripped_sections =  [] *)
 (* 92 *)
   let strip image =
   (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Image.name)) acc) image.Image.sections removed_sections in *)

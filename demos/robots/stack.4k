@@ -19,12 +19,16 @@ variable disc
 : w>d i>>f 32 i>>f fswap f/ ;
 : w>d> w>d f> ;
 : @w>d @ w>d ;
-: 3>f >r >r w>d> r> w>d> r> w>d> ;
+: 3>f >r >r i>f  r> i>f  r> i>f ;
+: 3>s >r >r w>d> r> w>d> r> w>d> ;
 
-: By 3>f glTranslatef drop ;
+: By 3>s glTranslatef drop ;
 | : Rot >r r * swap r * rot r * rot rot swap r> drop ;
 
 : Rot >r 3>f r> i>f glRotatef drop ;
+
+: RotX >r 1 X r> Rot ;
+
 
 3.1415 fconst pi
 
@@ -55,16 +59,21 @@ variable disc
 | Draws a primitive
 : Prim
     Begin
-	height @w>d -1 i>>f f* f> 0 0 glTranslatef drop
 	1 Z 360 2 / tess @ / Rot 
-
+|	2 i>>f height @w>d -1 i>>f f* f/  f> 0 0 glTranslatef drop
 	1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
 
 	GLU_FILL cylinder @ gluQuadricDrawStyle drop
 	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
 
 	GLU_INSIDE disc @ gluQuadricOrientation drop
-	2 tess @ bottom w>fixup>d 0 f>d disc @ gluDisk drop
+
+	2
+	tess @
+	bottom w>fixup>d
+	0 f>d
+	disc @ gluDisk drop
+	
 	height @w>d f> 0 0 glTranslatef drop
 	2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
     End
@@ -72,6 +81,15 @@ variable disc
 ;
 
 
+: Cylinder ( radius height -- height )
+    dup Top Bottom dup Height Prim
+;
 
+0 const p1
+1 const p2
+2 const p3
 
-
+: Join ( h1 h2 p1 p2 -- )
+    >r rot * 2 / w>d f> 0 0 glTranslatef drop dup
+    r> * -2 / w>d f> 0 0 glTranslatef drop
+;

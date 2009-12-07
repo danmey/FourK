@@ -29,9 +29,11 @@ $1202 const GL_SPECULAR
 
 : lookat
     glLoadIdentity drop
-    1.0  f>d 0.0 f>d 0 f>d
+    1.0  f>d 0.0 f>d 1.0 f>d
     0    f>d 0   f>d 0 f>d
-    0    f>d 0   f>d 15.0 f>d gluLookAt drop ;
+    0    f>d 0   f>d 15.0 f>d gluLookAt drop
+|     10.0 f>d 0    f>d 0   f>d gluLookAt drop
+;
 
 : proj
     GL_PROJECTION glMatrixMode drop
@@ -50,7 +52,7 @@ create light_pos data: 0.0 , 5.0 , 5.0 , 1.0 , data;
 $1203 const GL_POSITION
 
 
- : let-there-be-light
+: let-there-be-light
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
      | GL_CULL_FACE glDisable drop
@@ -62,16 +64,21 @@ $1203 const GL_POSITION
     1.0 0.0 0.5 0.94 glColor4f drop
     solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
     solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
- ;
-    
- : Scene
-      4 0 do (* -3 Z By *)
-	  64 Z By
-	  4 Tess
-	  Prim
-	loop
 ;
+
     
+    
+: Scene
+    Begin
+    64 64 32 Cylinder
+    3 0
+    	do
+	    finit
+	    10 RotX
+	    p1 p3 Join  64 32 Cylinder
+	loop
+    End
+;
 
 : render
     0 1.0 0 0 glClearColor drop
@@ -79,7 +86,6 @@ $1203 const GL_POSITION
     proj
     lookat
     Scene
-|    1 10 1.0 f>d 1.0 f>d 1.0 f>d cylinder @ gluCylinder drop
 ;
     
 : render-loop

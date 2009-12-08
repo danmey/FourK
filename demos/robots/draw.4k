@@ -74,7 +74,7 @@ $1203 const GL_POSITION
     	do
 	    finit
 	    10 RotX
-	    p1 p3 Join 64 32 Cylinder
+	    p3 p1 Join 64 32 Cylinder
 	loop
     End
 ;
@@ -105,7 +105,8 @@ $1203 const GL_POSITION
     video
     lookat
     init
-    let-there-be-light
+
+    | let-there-be-light
     Default
     render-loop
     SDL_Quit drop

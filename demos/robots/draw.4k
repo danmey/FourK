@@ -27,11 +27,17 @@ $1202 const GL_SPECULAR
 
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
+variable time
+
+: T 1000 i>>f time @ i>>f f/ ;
+
 : lookat
+    GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 1.0 f>d
     0    f>d 0   f>d 0 f>d
-    0    f>d 0   f>d 15.0 f>d gluLookAt drop
+    0    f>d  T fsincos 12 i>>f f* f> 12 i>>f f* f>d f> f>d gluLookAt drop
+ |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
 
@@ -66,6 +72,12 @@ $1203 const GL_POSITION
     solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
 
+
+: Join ( h1 h2 p1 p2 -- )
+    | >r * 2 / w>d r> * -2 /  f+ 
+    -64 w>d f> 0 0 glTranslatef drop
+;
+
     
 : Scene
     Begin
@@ -74,17 +86,19 @@ $1203 const GL_POSITION
     	do
 	    finit
 	    10 RotX
-	    p3 p1 Join 64 32 Cylinder
+	    p3 p3 Join 64 32 Cylinder
 	loop
     End
 ;
 
 : a ;
 : render
+    time @ 1+ time !
+
+    lookat
     0 1.0 0 0 glClearColor drop
     GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
     proj
-    lookat
     Scene
 ;
     
@@ -93,17 +107,18 @@ $1203 const GL_POSITION
 	event SDL_PollEvent 0= invert
 	if
 	    event e>type Keydown = if event e>key Esc = if ;; then then
-	    render
-	    SDL_GL_SwapBuffers drop
 	then
+	render
+	SDL_GL_SwapBuffers drop
     again
 ;
 
 : main
+    4 #ithere !
+    0 time !
     finit
     imports
     video
-    lookat
     init
 
     | let-there-be-light

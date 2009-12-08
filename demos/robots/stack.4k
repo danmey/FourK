@@ -62,8 +62,10 @@ variable disc
 | Draws a primitive
 : Prim
     Begin
+	finit
 	1 Z 360 2 / tess @ / Rot 
-|	2 i>>f height @w>d -1 i>>f f* f/  f> 0 0 glTranslatef drop
+|	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
+	
 	1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
 
 	GLU_FILL cylinder @ gluQuadricDrawStyle drop
@@ -91,8 +93,3 @@ variable disc
 0 const p1
 1 const p2
 2 const p3
-
-: Join ( h1 h2 p1 p2 -- )
-    >r rot * 2 / w>d f> 0 0 glTranslatef drop dup
-    r> * -2 / w>d f> 0 0 glTranslatef drop
-;

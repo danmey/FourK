@@ -274,6 +274,14 @@ module Words = struct
       | Label id -> None
       | Branch id -> None
       | Branch0 id -> None
+
+    let bytecode_id' = function
+      | Prefix (id,_) -> None
+      | Prefix32 (id,_) -> None
+      | Opcode id -> Some id
+      | Label id -> None
+      | Branch id -> None
+      | Branch0 id -> None
 	  
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
@@ -317,7 +325,7 @@ module Words = struct
 	function
 	  | []                                             -> [],ofs
 	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
-	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (253 + i))                  :: bc, ofs'
+	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
 	  | 1::b1::b2::b3::b4::xs                          -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
 	  | c::xs                                          -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
       in
@@ -425,6 +433,7 @@ module Words = struct
 	let rec names' i =
 	  if i * 32 + 32 <= name_sec.Image.len then
 	    let n = name i in
+	      Printf.printf "Name:: %d %s\n" i n;
 	      if n = "" then names' (i+1) else n::(names' (i+1))
 	  else [] in
 	  names' 0
@@ -451,17 +460,18 @@ module Words = struct
 	      | Bytecode b -> List.iter
 		  (fun x ->
 		     begin
-		       match bytecode_id x with
+		       match bytecode_id' x with
 			 | Some id ->
 			     begin
-			       if id != -1 then begin
-				 let word' = words.(id) in
-				   if not word'.used then
-				     begin
-				       word'.used <- true;
-				       traverse' words word'
-				     end
-			       end
+			       Printf.printf "Id: %d\n" id;
+			       Printf.printf "L: %d\n" (Array.length words);
+			       Printf.printf "Nm: %s\n"  words.(id).name;
+			       let word' = words.(id) in
+				 if not word'.used then
+				   begin
+				     word'.used <- true;
+				     traverse' words word'
+				   end
 			     end
 			 |  None -> ()
 		     end
@@ -621,6 +631,7 @@ module FourkImage = struct
 
   let link base_image image word_count =
     let dict_section = Image.find_section base_image "dict" in
+      print_endline "bla------------";
       Array.fill dict_section.Image.image 0 5 0x90; 
       BinaryArray.set_dword dict_section.Image.image 6 word_count;
       List.iter (fun nm ->

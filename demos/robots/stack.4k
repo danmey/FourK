@@ -41,7 +41,7 @@ variable disc
 
 : f>d >f d> ;
 
-: Begin glPushMatrix drop ;
+: Begin dup glPushMatrix drop ;
 
 : Default 32 top ! 32 bottom ! 32 height ! 10 tess ! ;
 | could be factored out as
@@ -57,7 +57,7 @@ variable disc
 | Fixes up the radius so the bounding area is the same, thus cylinder and box have the same width based on tesselation count
 : w>fixup>f ( r-ptr -- d:fr ) @w>d pi tess @ i>>f fswap f/ fcos f>  ;
 : w>fixup>d w>fixup>f f>d ;
-: End glPopMatrix drop ;
+: End glPopMatrix drop drop ;
 
 | Draws a primitive
 : Prim

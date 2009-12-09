@@ -29,14 +29,14 @@ $1202 const GL_SPECULAR
 
 variable time
 
-: T 1000 i>>f time @ i>>f f/ ;
+: T 250 i>>f time @ i>>f f/ ;
 
 : lookat
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 1.0 f>d
     0    f>d 0   f>d 0 f>d
-    0    f>d  T fsincos 12 i>>f f* f> 12 i>>f f* f>d f> f>d gluLookAt drop
+    0    f>d  T fsincos 12 i>>f f* f> f>d 12 i>>f f* f> f>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
@@ -54,7 +54,7 @@ data:
 data;
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
-create light_pos data: 0.0 , 5.0 , 5.0 , 1.0 , data;
+create light_pos data: 0.0 , 1.0 , 0.0 , 0.0 , data;
 $1203 const GL_POSITION
 
 
@@ -72,23 +72,30 @@ $1203 const GL_POSITION
     solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
 
+: RotY >r 1 Y r> Rot ;
+: RotZ >r 1 Z r> Rot ;
 
 : Join ( h1 h2 p1 p2 -- )
-    | >r * 2 / w>d r> * -2 /  f+ 
-    -64 w>d f> 0 0 glTranslatef drop
+   swap >r * -2 / swap r> swap dup >r * 2 / + w>d f> 0 0 glTranslatef drop r>
+    | 64 w>d f> 0 0 glTranslatef drop
 ;
 
     
 : Scene
     Begin
-    64 64 32 Cylinder
-    3 0
-    	do
-	    finit
-	    10 RotX
-	    p3 p3 Join 64 32 Cylinder
-	loop
-    End
+	10 0
+	do
+	64 128 32 Cylinder
+	Begin
+	finit Begin p3 p1 Join  45 RotY 64 32 Cylinder End
+	finit Begin p3 p1 Join -45 RotY 64 32 Cylinder End
+	finit Begin p1 p1 Join  135 RotY 64 32 Cylinder End
+	finit Begin p1 p1 Join -135 RotY 64 32 Cylinder End
+	    End
+	    128 X By
+	    36 RotZ
+       loop
+   End
 ;
 
 : a ;
@@ -121,7 +128,7 @@ $1203 const GL_POSITION
     video
     init
 
-    | let-there-be-light
+    let-there-be-light
     Default
     render-loop
     SDL_Quit drop

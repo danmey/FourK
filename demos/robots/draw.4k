@@ -80,21 +80,26 @@ $1203 const GL_POSITION
     | 64 w>d f> 0 0 glTranslatef drop
 ;
 
-    
+: Floor 0 Begin 16 Tess 10 50 10 Cylinder End drop  ;
+
 : Scene
     Begin
-	10 0
-	do
-	64 128 32 Cylinder
+	|	Floor
+	-64 X By 5 Tess 64 128 Cylinder
+    End
 	Begin
-	finit Begin p3 p1 Join  45 RotY 64 32 Cylinder End
-	finit Begin p3 p1 Join -45 RotY 64 32 Cylinder End
-	finit Begin p1 p1 Join  135 RotY 64 32 Cylinder End
-	finit Begin p1 p1 Join -135 RotY 64 32 Cylinder End
-	    End
-	    128 X By
-	    36 RotZ
-       loop
+       	10 0
+       	do
+	    32 64 32 Cylinder
+	    Begin
+		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
+		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
+		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
+	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
+       	    End
+            128 X By
+       	    36 RotZ
+	loop
    End
 ;
 
@@ -107,6 +112,7 @@ $1203 const GL_POSITION
     GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
     proj
     Scene
+    SDL_GL_SwapBuffers drop
 ;
     
 : render-loop
@@ -116,7 +122,6 @@ $1203 const GL_POSITION
 	    event e>type Keydown = if event e>key Esc = if ;; then then
 	then
 	render
-	SDL_GL_SwapBuffers drop
     again
 ;
 
@@ -127,7 +132,6 @@ $1203 const GL_POSITION
     imports
     video
     init
-
     let-there-be-light
     Default
     render-loop

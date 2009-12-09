@@ -55,7 +55,7 @@ variable disc
 : fcos fsincos fswap f> drop ;
 
 | Fixes up the radius so the bounding area is the same, thus cylinder and box have the same width based on tesselation count
-: w>fixup>f ( r-ptr -- d:fr ) @w>d pi tess @ i>>f fswap f/ fcos f>  ;
+: w>fixup>f ( r-ptr -- d:fr ) @w>d pi tess @ i>>f fswap f/ fcos fswap f/ f>  ;
 : w>fixup>d w>fixup>f f>d ;
 : End glPopMatrix drop drop ;
 

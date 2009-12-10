@@ -26,5 +26,6 @@
 27 ccall: glMaterialfv 
 28 ccall: gluQuadricDrawStyle 
 29 ccall: gluQuadricNormals 
-30 ccall: gluQuadricOrientation
-31 ccall: gluDisk
+30 ccall: gluQuadricOrientation 
+31 ccall: gluDisk 
+32 ccall: glScalef 

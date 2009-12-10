@@ -36,7 +36,7 @@ variable time
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 1.0 f>d
     0    f>d 0   f>d 0 f>d
-    0    f>d  T fsincos 12 i>>f f* f> f>d 12 i>>f f* f> f>d gluLookAt drop
+     T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
@@ -55,7 +55,7 @@ data;
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
 create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
-$1203 const GL_POSITION
+1203 const GL_POSITION
 
 
 : let-there-be-light
@@ -77,26 +77,38 @@ $1203 const GL_POSITION
 : RotZ >r 1 Z r> Rot ;
 
 : Join ( h1 h2 p1 p2 -- )
-   swap >r * -2 / swap r> swap dup >r * 2 / + w>d f> 0 0 glTranslatef drop r>
+    pp2 ! pp1 !
     | 64 w>d f> 0 0 glTranslatef drop
 ;
 
+
+
 : Floor 0 Begin 16 Tess 10 50 10 Cylinder End drop  ;
+
+: Arm ( height size -- height )
+    24 Scale 4 Tess dup Top 100 * 150 / Bottom dup Height Prim
+;
+: Pivot 90 RotX Cylinder ;
+
+: Arm 128 32 Arm swap p1 p3 Join 32 32 Cylinder ;
 
 : Scene
     Begin
 	|	Floor
-	-64 X By 5 Tess 64 128 Cylinder
+	|	20 Scale 4 Tess 64 128 Cylinder
+	90 RotX 80 8 Arm
     End
 	Begin
+	-200 Y By
+	-64 X By
        	10 0
        	do
-	    32 64 32 Cylinder
+|	    64 128 32 Cylinder
 	    Begin
-		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
-		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
-		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
-	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
+|		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
+|		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
+|		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
+|	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
        	    End
             128 X By
        	    36 RotZ

@@ -66,7 +66,7 @@ variable disc
 
 | Draws a primitive
 : Prim
-       pp1 @ pp2 @ swap >r * -2 / swap r> swap dup >r * 2 / + w>d f> 0 0 glTranslatef drop r>
+       pp2 @ pp1 @ >r * -2 / r> height @ * 2 / + w>d f> 0 0 glTranslatef drop r>
 
     Begin
 	finit

@@ -31,12 +31,15 @@ variable time
 
 : T 250 i>>f time @ i>>f f/ ;
 
+: i>d i>f f>d ;
+
 : lookat
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
-    1.0  f>d 0.0 f>d 1.0 f>d
+    1.0  f>d 0.0 f>d 0.0 f>d
     0    f>d 0   f>d 0 f>d
-     T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
+|    T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
+    6 i>d 6 i>d 6 i>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
@@ -90,13 +93,25 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
 ;
 : Pivot 90 RotX Cylinder ;
 
-: Arm 128 32 Arm swap p1 p3 Join 32 32 Cylinder ;
+: Arm
+    Begin 90 RotY 16 8 Cylinder End
+    p1 p3 Join 128 8 Arm
+    p1 p2 Join 90 RotY 8 6 Cylinder
+    ;
+
+: Arms Begin 12 40 Cylinder 
+	    180 RotY p1 p2 Join  Arm p1 p2 Join Arm End  ;
+;
+
+: Base Arms ;
 
 : Scene
     Begin
 	|	Floor
 	|	20 Scale 4 Tess 64 128 Cylinder
-	90 RotX 80 8 Arm
+|	 90 RotX
+	| 80 8
+	Base
     End
 	Begin
 	-200 Y By

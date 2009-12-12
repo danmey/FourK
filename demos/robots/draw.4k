@@ -101,7 +101,6 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
 
 : Arms Begin 12 40 Cylinder 
 	    180 RotY p1 p2 Join  Arm p1 p2 Join Arm End  ;
-;
 
 : Base Arms ;
 
@@ -131,7 +130,7 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
    End
 ;
 
-: a ;
+
 : render
     time @ 1+ time !
     lookat
@@ -163,7 +162,7 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
     Default
     render-loop
     SDL_Quit drop
-|    bye
+    bye
 |    cylinder @ .
 ;
 

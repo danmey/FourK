@@ -80,7 +80,7 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
     GL_DEPTH_TEST glEnable drop
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
-     GL_CULL_FACE glDisable drop
+ |    GL_CULL_FACE glDisable drop
      GL_FLAT glShadeModel drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
     light_pos GL_POSITION GL_LIGHT1 glLightfv drop

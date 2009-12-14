@@ -68,7 +68,7 @@ variable disc
 | Draws a primitive
 : Prim
     color @ glColor4ubv drop
-    dup pp2 @ pp1 @ >r * -2 / r> height @ * 2 / + w>d> 0 0 glTranslatef drop
+    dup . pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
     Begin
 	finit
 	1 i>f scale @ w>d> 1 i>f glScalef drop
@@ -90,14 +90,17 @@ variable disc
 	
 	height @w>d f> 0 0 glTranslatef drop
 	2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
-    End
-    Default
+	End
+	height @ 
+   Default
+	
 ;
 
+: Size dup Top Bottom ;
 
-: Cylinder ( radius height -- height )
-    dup Top Bottom dup Height Prim
-;
+| : Cylinder ( radius height -- height )
+|    dup Top Bottom dup Height Prim
+| ;
 
 0 const p1
 1 const p2

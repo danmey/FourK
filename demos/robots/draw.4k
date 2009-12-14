@@ -15,8 +15,8 @@ $00004000 const GL_COLOR_BUFFER_BIT
 $1700 const GL_MODELVIEW
 $1701 const GL_PROJECTION
 
-$4001 const GL_LIGHTING
-$0B50 const GL_LIGHT1
+$0B50 const GL_LIGHTING
+$4001 const GL_LIGHT1
 $0BA1 const GL_NORMALIZE
 $1602 const GL_AMBIENT_AND_DIFFUSE
 $0408 const GL_FRONT_AND_BACK
@@ -71,8 +71,8 @@ data:
 data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
-create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
-create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
+create light data: 0.0 , 1.0 , 1.0 , 1.0 , data;
+create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
 1203 const GL_POSITION
 
 
@@ -80,8 +80,8 @@ create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
     GL_DEPTH_TEST glEnable drop
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
-    | GL_CULL_FACE glDisable drop
-    GL_FLAT glShadeModel drop
+     GL_CULL_FACE glDisable drop
+     GL_FLAT glShadeModel drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
     light_pos GL_POSITION GL_LIGHT1 glLightfv drop
     GL_COLOR_MATERIAL glEnable drop
@@ -103,24 +103,31 @@ create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
 
 | : Floor 0 Begin 16 Tess 10 50 10 Cylinder End drop  ;
 
-| : Arm ( height size -- height )
-|    24 Scale 4 Tess dup Top 100 * 150 / Bottom dup Height Prim
-| ;
-| : Pivot 90 RotX Cylinder ;
+: Arm ( height size -- height )
+    24 Scale 4 Tess dup Top 100 * 150 / Bottom Height Prim
+;
 
-\ : Arm
-\     Begin -30 RotY 16 8 Cylinder End
-\     p1 p3 Join 128 8 Arm
-\     p1 p2 Join 90 RotY 8 6 Cylinder
-\ ;
+: Pivot ( height size -- height )
+    Size Height 90 RotX Prim
+;
+
+: Arm 100 10 Arm ;
+: Cylinder Size Height Prim ;
 \ | finit clear 3 6 5 eye  Base p3 p1 Join -30 RotY 16 8 Cylinder update
-\ : Base0 p1 p1 Join 3 0 do p3 p1 Join 16 50 Cylinder 16 Z By loop ;
-\ : Base1 98 32 Cylinder ;
-\ : Base Begin color1 Color Base0 End color2 Color p1 p1 Join Base1 ;
+ : Base0 3 0 do 16 50 Cylinder 16 Z By p3 p1 Join loop ;
+ : Base1 98 32 Cylinder ;
+: Base Begin color1 Color Base0 End color2 Color End p1 p1 Join Base1 ;
 \ : Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
+ : Arm
+     Begin 90 RotY 16 8 Cylinder End
+     p1 p3 Join 128 8 Arm
+     p1 p2 Join 90 RotY 8 6 Cylinder
+ ;
 
+ : Arms Arm p1 p2 Join 90 RotX Arm ;
 : Scene
     Begin
+	100 20 Arm
 	|	Floor
 	|	20 Scale 4 Tess 64 128 Cylinder
 |	 90 RotX
@@ -159,6 +166,8 @@ create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
     clear
     lookat
     proj
+|    GL_LIGHTING glEnable drop
+
     let-there-be-light
     Scene
     update
@@ -176,6 +185,7 @@ create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
 : main
     4 #ithere !
     0 time !
+    color1 Color
     finit
     imports
     video

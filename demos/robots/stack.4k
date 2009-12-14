@@ -46,7 +46,7 @@ variable disc
 
 : f>d >f d> ;
 
-: Begin glPushMatrix drop ;
+: Begin dup glPushMatrix drop ;
 
 : Default 32 top ! 32 bottom ! 32 height ! 10 tess ! 32 scale ! ;
 | could be factored out as
@@ -63,12 +63,12 @@ variable disc
 | Fixes up the radius so the bounding area is the same, thus cylinder and box have the same width based on tesselation count
 : w>fixup>f ( r-ptr -- d:fr ) @w>d pi tess @ i>>f fswap f/ fcos fswap f/ f>  ;
 : w>fixup>d w>fixup>f f>d ;
-: End glPopMatrix drop  ;
+: End drop glPopMatrix drop  ;
 
 | Draws a primitive
 : Prim
     color @ glColor4ubv drop
-    dup . pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
+    pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
     Begin
 	finit
 	1 i>f scale @ w>d> 1 i>f glScalef drop
@@ -79,7 +79,7 @@ variable disc
 
 	GLU_FILL cylinder @ gluQuadricDrawStyle drop
 | |	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
-
+	GLU_FLAT cylinder @ gluQuadricNormals drop
 | |	GLU_INSIDE disc @ gluQuadricOrientation drop
 	
 	2

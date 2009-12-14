@@ -25,6 +25,7 @@ $1201 const GL_DIFFUSE
 $0B57 const GL_COLOR_MATERIAL
 $1202 const GL_SPECULAR
 $1D00 const GL_FLAT
+$0B71 const GL_DEPTH_TEST				
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
 variable time
@@ -33,16 +34,20 @@ variable time
 
 : i>d i>f f>d ;
 
-: lookat
+: eye
+    >r >r >r
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 0.0 f>d
     0    f>d 0   f>d 0 f>d
 |    T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
-    6 i>d 6 i>d 6 i>d gluLookAt drop
+     r> i>d r> i>d r> i>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
+
+: lookat
+    6 6 15 eye ;
 
 : proj
     GL_PROJECTION glMatrixMode drop
@@ -55,13 +60,24 @@ create solid
 data:
 0.94 , 0.5 , 0.0 , 1.0 ,
 data;
+create color1
+data:
+200 c, 128 c, 0 c,  c, 255 c,
+data;
+
+create color2
+data:
+128 c, 200 c, 0 c,  c, 255 c,
+data;
+
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
-create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
+create light_pos data: 0.0 , 1b.0 , 0.0 , 0.0 , data;
 1203 const GL_POSITION
 
 
 : let-there-be-light
+    GL_DEPTH_TEST glEnable drop
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
     | GL_CULL_FACE glDisable drop
@@ -71,7 +87,6 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
     GL_COLOR_MATERIAL glEnable drop
     GL_NORMALIZE glEnable drop
     GL_AMBIENT_AND_DIFFUSE GL_FRONT_AND_BACK glColorMaterial drop
-    1.0 0.0 0.5 0.94 glColor4f drop
     solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
     solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
@@ -94,15 +109,15 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
 : Pivot 90 RotX Cylinder ;
 
 : Arm
-    Begin 90 RotY 16 8 Cylinder End
+    Begin -30 RotY 16 8 Cylinder End
     p1 p3 Join 128 8 Arm
     p1 p2 Join 90 RotY 8 6 Cylinder
     ;
 
-: Arms Begin 12 40 Cylinder 
-	    180 RotY p1 p2 Join  Arm p1 p2 Join Arm End  ;
-
-: Base Arms ;
+: Base0 p1 p1 Join 3 0 do p3 p1 Join 16 50 Cylinder 16 Z By loop ;
+: Base1 98 32 Cylinder ;
+: Base Begin color1 Color Base0 End color2 Color p1 p1 Join Base1 ;
+: Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
 
 : Scene
     Begin
@@ -110,7 +125,7 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
 	|	20 Scale 4 Tess 64 128 Cylinder
 |	 90 RotX
 	| 80 8
-	Base
+	Base p1 p3 Join Arm
     End
 	Begin
 	-200 Y By
@@ -130,18 +145,24 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
    End
 ;
 
+: clear
+    0 0.0 0 0 glClearColor drop
+    GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
+;
+
+: update
+    SDL_GL_SwapBuffers drop
+;
 
 : render
     time @ 1+ time !
+    clear
     lookat
-    0 0.0 0 0 glClearColor drop
-    GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
     proj
     let-there-be-light
     Scene
-    SDL_GL_SwapBuffers drop
+    update
 ;
-    
 : render-loop
     begin
 	event SDL_PollEvent 0= invert
@@ -162,7 +183,7 @@ create light_pos data: 0.0 , 15.0 , 0.0 , 0.0 , data;
     Default
     render-loop
     SDL_Quit drop
-    bye
+|    bye
 |    cylinder @ .
 ;
 

@@ -11,6 +11,7 @@ variable color
 variable scale
 variable pp1
 variable pp2
+variable color
 | Our quadric object pointer
 variable cylinder
 variable disc
@@ -35,6 +36,7 @@ variable disc
 
 : RotX >r 1 X r> Rot ;
 
+: Color color ! ;
 
 3.1415 fconst pi
 
@@ -44,10 +46,9 @@ variable disc
 
 : f>d >f d> ;
 
-: Begin dup glPushMatrix drop ;
+: Begin glPushMatrix drop ;
 
-: Default 32 top ! 32 bottom ! 32 height ! 10 tess ! 32 scale !
-;
+: Default 32 top ! 32 bottom ! 32 height ! 10 tess ! 32 scale ! ;
 | could be factored out as
 : Top top ! ;
 : Bottom bottom ! ;
@@ -62,24 +63,24 @@ variable disc
 | Fixes up the radius so the bounding area is the same, thus cylinder and box have the same width based on tesselation count
 : w>fixup>f ( r-ptr -- d:fr ) @w>d pi tess @ i>>f fswap f/ fcos fswap f/ f>  ;
 : w>fixup>d w>fixup>f f>d ;
-: End glPopMatrix drop drop ;
+: End glPopMatrix drop  ;
 
 | Draws a primitive
 : Prim
-       pp2 @ pp1 @ >r * -2 / r> height @ * 2 / + w>d f> 0 0 glTranslatef drop r>
-
+    color @ glColor4ubv drop
+    dup pp2 @ pp1 @ >r * -2 / r> height @ * 2 / + w>d> 0 0 glTranslatef drop
     Begin
 	finit
 	1 i>f scale @ w>d> 1 i>f glScalef drop
-	1 Z 360 2 / tess @ / Rot 
-|	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
+	1 Z 360 2 / tess @ / Rot
+| |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
 	
 	1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
 
 	GLU_FILL cylinder @ gluQuadricDrawStyle drop
-|	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
+| |	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
 
-|	GLU_INSIDE disc @ gluQuadricOrientation drop
+| |	GLU_INSIDE disc @ gluQuadricOrientation drop
 	
 	2
 	tess @

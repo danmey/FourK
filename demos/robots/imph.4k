@@ -22,7 +22,7 @@
 23 ccall: SDL_PollEvent 
 24 ccall: SDL_Quit 
 25 ccall: SDL_SetVideoMode 
-26 ccall: glColor4f 
+26 ccall: glColor4ubv 
 27 ccall: glMaterialfv 
 28 ccall: gluQuadricDrawStyle 
 29 ccall: gluQuadricNormals 

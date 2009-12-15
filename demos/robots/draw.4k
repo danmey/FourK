@@ -4,7 +4,9 @@ mark
 4 #ithere !
 
 100012 const GLU_FILL
-100001 const GLU_FLAT
+$1D00 const  GLU_FLAT
+$1D01 const  GL_SMOOTH
+
 
 require" demos/robots/gl.4k"
 
@@ -71,7 +73,7 @@ data:
 data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
-create light data: 0.0 , 1.0 , 1.0 , 1.0 , data;
+create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
 create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
 1203 const GL_POSITION
 
@@ -81,7 +83,7 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
  |    GL_CULL_FACE glDisable drop
-     GL_FLAT glShadeModel drop
+     GL_SMOOTH glShadeModel drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
     light_pos GL_POSITION GL_LIGHT1 glLightfv drop
     GL_COLOR_MATERIAL glEnable drop
@@ -127,7 +129,8 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
  : Arms Arm p1 p2 Join 90 RotX Arm ;
 : Scene
     Begin
-	100 20 Arm
+	 Base p1 p3 Join Arms
+|	100 20 Arm
 	|	Floor
 	|	20 Scale 4 Tess 64 128 Cylinder
 |	 90 RotX

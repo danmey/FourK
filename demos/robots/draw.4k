@@ -42,7 +42,7 @@ variable time
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 0.0 f>d
     0    f>d 0   f>d 0 f>d
-|    T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
+|     T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
      r> i>d r> i>d r> i>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
@@ -83,7 +83,8 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
     GL_LIGHT1 glEnable drop
     GL_LIGHTING glEnable drop
  |    GL_CULL_FACE glDisable drop
-     GL_SMOOTH glShadeModel drop
+    |     GL_SMOOTH glShadeModel drop
+    GL_FLAT glShadeModel drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
     light_pos GL_POSITION GL_LIGHT1 glLightfv drop
     GL_COLOR_MATERIAL glEnable drop
@@ -109,9 +110,16 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
     24 Scale 4 Tess dup Top 100 * 150 / Bottom Height Prim
 ;
 
+: Pivot-0 12 Size 16 Height Prim ;
+: Pivot-1 16 Size 4 Height Prim ;
 : Pivot ( height size -- height )
-    Size Height 90 RotX Prim
+    Begin
+	Pivot-0
+	Begin p3 p1 Join Pivot-1 End
+	Begin p1 p1 Join Pivot-1 End
+    End
 ;
+	
 
 : Arm 100 10 Arm ;
 : Cylinder Size Height Prim ;
@@ -142,12 +150,12 @@ create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
 	-64 X By
        	10 0
        	do
-|	    64 128 32 Cylinder
+	    64 128 32 Cylinder
 	    Begin
-|		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
-|		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
-|		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
-|	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
+		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
+		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
+		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
+	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
        	    End
             128 X By
        	    36 RotZ

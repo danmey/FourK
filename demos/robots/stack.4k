@@ -68,31 +68,30 @@ variable disc
 | Draws a primitive
 : Prim
     color @ glColor4ubv drop
-    pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
     Begin
-	finit
-	1 i>f scale @ w>d> 1 i>f glScalef drop
-	1 Z 360 2 / tess @ / Rot
-| |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
-	
-	1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
-
-	GLU_FILL cylinder @ gluQuadricDrawStyle drop
-| |	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
-	GLU_FLAT cylinder @ gluQuadricNormals drop
-| |	GLU_INSIDE disc @ gluQuadricOrientation drop
-	
-	2
-	tess @
-	bottom w>fixup>d
-	0 f>d
-	disc @ gluDisk drop
-	
-	height @w>d f> 0 0 glTranslatef drop
-	2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
-	End
-	height @ 
-   Default
+    finit
+    1 i>f scale @ w>d> 1 i>f glScalef drop
+    1 Z 360 2 / tess @ / Rot
+    | |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
+    
+    1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
+    
+    GLU_FILL cylinder @ gluQuadricDrawStyle drop
+    | |	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
+    GLU_FLAT cylinder @ gluQuadricNormals drop
+    | |	GLU_INSIDE disc @ gluQuadricOrientation drop
+    
+    2
+    tess @
+    bottom w>fixup>d
+    0 f>d
+    disc @ gluDisk drop
+    
+    height @w>d f> 0 0 glTranslatef drop
+    2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
+    End
+    height @ 
+    Default
 	
 ;
 

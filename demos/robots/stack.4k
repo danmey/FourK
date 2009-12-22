@@ -33,9 +33,10 @@ variable disc
 : By 3>s glTranslatef drop ;
 | : Rot >r r * swap r * rot r * rot rot swap r> drop ;
 
-: Rot >r 3>f r> i>f glRotatef drop ;
+: Rot glRotatef drop ;
 
-: RotX >r 1 X r> Rot ;
+: FRotX >r 1 X 3>f r> Rot ;
+: RotX >r 1 X 3>f r> i>f Rot ;
 
 : Color color ! ;
 
@@ -66,6 +67,22 @@ variable disc
 : w>fixup>d w>fixup>f f>d ;
 : End drop glPopMatrix drop  ;
 
+: let-there-be-light
+    GL_DEPTH_TEST glEnable drop
+    GL_LIGHT1 glEnable drop
+    GL_LIGHTING glEnable drop
+ |    GL_CULL_FACE glDisable drop
+    GL_SMOOTH glShadeModel drop
+    | GL_FLAT glShadeModel drop
+    light GL_DIFFUSE GL_LIGHT1 glLightfv drop
+    light_pos GL_POSITION GL_LIGHT1 glLightfv drop
+    GL_COLOR_MATERIAL glEnable drop
+    GL_NORMALIZE glEnable drop
+    GL_AMBIENT_AND_DIFFUSE GL_FRONT_AND_BACK glColorMaterial drop
+    solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
+    solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
+;
+
 | Draws a primitive
 : Prim
     color @ glColor4ubv drop
@@ -82,7 +99,7 @@ variable disc
 |	    GLU_SMOOTH cylinder @ gluQuadricNormals drop
 |	    GL_FLAT glShadeModel drop
 |	then
-    
+	let-there-be-light    
     1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
     
 	GLU_FILL cylinder @ gluQuadricDrawStyle drop

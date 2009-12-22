@@ -8,11 +8,6 @@ $1D00 const  GLU_FLAT
 $1D01 const  GL_SMOOTH
 100000 const GLU_SMOOTH
 $1D00 const GL_FLAT
-
-require" demos/robots/gl.4k"
-
-require" demos/robots/stack.4k"
-
 $00000100 const GL_DEPTH_BUFFER_BIT			
 $00004000 const GL_COLOR_BUFFER_BIT
 $1700 const GL_MODELVIEW
@@ -28,6 +23,22 @@ $1201 const GL_DIFFUSE
 $0B57 const GL_COLOR_MATERIAL
 $1202 const GL_SPECULAR
 $0B71 const GL_DEPTH_TEST				
+create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
+create light_pos data: 1.0 , 0.0 , 0.0 , 10.0 , data;
+1203 const GL_POSITION
+
+create solid
+data:
+0.94 , 0.5 , 0.0 , 1.0 ,
+data;
+
+create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
+
+require" demos/robots/gl.4k"
+
+require" demos/robots/stack.4k"
+| require" demos/robots/synth.4k"
+
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
 variable time
@@ -37,20 +48,20 @@ variable time
 : i>d i>f f>d ;
 
 : eye
-    
-    >r >r >r
+    >r >r >r >r >r >r
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
     1.0  f>d 0.0 f>d 0.0 f>d
-    0    f>d 0   f>d 0 f>d
+    r> f>d r>  f>d r> f>d
     | T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
      r> f>d r> f>d r> f>d gluLookAt drop
  |   0    f>d 0   f>d 15.0 f>d gluLookAt drop
 |     10.0 f>d 0    f>d 0   f>d gluLookAt drop
 ;
 
+: Looking 10.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> ;
 : lookat
-    10.0 T fsincos 6 i>>f f* f> 6 i>>f f* f> eye ;
+    0 0 0 Looking eye ;
 
 : proj
     GL_PROJECTION glMatrixMode drop
@@ -59,10 +70,6 @@ variable time
     GL_MODELVIEW glMatrixMode drop
 ;   
 
-create solid
-data:
-0.94 , 0.5 , 0.0 , 1.0 ,
-data;
 create color1
 data:
 200 c, 128 c, 0 c,  c, 255 c,
@@ -73,68 +80,61 @@ data:
 128 c, 200 c, 0 c,  c, 255 c,
 data;
 
-create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
-create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
-create light_pos data: 4.0 , 4.0 , 10.0 , 0.0 , data;
-1203 const GL_POSITION
 
 
-: let-there-be-light
-    GL_DEPTH_TEST glEnable drop
-    GL_LIGHT1 glEnable drop
-    GL_LIGHTING glEnable drop
- |    GL_CULL_FACE glDisable drop
-    GL_SMOOTH glShadeModel drop
-    | GL_FLAT glShadeModel drop
-    light GL_DIFFUSE GL_LIGHT1 glLightfv drop
-    light_pos GL_POSITION GL_LIGHT1 glLightfv drop
-    GL_COLOR_MATERIAL glEnable drop
-    GL_NORMALIZE glEnable drop
-    GL_AMBIENT_AND_DIFFUSE GL_FRONT_AND_BACK glColorMaterial drop
-    solid GL_SPECULAR GL_FRONT_AND_BACK glMaterialfv drop
-    solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
-;
 
-: RotY >r 1 Y r> Rot ;
-: RotZ >r 1 Z r> Rot ;
+: RotY >r 1 Y 3>f r> i>f Rot ;
+: RotZ >r 1 Z 3>f r> i>f Rot ;
 
-: Join ( h1 h2 p1 p2 -- )
+: Join ( p1 p2 -- )
     pp2 ! pp1 !
     | pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
     pp1 @ * 2 / w>d> 0 0 glTranslatef drop
     | 64 w>d f> 0 0 glTranslatef drop
 ;
 
-
-
-| : Floor 0 Begin 16 Tess 10 50 10 Cylinder End drop  ;
-
 : Arm0 ( size -- height )
-    24 Scale 4 Tess dup Top 100 * 150 / Bottom Prim
+    24 Scale 4 Tess dup Bottom 100 * 150 / Top Prim
 ;
 
-: Pivot-0 12 Size  Prim ;
-: Pivot-1 16 Size 4 Height Prim ;
+: Pivot-0 Height Size Prim ;
+: Smaller 12 40 ;
+: Bigger 18 44 ;
+: Side 16 4 ;
 : Pivot
     90 RotY
-    40 Height Pivot-0
- |   Begin p3 p1 Join Pivot-1 End
-    Begin p1 p3 Join Pivot-1 End
+    Pivot-0
+    Begin p3 p1 Join Side Pivot-0 End
+    Begin p1 p3 Join Side Pivot-0 End
+;
+
+: Cylinder Size Height Prim ;
+
+: Tile 180 RotY 4 Tess 50 Cylinder ;
+: Floor
+    10 0 do
+	10 0 do
+	    Begin i j + 1 and 0= if 4 color1 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
+	loop
+    loop
 ;
 
     
-: Cylinder Size Height Prim ;
 \ | finit clear 3 6 5 eye  Base p3 p1 Join -30 RotY 16 8 Cylinder update
- : Base0 3 0 do 16 50 Cylinder 16 Z By p3 p1 Join loop ;
- : Base1 98 32 Cylinder ;
-: Base Begin color1 Color Base0 End color2 Color End p1 p1 Join Base1 ;
+: Base0 0 3 0 do p3 p1 Join 16 50 Cylinder 16 Z By loop drop ;
+: Base1 114 32 Cylinder ;
+: Base Begin color1 Color Base0 End color2 Color p1 p1 Join Base1 ;
     \ : Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
-: Arm Pivot p2 p1 Join 90 RotY 128 Height 20 Arm0 p3 p2 Join Pivot ;
+: Arm Smaller Pivot p2 p1 Join 90 RotY 128 Height 20 Arm0 p3 p2 Join Bigger Pivot ;
+
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 : Scene
-|    Begin
-	Base p3 p2 Join -130 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm drop
+    finit
+    Begin
+	|	16 50 Cylinder p1 p2 Join 16 50 Cylinder
+	Floor
+	Base p3 p2 Join T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
 |	 Base p1 p3 Join Arms
 |	100 20 Arm
 	|	Floor

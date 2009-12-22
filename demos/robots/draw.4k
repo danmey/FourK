@@ -134,7 +134,12 @@ data;
     Begin
 	|	16 50 Cylinder p1 p2 Join 16 50 Cylinder
 	Floor
-	Base p3 p2 Join T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
+	5 0 do
+	    Begin
+		i 200 * X By
+		Base p3 p2 Join T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
+	    End
+	 loop
 |	 Base p1 p3 Join Arms
 |	100 20 Arm
 	|	Floor

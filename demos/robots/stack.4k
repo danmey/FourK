@@ -12,6 +12,7 @@ variable scale
 variable pp1
 variable pp2
 variable color
+variable flat
 | Our quadric object pointer
 variable cylinder
 variable disc
@@ -74,12 +75,19 @@ variable disc
     1 i>f scale @ w>d> 1 i>f glScalef drop
     1 Z 360 2 / tess @ / Rot
     | |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
+|	tess @ 4 = if 
+|	    GLU_FLAT cylinder @ gluQuadricDrawStyle drop
+	    GL_FLAT glShadeModel drop
+|	else
+|	    GLU_SMOOTH cylinder @ gluQuadricNormals drop
+|	    GL_FLAT glShadeModel drop
+|	then
     
     1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
     
-    GLU_FILL cylinder @ gluQuadricDrawStyle drop
-    | |	GLU_FLAT cylinder @ gluQuadricDrawStyle drop
-    GLU_FLAT cylinder @ gluQuadricNormals drop
+	GLU_FILL cylinder @ gluQuadricDrawStyle drop
+
+    | GLU_SMOOTH cylinder @ gluQuadricNormals drop
     | |	GLU_INSIDE disc @ gluQuadricOrientation drop
     
     2

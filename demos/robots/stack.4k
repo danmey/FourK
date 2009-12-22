@@ -68,8 +68,9 @@ variable disc
 | Draws a primitive
 : Prim
     color @ glColor4ubv drop
+    height @ pp2 @ * -2 / w>d> 0 0 glTranslatef drop
     Begin
-    finit
+	finit
     1 i>f scale @ w>d> 1 i>f glScalef drop
     1 Z 360 2 / tess @ / Rot
     | |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop

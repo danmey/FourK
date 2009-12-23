@@ -183,12 +183,15 @@ rcell func: printf
 rcell func: exit
 
 : moo  
-" hello world!!
-" drop   
+" hello world!!" drop cr   
   call: printf  
   0 call: exit
-  " hello world!!
-" drop 
+  " hello world!!" drop cr
   call: printf
-; 
+;
+: foo 
+  " hello world!
+" drop dup c@ . call: printf cr ; 
+load-all
+foo 
 moo 

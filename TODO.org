@@ -162,7 +162,7 @@
 **** TODO Setup a Gobby discussion
 **** TODO Make up a prototype
 
-* "Planning" of 4k
+* DONE "Planning" of 4k
   DEADLINE: <2009-11-30 Mon>
   - I chose "Planning" because I haven't a better word 
     for it -- phon

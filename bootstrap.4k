@@ -214,9 +214,9 @@ variable flag
 ; immediate
 
 
-| : ." ( -- ) postpone " 
-| state @ 0 = if postpone type ;; then type 
-| ; immediate
+: ." ( -- ) postpone " 
+ state @ 0 = if postpone type ;; then type 
+; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;
@@ -235,8 +235,9 @@ variable #ithere
 4 #ithere !
 
 : add-handle ( handle stackfix -- )
-|  ." index: " #ithere @ 2 / . cr 
- | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
+ ." index: " #ithere @ 2 / . cr 
+ over 0 = if ." ERROR: handle is 0" cr 2drop ;; then 
+ over ." handle: " . ." stackfix: " dup . cr 
   ithere @ 1 #ithere @ + rcells+ !
   ithere @ #ithere @ rcells+ !
   #ithere @ 2 + #ithere !

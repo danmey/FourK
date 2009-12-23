@@ -81,8 +81,6 @@ data:
 data;
 
 
-
-
 : RotY >r 1 Y 3>f r> i>f Rot ;
 : RotZ >r 1 Z 3>f r> i>f Rot ;
 

@@ -1,4 +1,3 @@
-include" demos/robots/imph.4k"
 : fconst : rliteral postpone >f postpone ; ;
 : i>>f i>f >f ;
 
@@ -12,50 +11,56 @@ include" demos/robots/imph.4k"
 
 2 const SDL_OPENGL
 
-: imports ( -- )
-    " libc.so" lib " _exit" sym rcell add-handle
-    " /usr/lib/libGL.so" lib " glClear"                sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glClearColor"           sym 4 rcells add-handle
-    " /usr/lib/libGL.so" lib " glColorMaterial"        sym 2 rcells add-handle
-    " /usr/lib/libGL.so" lib " glDisable"              sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glEnable"               sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glFrustum"              sym 12 rcells add-handle
-    " /usr/lib/libGL.so" lib " glGetFloatv"            sym 2 rcells add-handle
-    " /usr/lib/libGL.so" lib " glLightfv"              sym 3 rcells add-handle
-    " /usr/lib/libGL.so" lib " glLoadIdentity"         sym 0 rcells add-handle
-    " /usr/lib/libGL.so" lib " glMatrixMode"           sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glPopMatrix"            sym 0 rcells add-handle
-    " /usr/lib/libGL.so" lib " glPushMatrix"           sym 0 rcells add-handle
-    " /usr/lib/libGL.so" lib " glRotatef"              sym 4 rcells add-handle
-    " /usr/lib/libGL.so" lib " glScalef"               sym 3 rcells add-handle
-    " /usr/lib/libGL.so" lib " glShadeModel"           sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glTranslatef"           sym 3 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluCylinder"          sym 9 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluLookAt"            sym 18 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluNewQuadric"        sym 0 rcells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_GL_SwapBuffers"    sym 0 rcells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_PollEvent"         sym 1 rcells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_Quit"              sym 0 rcells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode"      sym 4 rcells add-handle
-    " /usr/lib/libGL.so" lib " glColor4ubv"           sym 1 rcells add-handle
-    " /usr/lib/libGL.so" lib " glMaterialfv"           sym 3 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluQuadricDrawStyle"  sym 2 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluQuadricNormals" sym 2 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluQuadricOrientation" sym 2 rcells add-handle
-    " /usr/lib/libglut.so" lib " gluDisk" sym 7 rcells add-handle
-    " /usr/lib/libGL.so" lib " glScalef" sym 3 rcells add-handle
-
-;
-
-
+: libGL " /usr/lib/libGL.so" lib ;
+: libglut " /usr/lib/libglut.so" lib ;
+: libSDL " /usr/lib/libSDL.so" lib ;
 | this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
 
+: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+: imports ( -- )
+    " libc.so" lib " _exit" 1 hdl
+    libGL " glClear"                 1 hdl
+    libGL " glClearColor"            4 hdl
+    libGL " glColorMaterial"         2 hdl
+    libGL " glDisable"               1 hdl
+    libGL " glEnable"                1 hdl
+    libGL " glFrustum"               12 hdl
+    libGL " glGetFloatv"             2 hdl
+    libGL " glLightfv"               3 hdl
+    libGL " glLoadIdentity"          0 hdl
+    libGL " glMatrixMode"            1 hdl
+    libGL " glPopMatrix"             0 hdl
+    libGL " glPushMatrix"            0 hdl
+    libGL " glRotatef"               4 hdl
+    libGL " glScalef"                3 hdl
+    libGL " glShadeModel"            1 hdl
+    libGL " glTranslatef"            3 hdl
+    libglut " gluCylinder"           9 hdl
+    libglut " gluLookAt"             18 hdl
+    libglut " gluNewQuadric"         0 hdl
+    libSDL " SDL_GL_SwapBuffers"     0 hdl
+    libSDL " SDL_PollEvent"          1 hdl
+    libSDL " SDL_Quit"               0 hdl
+    libSDL " SDL_SetVideoMode"       4 hdl
+    libGL " glColor4ubv"            1 hdl
+    libGL " glMaterialfv"            3 hdl
+    libglut " gluQuadricDrawStyle"   2 hdl
+    libglut " gluQuadricNormals"  2 hdl
+    libglut " gluQuadricOrientation"  2 hdl
+    libglut " gluDisk"  7 hdl
+    libGL " glScalef"  3 hdl
+;
+
+include" demos/robots/imph.4k"
+
+
+
 \ some constants
-800 const width
-600 const height
-32  const bpp
-bpp 8 / const point
+ 800 const width
+ 600 const height
+ 32  const bpp
+| bpp 8 / const point
 
 \ SDL constants
 27  const Esc

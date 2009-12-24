@@ -215,7 +215,7 @@ variable flag
 
 
  : ." ( -- ) postpone " 
- state @ 0 = if postpone type ;; then type 
+  state @ 0 = if postpone type ;; then type 
  ; immediate
 
 

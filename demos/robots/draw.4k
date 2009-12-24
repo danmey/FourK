@@ -1,8 +1,11 @@
+| For an interactive session
 forget
 mark
 
+| ...
 4 #ithere !
 
+| Some needed constants
 100012 const GLU_FILL
 $1D00 const  GLU_FLAT
 $1D01 const  GL_SMOOTH
@@ -12,7 +15,6 @@ $00000100 const GL_DEPTH_BUFFER_BIT
 $00004000 const GL_COLOR_BUFFER_BIT
 $1700 const GL_MODELVIEW
 $1701 const GL_PROJECTION
-
 $0B50 const GL_LIGHTING
 $4001 const GL_LIGHT1
 $0BA1 const GL_NORMALIZE
@@ -22,10 +24,13 @@ $1600 const GL_EMISSION
 $1201 const GL_DIFFUSE
 $0B57 const GL_COLOR_MATERIAL
 $1202 const GL_SPECULAR
-$0B71 const GL_DEPTH_TEST				
+$0B71 const GL_DEPTH_TEST
+
+| Some colors (should be HSV)
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
 create light_pos data: 1.0 , 0.0 , 0.0 , 10.0 , data;
 1203 const GL_POSITION
+
 
 create solid
 data:
@@ -34,23 +39,27 @@ data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
+| This is sort of messy
 require" demos/robots/gl.4k"
-
 require" demos/robots/stack.4k"
 
+| Mutable time ;-)
 variable time
 : F time @ ;
 
+| Camera neaty-cutie stuff
 require" demos/robots/camera.4k"
 
-
+| our construction
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
-
+| Simulate time flow
 : T 250 i>>f time @ i>>f f/ ;
 
+| some conv word
 : i>d i>f f>d ;
 
+| looking helper
 : eye
     >r >r >r >r >r >r
     GL_MODELVIEW glMatrixMode drop

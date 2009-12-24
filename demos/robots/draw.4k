@@ -132,20 +132,21 @@ data;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 
-
-: acam 0 0 0 10.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: acam T f> 15.0 0 T f> 15.0 15.0 eye ;
 : bcam 0 0 0 15.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
-: ccam 0 0 0 15.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: ccam 0 0 0 20.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
-100 Frame: f1 acam
-150 Frame: f2 bcam
-200 Frame: f3 ccam
+1 s 100 ms + Frame: f1 acam
+150 ms Frame: f2 bcam
+200 ms Frame: f3 ccam
+300 ms Frame: f4 acam
 
-Script: cam
+Script: camera
 f1
 f2
 f3
-Script;
+f4
+drop ;
 
 : Scene
     finit
@@ -196,7 +197,7 @@ Script;
 : render
     time @ 1+ time !
     clear
-    lookat
+    camera
     proj
 |    GL_LIGHTING glEnable drop
 

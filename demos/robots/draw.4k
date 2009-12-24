@@ -38,10 +38,14 @@ require" demos/robots/gl.4k"
 
 require" demos/robots/stack.4k"
 
+variable time
+: F time @ ;
+
+require" demos/robots/camera.4k"
+
 
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
-variable time
 
 : T 250 i>>f time @ i>>f f/ ;
 
@@ -127,6 +131,22 @@ data;
 
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
+
+
+: acam 0 0 0 10.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: bcam 0 0 0 15.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: ccam 0 0 0 15.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+
+100 Frame: f1 acam
+150 Frame: f2 bcam
+200 Frame: f3 ccam
+
+Script: cam
+f1
+f2
+f3
+Script;
+
 : Scene
     finit
     Begin

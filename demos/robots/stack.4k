@@ -90,7 +90,7 @@ variable disc
     Begin
 	finit
     1 i>f scale @ w>d> 1 i>f glScalef drop
-    1 Z 360 2 / tess @ / Rot
+    1 i>f Z 360 2 / tess @ / i>f Rot
     | |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
 |	tess @ 4 = if 
 |	    GLU_FLAT cylinder @ gluQuadricDrawStyle drop

@@ -1,5 +1,6 @@
 | No time left for does> :(
 variable escape
+variable last
 : check dup rot + F > escape @ and ;
 : Frame: ( len -- ) : rliteral postpone check postpone if ' compile 0 literal postpone escape postpone ! postpone then postpone ; ;
 : Script: : 0 literal -1 literal postpone escape postpone ! ;
@@ -9,6 +10,5 @@ variable escape
 : s 1000 * ;
 : ms ;
 : m 60 s * ;
-
-| hahaha just joking ;-)
+| hahaha just joking
 : h 60 m * ;

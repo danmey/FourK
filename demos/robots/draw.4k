@@ -55,6 +55,7 @@ require" demos/robots/camera.4k"
 
 | Simulate time flow
 : T 250 i>>f time @ i>>f f/ ;
+: TT >r 250 i>>f r> i>>f f/ ;
 
 | some conv word
 : i>d i>f f>d ;
@@ -121,10 +122,11 @@ data;
 
 : Cylinder Size Height Prim ;
 
-: Tile 180 RotY 4 Tess 50 Cylinder ;
+: Tile 4 Tess 50 Cylinder ;
 : Floor
-    10 0 do
-	10 0 do
+    p1 p1 Join
+    8 0 do
+	8 0 do
 	    Begin i j + 1 and 0= if 4 color1 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
 	loop
     loop
@@ -141,11 +143,11 @@ data;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 
-: acam T f> 15.0 0 T f> 15.0 15.0 eye ;
-: bcam 0 0 0 15.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: acam dup . >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
+: bcam dup . >r 1.0  1.0 0  15.0 r> TT -50 i>>f  f* 30 i>>f f+ f> 0 eye ;
 : ccam 0 0 0 20.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
-1 s 100 ms + Frame: f1 acam
+300 ms Frame: f1 acam
 150 ms Frame: f2 bcam
 200 ms Frame: f3 ccam
 300 ms Frame: f4 acam
@@ -157,17 +159,72 @@ f3
 f4
 drop ;
 
+: Base
+    8 40 Cylinder
+    p3 p1 Join
+    16 32 Cylinder
+    20 Height 32 Bottom 24 Top p3 p1 Join Prim
+    16 Height 24 Bottom 14 Top p3 p1 Join Prim
+    16 Height 14 Bottom 24 Top p3 p1 Join Prim
+    p3 p1 Join 8 24 Cylinder
+;    
+: Pawn
+    Base
+    p3 p1 Join 4 16 Cylinder
+    p3 p1 Join 16 Height 8 Z By Sphere
+    p3 p1 Join 0 Top 4 Bottom Prim
+;
+
+: Bishop
+    Base
+    p3 p1 Join 8 24 Cylinder
+    40 Height 8 Top 14 Bottom p3 p1 Join Prim
+    p3 p1 Join 16 Height 8 Z By Sphere
+;
+
+: Knight
+    Base
+    p3 p1 Join 4 16 Cylinder
+    p3 p1 Join 4 Tess 32 Height 14 Bottom 10 Top Prim
+    p3 p1 Join 16 Height 4 Z By Sphere
+    Begin p1 p1 Join 48 Height 24 Scale 6 Top 12 Bottom 90 RotZ 90 RotY 4 Tess Prim End
+    p3 p1 Join 0 Top 4 Bottom 16 Height Prim
+;
+
+: Rook
+    Base 
+| More general loop would be needed here, temporary workaround
+    4 4 2 do 16 Height dup 6 * Bottom dup 6 * 100 * 100 /  Top Prim  p3 p1 Join 1- loop
+    10 Bottom 20 Top 20 Height Prim
+;
+    
+
 : Scene
     finit
     Begin
 	|	16 50 Cylinder p1 p2 Join 16 50 Cylinder
-	Floor
-	5 0 do
+	 Floor
+	7 0 do
 	    Begin
-		i 200 * X By
-		Base p3 p2 Join T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
+		100 Y By
+		i 100 * X By
+		| Base | p3 p2 Join | T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
+		Pawn
 	    End
-	 loop
+	    Begin	
+		700 Y By
+		i 100 * X By
+
+|		Pawn
+		End
+	    loop
+	    Begin 200 X By Bishop End
+	    Begin 700 X By Bishop End
+	    Begin 100 X By Knight End
+	    Begin 700 X By Knight End
+	    Begin 0 X By Rook End
+	    Begin 700 X By Rook End
+		    
 |	 Base p1 p3 Join Arms
 |	100 20 Arm
 	|	Floor

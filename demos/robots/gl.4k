@@ -50,6 +50,7 @@
     libglut " gluQuadricOrientation"  2 hdl
     libglut " gluDisk"  7 hdl
     libGL " glScalef"  3 hdl
+    libglut " gluSphere"              5 hdl
 ;
 
 include" demos/robots/imph.4k"

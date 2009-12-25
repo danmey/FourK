@@ -83,14 +83,11 @@ variable disc
     solid2 GL_EMISSION GL_FRONT_AND_BACK glMaterialfv drop
 ;
 
-| Draws a primitive
-: Prim
-    color @ glColor4ubv drop
-    height @ pp2 @ * -2 / w>d> 0 0 glTranslatef drop
+: Prim0
     Begin
 	finit
-    1 i>f scale @ w>d> 1 i>f glScalef drop
-    1 i>f Z 360 2 / tess @ / i>f Rot
+	1 i>f scale @ w>d> 1 i>f glScalef drop
+	1 i>f Z 360 2 / tess @ / i>f Rot
     | |	-2 i>>f height @w>d f/ f> 0 0 glTranslatef drop
 |	tess @ 4 = if 
 |	    GLU_FLAT cylinder @ gluQuadricDrawStyle drop
@@ -100,25 +97,45 @@ variable disc
 |	    GL_FLAT glShadeModel drop
 |	then
 	let-there-be-light    
-    1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
-    
-	GLU_FILL cylinder @ gluQuadricDrawStyle drop
+    ;
 
-    | GLU_SMOOTH cylinder @ gluQuadricNormals drop
+ : Prim1
+     
+     GLU_FILL cylinder @ gluQuadricDrawStyle drop
+     
+     | GLU_SMOOTH cylinder @ gluQuadricNormals drop
     | |	GLU_INSIDE disc @ gluQuadricOrientation drop
     
-    2
-    tess @
-    bottom w>fixup>d
-    0 f>d
-    disc @ gluDisk drop
-    
-    height @w>d f> 0 0 glTranslatef drop
-    2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
-    End
-    height @ 
-    Default
+	2
+	tess @
+	bottom w>fixup>d
+	0 f>d
+	disc @ gluDisk drop
 	
+	height @w>d f> 0 0 glTranslatef drop
+     2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop
+ ;
+: Prim2
+	End
+	height @ 
+	Default
+;
+| Draws a primitive
+: Prim
+    color @ glColor4ubv drop
+    height @ pp2 @ * -2 / w>d> 0 0 glTranslatef drop
+    Prim0
+	1 tess @ height @w>d f> f>d top w>fixup>d bottom w>fixup>d cylinder @ gluCylinder drop
+    Prim1
+    Prim2
+;
+
+: Sphere
+    color @ glColor4ubv drop
+    height @ pp2 @ * -2 / w>d> 0 0 glTranslatef drop
+    Prim0
+    tess @ tess @ height @w>d f> f>d cylinder @ gluSphere drop
+    Prim2
 ;
 
 : Size dup Top Bottom ;

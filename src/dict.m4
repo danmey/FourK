@@ -13,7 +13,7 @@ define([PREFIX_TOKEN],[253])dnl
 define([LIT_TOKEN],[0])dnl
 define([NTAB_ENTRY_SIZE], 32)dnl
 define([MAX_WORDS],512)dnl
-define([DICT_SIZE], 4*1024)dnl
+define([DICT_SIZE], 8*1024)dnl
 define([NEXT_WORD], [jmp *%ebp])dnl
 define([CORE_COUNT],[0])dnl
 dnl

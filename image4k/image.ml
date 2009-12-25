@@ -325,7 +325,7 @@ module Words = struct
 	function
 	  | []                                             -> [],ofs
 	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
-	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (253 + i))                  :: bc, ofs'
+	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
 	  | 1::b1::b2::b3::b4::xs                          -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
 	  | c::xs                                          -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
       in

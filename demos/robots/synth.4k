@@ -1,0 +1,277 @@
+forget
+mark
+
+4 #ithere !
+
+2 ccall: fwrite
+3 ccall: fopen
+4 ccall: fclose
+5 ccall: rand
+6 ccall: powf
+7 ccall: system
+8 ccall: exit
+
+: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+: libc " libc.so" lib ;
+
+: imports ( -- )
+    libc " fwrite" 4 hdl
+    libc " fopen"  2 hdl
+    libc " fclose" 1 hdl
+    libc " rand"   0 hdl
+    libc " powf"   2 hdl
+    libc " system" 1 hdl
+    libc " _exit"  1 hdl
+;
+
+: fconst : rliteral postpone >f postpone ; ;
+
+
+2147483647 const rand-max
+44100 const frq
+
+frq 4 * const #samples
+
+1 const sample-size
+
+: samples sample-size * ;
+
+variable buffer
+variable audio
+variable temp
+: w! 2dup c! swap 8 >> swap 1+ c! ;
+
+: #sample! samples buffer @ + w! ;
+
+
+(*
+PLAYERWAVE mywave={'R','I','F','F',
+		   sizeof(PLAYERWAVE)+NUMSAMPLES*2,
+		   'W','A','V','E','f','m','t',' ',
+		   0x10,1,1,
+		   PLAYFREQ,
+		   PLAYFREQ*2,
+		   2,16,'d','a','t','a',
+		   SAMPLESIZE,{0}
+};
+*)
+
+(*
+//Parameter calculation
+//cutoff and resonance are from 0 to 127
+
+  c = pow(0.5, (128-cutoff)   / 16.0);
+  r = pow(0.5, (resonance+24) / 16.0);
+
+//Loop:
+
+  v0 =  (1-r*c)*v0  -  (c)*v1  + (c)*input;
+  v1 =  (1-r*c)*v1  +  (c)*v0;
+
+  output = v1;
+*)
+
+variable stream
+variable temp
+: >file ( str c -- file ) >r >r stream @ 1 r> r> swap fwrite drop  ;
+: i>file temp ! temp 4 >file ;
+: s>file temp ! temp 2 >file ;
+: file: ( str c -- file ) >cstr " wb" >cstr swap fopen stream ! ;
+: file; stream @ fclose ;
+
+52 #samples 2 * + const wav-size
+
+: >whdr
+    " RIFF" >file
+    wav-size i>file
+    " WAVEfmt " >file
+    16 i>file
+    1 s>file
+    1 s>file
+    44100 i>file
+    44100 2 * i>file
+    2 s>file
+    16 s>file
+    " data" >file
+    #samples 2 * i>file
+;
+
+: dupf f> dup >f >f ;
+: dupf> f> dup >f ;
+: dropf f> drop ;
+: fswap f> f> swap >f >f ;
+
+| our sin (or cos I dunno) function
+: fcos fsincos f> drop ;
+: frot f> f> f> rot >f >f >f ;
+
+( f: a b -> b a -> b a a -> a b a )
+: fover f> f> dup rot rot >f >f >f ;
+
+: ffrac dupf frnd fswap f- ;
+: fmod dupf frot fswap f/ ffrac f* ;
+: i>>f i>f >f ;
+: f>>i f> f>i ;
+
+: frand ( -- f: -1..1 ) rand i>>f rand-max i>>f fswap f/ 2 i>>f f* 1 i>>f f- ;
+
+| some pimped sin function which keeps value
+: sin fcos 32000 i>>f f* ;
+
+
+3.1415 2.0 >f >f f* f> fconst pi2
+3.1415 fconst pi
+frq i>>f f> fconst fr
+
+variable sample
+
+0 sample !
+: +1! 1 swap +! ;
+
+120 const bpm
+frq bpm / const frame
+30 const speed
+
+: sconst : sliteral postpone ; ;
+variable current-song
+
+: song there @ current-song ! 4 rcells allot 0 data: ;
+: pattern here @  ;
+: endp over current-song @ + ! rcell +  ;
+: end-song data; drop ;
+
+create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, data;
+
+song
+pattern 1 c, 0 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+pattern 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, endp
+end-song
+
+0 variable now
+
+2 rcells const channel
+4 channel * create channels allot
+variable current
+0 current !
+: current-channel current @ channel *   ;
+: current-track  current-song @ current @ rcells  + @ ;
+
+: time ( #ch -- F:t ) channels + ;
+: which-frame time rcell + ;
+
+: reset 3 0 do 0.0 i channel time ! -1 i channel which-frame ! loop ;
+
+: frame# sample @ frame speed * / ;
+: trigger ( frame -- ) current-track frame# + c@ 1 = if 0.0 current-channel time ! current-channel which-frame ! ;; then drop ;
+: play ( frame -- ) current-channel which-frame @ frame# dup rot <> if trigger ;; then drop  ;
+: tick current-channel time @ >f 1 i>>f frq i>>f fswap f/ f+ f> current-channel time ! play  ;
+
+: T current-channel time @ >f ;
+variable accum
+: Osc ( f: amp-in  pitch-in  freq-in -- f: out ) T pi2 f* f* f+ fcos ;
+: Lfo ( f: freq-in -- f: out ) T pi2 f* f* fcos ;
+: Out 20000 i>>f f* f>>i ;
+: IConst i>>f ;
+: IConst2 swap i>>f i>>f ;
+: FConst >f ;
+: fl> flt ;
+: fl<= fl> invert ;
+
+: Mul ( f: in val -- out ) f* ;
+: SimpleOsc f> 1 IConst 1 IConst >f Osc ;
+
+: Clamp ( f: in -- cut ) dupf 1 i>>f fl> if dropf 1 i>>f ;; then dupf -1 i>>f fl<= if dropf -1 i>>f ;; then ;
+
+0.0 accum !
+: Pitch accum @ >f f+ dupf f> accum ! ;
+
+: Sr ( f: S -- v )
+    fswap dupf T fswap fl<= if T f/ fswap dropf ;; then
+    fover T fswap fl<= if dupf T f- frot fswap f- fswap f/ 1 i>>f f- ;; then
+    0 i>>f
+;
+
+(*
+Process loop (lowpass):
+out = a0*in - b1*tmp;
+tmp = out;
+
+Coefficient calculation:x
+ = exp(-2.0*pi*freq/samplerate);
+a0 = 1.0-x;
+b1 = -x;
+*)
+
+
+variable tmp
+0.0 tmp !
+
+: exp 2 i>f swap powf ;
+: fx -2 i>>f pi f* fr fswap f/ 3000 i>>f f* f> exp ;
+: a0 fx 1 i>>f f- ;
+: b1 fx ;
+: LP a0 f* b1 tmp @ >f f* f+ f> dup tmp ! >f ;
+: HP dupf LP fswap f- ;
+
+
+: BassDrum
+
+    | 0.01 FConst 0.3 FConst Sr
+    0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch
+    |        1 IConst
+    55 IConst Osc
+    0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
+    Clamp 0.5 FConst Mul
+;
+
+: Noise frand ;
+: HiHat  Noise  | HP 0.1  FConst 0.3 FConst Sr Mul
+;
+create Instruments data:  ' HiHat , ' BassDrum , data;
+
+| : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
+: play1 ( token -- )  current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick
+	;; then 0.0 >f tick ;
+: play ( token -- )
+
+    0 current ! play1 f>
+    1 current ! play1
+|    0 >f 0
+    >f
+    f+ f>
+;
+
+: Add f+ ;
+
+| : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
+
+: sound
+    " test.wav" file:
+    >whdr
+    0 sample !
+    #samples 0
+    do
+	play
+	>f Out s>file
+	1 sample +!
+    loop
+    file;
+;
+
+
+: main
+    imports
+    reset
+    0 sample !
+
+|    " HiHat" find
+     sound
+    " play test.wav" >cstr system
+  |  0 exit
+;
+
+| save-image im.4ki
+| main
+
+| main

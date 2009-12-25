@@ -5,6 +5,8 @@ mark
 | ...
 4 #ithere !
 
+require" demos/robots/gl.4k"
+
 | Some needed constants
 100012 const GLU_FILL
 $1D00 const  GLU_FLAT
@@ -51,7 +53,6 @@ data;
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
 | This is sort of messy
-require" demos/robots/gl.4k"
 require" demos/robots/stack.4k"
 
 | Mutable time ;-)
@@ -159,16 +160,15 @@ data;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 
-: acam  F >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye
-    
-;
-: bcam  F >r 1.0  1.0 0  15.0 r> TT -50 i>>f  f* 30 i>>f f+ f> 0 eye ;
+: acam  F >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
+: bcam  0 400 i>f  400 i>f  10 i>f 400 i>f 400 i>f  eye ;
 : ccam 0 0 0 20.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
 300 ms Frame: f1 acam
 150 ms Frame: f2 bcam
 200 ms Frame: f3 ccam
 300 ms Frame: f4 acam
+
 
 Script: camera
 f1
@@ -313,7 +313,7 @@ drop ;
 |    GL_LIGHTING glEnable drop
     let-there-be-light
     Scene
-    Fade
+    time @ Fade
     update
 ;
 : render-loop

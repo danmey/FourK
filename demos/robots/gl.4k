@@ -5,6 +5,7 @@
 
 
 
+include" demos/robots/imph.4k"
 
 : i>>f i>f >f ;
 
@@ -58,7 +59,6 @@
     
 ;
 
-include" demos/robots/imph.4k"
 
 
 

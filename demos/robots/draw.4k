@@ -25,6 +25,17 @@ $1201 const GL_DIFFUSE
 $0B57 const GL_COLOR_MATERIAL
 $1202 const GL_SPECULAR
 $0B71 const GL_DEPTH_TEST
+$0007 const GL_QUADS
+$0BE2 const GL_BLEND
+$0BE1 const GL_BLEND_SRC
+$0BE0 const GL_BLEND_DST
+$1 const					GL_ONE
+$0 const					GL_ZERO
+$303 const			GL_ONE_MINUS_SRC_ALPHA
+$0302 const GL_SRC_ALPHA
+$0304 const				GL_DST_ALPHA
+$0308 const			GL_SRC_ALPHA_SATURATE
+
 
 | Some colors (should be HSV)
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
@@ -86,12 +97,17 @@ require" demos/robots/camera.4k"
 
 create color1
 data:
-200 c, 128 c, 0 c,  c, 255 c,
+200 c, 128 c, 0  c, 128 c,
 data;
 
 create color2
 data:
-128 c, 200 c, 0 c,  c, 255 c,
+128 c, 200 c, 0  c, 128 c,
+data;
+
+create black
+data:
+0 c, 0 c, 0  c, 255 c,
 data;
 
 
@@ -143,8 +159,10 @@ data;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 
-: acam dup . >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
-: bcam dup . >r 1.0  1.0 0  15.0 r> TT -50 i>>f  f* 30 i>>f f+ f> 0 eye ;
+: acam  F >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye
+    
+;
+: bcam  F >r 1.0  1.0 0  15.0 r> TT -50 i>>f  f* 30 i>>f f+ f> 0 eye ;
 : ccam 0 0 0 20.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
 300 ms Frame: f1 acam
@@ -251,6 +269,33 @@ drop ;
  |  End
 ;
 
+
+: Fade
+    GL_BLEND glEnable drop
+    GL_DEPTH_TEST glDisable drop
+    GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA glBlendFunc drop
+    GL_MODELVIEW glMatrixMode drop
+    glPushMatrix drop
+    glLoadIdentity drop
+    GL_PROJECTION glMatrixMode drop
+    glPushMatrix drop
+    glLoadIdentity drop
+    GL_QUADS glBegin drop
+    black 3 + !
+    black glColor4ubv drop
+
+    -1 -1 -1 glVertex3i drop
+    -1 1 -1  glVertex3i drop
+    -1 1 1   glVertex3i drop
+    -1 -1 1   glVertex3i drop
+    glEnd drop
+    glPopMatrix drop
+    GL_MODELVIEW glMatrixMode drop
+    glPopMatrix drop
+    GL_DEPTH_TEST glEnable drop
+    GL_BLEND glDisable drop
+;
+
 : clear
     0 0.0 0 0 glClearColor drop
     GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
@@ -266,9 +311,9 @@ drop ;
     camera
     proj
 |    GL_LIGHTING glEnable drop
-
     let-there-be-light
     Scene
+    Fade
     update
 ;
 : render-loop

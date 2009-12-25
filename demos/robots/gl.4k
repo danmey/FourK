@@ -51,6 +51,11 @@
     libglut " gluDisk"  7 hdl
     libGL " glScalef"  3 hdl
     libglut " gluSphere"              5 hdl
+    libGL " glBegin" 1 hdl
+    libGL " glEnd" 0 hdl
+    libGL " glVertex3i" 3 hdl
+    libGL " glBlendFunc" 2 hdl
+    
 ;
 
 include" demos/robots/imph.4k"

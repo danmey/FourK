@@ -30,3 +30,9 @@
 31 ccall: gluDisk 
 32 ccall: glScalef 
 33 ccall: gluSphere
+34 ccall: glBegin
+35 ccall: glEnd
+36 ccall: glVertex3i
+37 ccall: glBlendFunc
+
+

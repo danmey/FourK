@@ -339,6 +339,7 @@ drop ;
 ;
 
 : main
+|    0 if 
     4 #ithere !
     0 time !
     color1 Color
@@ -349,11 +350,12 @@ drop ;
     Default
     render-loop
     SDL_Quit drop
-   a-sound
+|	a-sound
+|	then
 |    bye
 |    cylinder @ .
 ;
-| save-image im.4ki
+save-image im.4ki
 
 | main
 

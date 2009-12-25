@@ -68,10 +68,17 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	mov	%esp,%ebx
 	sub	$4096,%ebx
 	mov	$next_word,%ebp
-	mov	%al,ex_bytecode
-	movb	$-1,(ex_bytecode+1)
-	mov	$(ex_bytecode-1),%eax
-	
+	movl	$ ex_bytecode,%ecx
+	cmp	$ PREFIX_TOKEN, %eax
+	jb	1f
+	movb	$ PREFIX_TOKEN, (%ecx)
+	inc	%ecx
+	sub	$ PREFIX_TOKEN,%eax
+1:	
+	movb	%al,(%ecx)
+	inc	%ecx
+	movb	$-1,(%ecx)
+	mov     $(ex_bytecode-1),%eax
 	jmp	runbyte
 dlopen_s:	.asciz "dlopen"
 msg3:			.ASCIZ "%s\n"

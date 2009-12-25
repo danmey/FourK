@@ -54,6 +54,8 @@ create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
 | This is sort of messy
 require" demos/robots/stack.4k"
+require" demos/robots/synth.4k"
+
 
 | Mutable time ;-)
 variable time
@@ -325,6 +327,16 @@ drop ;
 	render
     again
 ;
+: a-sound
+|    imports
+    reset
+    0 sample !
+
+|    " HiHat" find
+     sound
+    " play test.wav" >cstr system
+  |  0 exit
+;
 
 : main
     4 #ithere !
@@ -337,10 +349,11 @@ drop ;
     Default
     render-loop
     SDL_Quit drop
+   a-sound
 |    bye
 |    cylinder @ .
 ;
-save-image im.4ki
+| save-image im.4ki
 
 | main
 

@@ -79,7 +79,7 @@ msg3:			.ASCIZ "%s\n"
 ccall_tab:
 	.LONG dlopen,8
 	.LONG dlsym,8
-	.FILL 256-16
+	.FILL 512-16
 
 ################################################################################
 # Build the dispatch table

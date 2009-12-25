@@ -516,7 +516,8 @@ module Words = struct
 			  match op with
 			    | Prefix   (i,v) -> acc @ [i;v] 
 			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
-			    | Opcode i       -> acc @ [i]
+			    | Opcode i when i >= 253 -> Printf.printf "pref: %d\n" i; acc @ [253; i-250]
+			    | Opcode i               -> acc @ [i]
 			    | Label i   -> acc
 			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]
       			    | Branch i  ->  acc @ [2;List.assoc i labels - t-1]) [] pass0
@@ -615,8 +616,8 @@ module FourkImage = struct
     let word_sec = Image.find_section image "words" in
       Words.words (word_sec,name_sec)
 
-    let stripped_sections =  ["interpret";"name";"dsptch";"semantic";] 
-(*    let stripped_sections =  [] *)
+(*    let stripped_sections =  ["interpret";"name";"dsptch";"semantic";]  *)
+    let stripped_sections =  [] 
 (* 92 *)
   let strip image =
   (*  let secs = List.fold_left (fun acc i -> List.filter (fun x -> not (i = x.Image.name)) acc) image.Image.sections removed_sections in *)

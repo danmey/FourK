@@ -34,5 +34,12 @@
 35 ccall: glEnd
 36 ccall: glVertex3i
 37 ccall: glBlendFunc
+38 ccall: fwrite
+39 ccall: fopen
+40 ccall: fclose
+41 ccall: rand
+42 ccall: powf
+43 ccall: system
+45 ccall: exit
 
 

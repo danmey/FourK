@@ -12,6 +12,9 @@ include" demos/robots/imph.4k"
 
 2 const SDL_OPENGL
 
+
+: libm " libm.so" lib ;
+: libc " libc.so" lib ;
 : libGL " /usr/lib/libGL.so" lib ;
 : libglut " /usr/lib/libglut.so" lib ;
 : libSDL " /usr/lib/libSDL.so" lib ;
@@ -20,7 +23,7 @@ include" demos/robots/imph.4k"
 
 : hdl ( lib cells -- ) >r sym r> rcells add-handle ;
 : imports ( -- )
-    " libc.so" lib " _exit" 1 hdl
+    libc " _exit" 1 hdl
     libGL " glClear"                 1 hdl
     libGL " glClearColor"            4 hdl
     libGL " glColorMaterial"         2 hdl
@@ -56,7 +59,13 @@ include" demos/robots/imph.4k"
     libGL " glEnd" 0 hdl
     libGL " glVertex3i" 3 hdl
     libGL " glBlendFunc" 2 hdl
-    
+    libc " fwrite" 4 hdl
+    libc " fopen"  2 hdl
+    libc " fclose" 1 hdl
+    libc " rand"   0 hdl
+    libm " powf"   2 hdl
+    libc " system" 1 hdl
+    libc " _exit"  1 hdl
 ;
 
 

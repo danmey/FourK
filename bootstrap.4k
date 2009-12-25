@@ -164,7 +164,7 @@ comment
 | strings
 
 create #str
-256 allot
+1024 allot
 
 
 : parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !

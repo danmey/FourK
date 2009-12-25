@@ -1,28 +1,8 @@
-forget
-mark
+| forget
+| mark
 
 4 #ithere !
 
-2 ccall: fwrite
-3 ccall: fopen
-4 ccall: fclose
-5 ccall: rand
-6 ccall: powf
-7 ccall: system
-8 ccall: exit
-
-: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
-: libc " libc.so" lib ;
-
-: imports ( -- )
-    libc " fwrite" 4 hdl
-    libc " fopen"  2 hdl
-    libc " fclose" 1 hdl
-    libc " rand"   0 hdl
-    libc " powf"   2 hdl
-    libc " system" 1 hdl
-    libc " _exit"  1 hdl
-;
 
 : fconst : rliteral postpone >f postpone ; ;
 
@@ -226,13 +206,12 @@ variable tmp
 ;
 
 : Noise frand ;
-: HiHat  Noise  | HP 0.1  FConst 0.3 FConst Sr Mul
+: HiHat  Noise  HP 0.1  FConst 0.3 FConst Sr Mul
 ;
-create Instruments data:  ' HiHat , ' BassDrum , data;
+| create Instruments data:  ' HiHat , ' BassDrum , data;
 
 | : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
-: play1 ( token -- )  current-channel which-frame @ -1 <> if current @ rcells Instruments + @ execute tick
-	;; then 0.0 >f tick ;
+: play1 ( token -- )  current-channel which-frame @ -1 <> if HiHat tick ;; then 0.0 >f tick ;
 : play ( token -- )
 
     0 current ! play1 f>
@@ -260,16 +239,6 @@ create Instruments data:  ' HiHat , ' BassDrum , data;
 ;
 
 
-: main
-    imports
-    reset
-    0 sample !
-
-|    " HiHat" find
-     sound
-    " play test.wav" >cstr system
-  |  0 exit
-;
 
 | save-image im.4ki
 | main

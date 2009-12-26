@@ -146,8 +146,8 @@ data;
 : Tile 4 Tess 50 Cylinder ;
 : Floor
     p1 p1 Join
-    8 0 do
-	8 0 do
+    7 0 do
+	7 0 do
 	    Begin i j + 1 and 0= if 4 color1 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
 	loop
     loop
@@ -189,8 +189,9 @@ data;
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 : dupf f> dup >f >f ;
 
-: Fader FF @ TT dupf 1000 i>>f f* f> f>i Fade ;
 : Linear ( a b -- rf ) FF @ TT i>>f f* i>>f f+ f> ;
+: Linear/ FF @ TT i>>f fswap f/ i>>f f+ f> ;
+: Fader 1 50 Linear f>i Fade ;
 : Up
     3>f
     up-vec 2 rcells + !
@@ -199,10 +200,17 @@ data;
 ;
 
 : UpCamera
-    FF @ .
-    1 X Up
-     1.0 1.0 0 15.0 0 30 -10 Linear eye ;
+|    1 X Up
+    1.0 1.0 0 15.0 0 30 -10 Linear eye
+|    Fader
 ;
+
+: T-Camera
+    1 X Up
+    1.0 1.0 0
+    10.0 
+    20 0 Linear 0 eye ;
+
 
 : acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
 : ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
@@ -211,7 +219,7 @@ data;
 0 first !
 
 
-10 s Frame: f1 UpCamera
+10 s Frame: f1 T-Camera
 200 ms Frame: f3 ccam
 300 ms Frame: f4 acam
 
@@ -252,6 +260,9 @@ f1
     p3 p1 Join 0 Top 4 Bottom 16 Height Prim
 ;
 
+: Queen
+    Base
+;
 
 : Rook
     Base 
@@ -264,53 +275,26 @@ f1
 : Scene
     finit
     Begin
-	|	16 50 Cylinder p1 p2 Join 16 50 Cylinder
-	 Floor
+	Floor
 	7 0 do
 	    Begin
 		100 Y By
 		i 100 * X By
-		| Base | p3 p2 Join | T 100.0 >f f* 180.0 >f f+ f> FRotX Arm p3 p1 Join 90 RotY 30 RotX Arm p3 p1 Join 90 RotY 30 RotX Arm
 		Pawn
 	    End
 	    Begin	
 		700 Y By
 		i 100 * X By
-
-|		Pawn
 		End
 	    loop
-	    Begin 200 X By Bishop End
-	    Begin 700 X By Bishop End
-	    Begin 100 X By Knight End
-	    Begin 700 X By Knight End
-	    Begin 0 X By Rook End
-	    Begin 700 X By Rook End
-		    
-|	 Base p1 p3 Join Arms
-|	100 20 Arm
-	|	Floor
-	|	20 Scale 4 Tess 64 128 Cylinder
-|	 90 RotX
-	| 80 8
-|	Base p1 p3 Join Arm
+	Begin 0 X By Rook End
+	Begin 100 X By Knight End
+	Begin 200 X By Bishop End
+	Begin 300 X By Queen End	
+	Begin 500 X By Bishop End
+	Begin 600 X By Knight End
+	Begin 700 X By Rook End
     End
-|	Begin
-|	-200 Y By
-|	-64 X By
- |      	10 0
-  |     	do
-|	    64 128 32 Cylinder
-|	    Begin
-|		Begin p3 p1 Join  45 RotY 64 32 Cylinder End
-|		Begin p3 p1 Join -45 RotY 64 32 Cylinder End
-|		Begin p1 p1 Join  135 RotY 64 32 Cylinder End
-|	        Begin p1 p1 Join -135 RotY 64 32 Cylinder End
- |      	    End
-  |          128 X By
-   |    	    36 RotZ
-|	loop
- |  End
 ;
 
 
@@ -357,15 +341,16 @@ f1
 \ ;
 
 : main
+    
     |    0 if
     4 #ithere !
-    0 time !
     color1 Color
     finit
     imports
     SDL_GetTicks time !
     video
     init
+    Init-Cam
     Default
     render-loop
     SDL_Quit drop
@@ -374,8 +359,10 @@ f1
 |    bye
 |    cylinder @ .
 ;
-save-image im.4ki
+| save-image im.4ki
 
-| main
+| : main
+|    main main
+| ;
 
 | main

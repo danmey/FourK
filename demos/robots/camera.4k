@@ -1,29 +1,28 @@
 | No time left for does> :(
 variable escape
 variable first
-cr
-cr
-0 first !
--1 escape !
+
 variable FF
 variable #f
 variable #cf
-0 FF !
-0 #f !
-0 #cf !
+: Init-Cam
+    0 first !
+    -1 escape !
+    0 FF !
+    0 #f !
+    0 #cf !
+;
 
 | swap F swap - first @ +  FF
-| it used to be done in `smart' way i am sure you can have it in 5 lines
+| it used to be done in `smart' way i am sure you can have it in 5 lines ;)
 : check FF @ > if FF @ F + FF ! -1 else #cf 1+! 0 FF ! 0 then #cf @ #f @ = #f 1+! ;
 : Frame:  ( len -- )  : rliteral postpone check postpone if ' compile postpone then postpone ;  ;
-: Script: : -1 literal postpone escape postpone !
+: Script:
+    | Compile our shit
+    : -1 literal postpone escape postpone !
     0 literal postpone #f postpone !
+    | Skip trailing so we are still compiling more stuff into it
 ;
-| : Script; postpone drop postpone ; ; immediate
-
-| : check dup rot + F > escape @ and ;
-| : Frame: ( len -- )  : rliteral postpone check postpone if ' compile 0 literal postpone escape postpone ! postpone then postpone ; ;
-| : Script: : 0 literal -1 literal postpone escape postpone !  ;
 
 
 : s 1000 * ;

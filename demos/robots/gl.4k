@@ -59,6 +59,7 @@ include" demos/robots/imph.4k"
     libGL " glEnd" 0 hdl
     libGL " glVertex3i" 3 hdl
     libGL " glBlendFunc" 2 hdl
+    libSDL " SDL_GetTicks" 0 hdl
     libc " fwrite" 4 hdl
     libc " fopen"  2 hdl
     libc " fclose" 1 hdl
@@ -67,9 +68,6 @@ include" demos/robots/imph.4k"
     libc " system" 1 hdl
     libc " _exit"  1 hdl
 ;
-
-
-
 
 \ some constants
  800 const width

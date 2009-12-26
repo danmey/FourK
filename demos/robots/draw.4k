@@ -54,12 +54,12 @@ create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
 | This is sort of messy
 require" demos/robots/stack.4k"
-require" demos/robots/synth.4k"
+| require" demos/robots/synth.4k"
 
 
 | Mutable time ;-)
 variable time
-: F time @ ;
+: F SDL_GetTicks time @ - ;
 
 | Camera neaty-cutie stuff
 require" demos/robots/camera.4k"
@@ -68,8 +68,8 @@ require" demos/robots/camera.4k"
 : init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
 
 | Simulate time flow
-: T 250 i>>f time @ i>>f f/ ;
-: TT >r 250 i>>f r> i>>f f/ ;
+: T 1000 i>>f F i>>f f/ ;
+: TT >r 1000 i>>f r> i>>f f/ ;
 
 | some conv word
 : i>d i>f f>d ;
@@ -79,7 +79,7 @@ require" demos/robots/camera.4k"
     >r >r >r >r >r >r
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
-    1.0  f>d 0.0 f>d 0.0 f>d
+    0.0  f>d 1.0 f>d 0.0 f>d
     r> f>d r>  f>d r> f>d
     | T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
      r> f>d r> f>d r> f>d gluLookAt drop
@@ -162,22 +162,22 @@ data;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
 
-: acam  F >r 1.0  1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
-: bcam  0 400 i>f  400 i>f  10 i>f 400 i>f 400 i>f  eye ;
-: ccam 0 0 0 20.0 T fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
+: UpCamera FF @ >r 0 0 0 r> TT -100 i>>f f* 100 i>>f f+ f> 0 0 eye ;
+: acam FF @ >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
+: ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
+| : ccam FF @ dup . TT 0 0 0 20.0  fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
-300 ms Frame: f1 acam
-150 ms Frame: f2 bcam
+0 first !
+
+300 ms Frame: f1 UpCamera
 200 ms Frame: f3 ccam
 300 ms Frame: f4 acam
 
 
 Script: camera
 f1
-f2
 f3
-f4
-drop ;
+;
 
 : Base
     8 40 Cylinder
@@ -210,6 +210,7 @@ drop ;
     Begin p1 p1 Join 48 Height 24 Scale 6 Top 12 Bottom 90 RotZ 90 RotY 4 Tess Prim End
     p3 p1 Join 0 Top 4 Bottom 16 Height Prim
 ;
+
 
 : Rook
     Base 
@@ -308,14 +309,14 @@ drop ;
 ;
 
 : render
-    time @ 1+ time !
+    | time @ 1+ time !
     clear
     camera
     proj
 |    GL_LIGHTING glEnable drop
     let-there-be-light
     Scene
-    time @ Fade
+    | time @ Fade
     update
 ;
 : render-loop
@@ -325,26 +326,28 @@ drop ;
 	    event e>type Keydown = if event e>key Esc = if ;; then then
 	then
 	render
+|	SDL_GetTicks .
     again
 ;
-: a-sound
-|    imports
-    reset
-    0 sample !
+\ : a-sound
+\ |    imports
+\     reset
+\     0 sample !
 
-|    " HiHat" find
-     sound
-    " play test.wav" >cstr system
-  |  0 exit
-;
+\ |    " HiHat" find
+\      sound
+\     " play test.wav" >cstr system
+\   |  0 exit
+\ ;
 
 : main
-|    0 if 
+    |    0 if
     4 #ithere !
     0 time !
     color1 Color
     finit
     imports
+    SDL_GetTicks time !
     video
     init
     Default
@@ -352,10 +355,11 @@ drop ;
     SDL_Quit drop
  |   a-sound
 |	then
-    bye
+|    bye
 |    cylinder @ .
 ;
 save-image im.4ki
 
 | main
 
+main

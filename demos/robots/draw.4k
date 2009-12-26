@@ -43,7 +43,7 @@ $0308 const			GL_SRC_ALPHA_SATURATE
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
 create light_pos data: 1.0 , 0.0 , 0.0 , 10.0 , data;
 1203 const GL_POSITION
-
+create up-vec data: 0.0 , 1.0 , 0.0 , data;
 
 create solid
 data:
@@ -59,7 +59,7 @@ require" demos/robots/stack.4k"
 
 | Mutable time ;-)
 variable time
-: F SDL_GetTicks time @ - ;
+: F SDL_GetTicks dup time @ - swap time ! ;
 
 | Camera neaty-cutie stuff
 require" demos/robots/camera.4k"
@@ -79,7 +79,9 @@ require" demos/robots/camera.4k"
     >r >r >r >r >r >r
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
-    0.0  f>d 1.0 f>d 0.0 f>d
+    up-vec 2 rcells + @ f>d
+    up-vec 1 rcells + @ f>d
+    up-vec 0 rcells + @ f>d
     r> f>d r>  f>d r> f>d
     | T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
      r> f>d r> f>d r> f>d gluLookAt drop
@@ -159,24 +161,63 @@ data;
     \ : Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
 : Arm Smaller Pivot p2 p1 Join 90 RotY 128 Height 20 Arm0 p3 p2 Join Bigger Pivot ;
 
+: Fade
+    GL_BLEND glEnable drop
+    GL_DEPTH_TEST glDisable drop
+    GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA glBlendFunc drop
+    GL_MODELVIEW glMatrixMode drop
+    glPushMatrix drop
+    glLoadIdentity drop
+    GL_PROJECTION glMatrixMode drop
+    glPushMatrix drop
+    glLoadIdentity drop
+    GL_QUADS glBegin drop
+    black 3 + !
+    black glColor4ubv drop
+    -1 -1 -1 glVertex3i drop
+    -1 1 -1  glVertex3i drop
+    -1 1 1   glVertex3i drop
+    -1 -1 1   glVertex3i drop
+    glEnd drop
+    glPopMatrix drop
+    GL_MODELVIEW glMatrixMode drop
+    glPopMatrix drop
+    GL_DEPTH_TEST glEnable drop
+    GL_BLEND glDisable drop
+;
 
 : Arms Arm p1 p2 Join 90 RotX Arm ;
+: dupf f> dup >f >f ;
 
-: UpCamera FF @ >r 0 0 0 r> TT -100 i>>f f* 100 i>>f f+ f> 0 0 eye ;
-: acam FF @ >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
+: Fader FF @ TT dupf 1000 i>>f f* f> f>i Fade ;
+: Linear ( a b -- rf ) FF @ TT i>>f f* i>>f f+ f> ;
+: Up
+    3>f
+    up-vec 2 rcells + !
+    up-vec 1 rcells + !
+    up-vec 0 rcells + !
+;
+
+: UpCamera
+    FF @ .
+    1 X Up
+     1.0 1.0 0 15.0 0 30 -10 Linear eye ;
+;
+
+: acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
 : ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
 | : ccam FF @ dup . TT 0 0 0 20.0  fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
 0 first !
 
-300 ms Frame: f1 UpCamera
+
+10 s Frame: f1 UpCamera
 200 ms Frame: f3 ccam
 300 ms Frame: f4 acam
 
 
 Script: camera
 f1
-f3
 ;
 
 : Base
@@ -273,31 +314,6 @@ f3
 ;
 
 
-: Fade
-    GL_BLEND glEnable drop
-    GL_DEPTH_TEST glDisable drop
-    GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA glBlendFunc drop
-    GL_MODELVIEW glMatrixMode drop
-    glPushMatrix drop
-    glLoadIdentity drop
-    GL_PROJECTION glMatrixMode drop
-    glPushMatrix drop
-    glLoadIdentity drop
-    GL_QUADS glBegin drop
-    black 3 + !
-    black glColor4ubv drop
-
-    -1 -1 -1 glVertex3i drop
-    -1 1 -1  glVertex3i drop
-    -1 1 1   glVertex3i drop
-    -1 -1 1   glVertex3i drop
-    glEnd drop
-    glPopMatrix drop
-    GL_MODELVIEW glMatrixMode drop
-    glPopMatrix drop
-    GL_DEPTH_TEST glEnable drop
-    GL_BLEND glDisable drop
-;
 
 : clear
     0 0.0 0 0 glClearColor drop
@@ -311,11 +327,11 @@ f3
 : render
     | time @ 1+ time !
     clear
-    camera
     proj
 |    GL_LIGHTING glEnable drop
     let-there-be-light
     Scene
+    camera
     | time @ Fade
     update
 ;
@@ -362,4 +378,4 @@ save-image im.4ki
 
 | main
 
-main
+| main

@@ -37,9 +37,13 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	jmp 	entry_point
 	mov	$0,	%ebx
 	push	%ebx
+	ifdef([PARTY],,[
+		K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+	])
 	call	init_imports
+	ifdef([PARTY],[
 	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-
+	])
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
@@ -94,9 +98,21 @@ ccall_tab:
 # Out:
 
 build_dispatch:
+
 	mov	$dsptch, %edi	#load destination table of dwords
 	mov	$_words_start, %esi	#begining of the dictionary
 .loop:
+	mov	%edi,%eax
+	sub	$dsptch, %eax
+	shr	$2,%eax
+	cmp	$253,%eax
+	jb	.ok
+	cmp	$255,%eax
+	ja	.ok
+	xor	%eax,%eax
+	stosl
+	jmp	.loop
+.ok:
 	xor	%eax,%eax	#clear out eax
 	lodsb
 	mov	%eax,%ecx
@@ -107,6 +123,7 @@ build_dispatch:
 	mov	%esi,%eax	#load pointer to word
 	dec	%eax
 	stosl			#store the pointer to word in %edi
+
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .loop2:

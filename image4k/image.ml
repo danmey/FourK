@@ -162,12 +162,15 @@ module Image = struct
 	    let rva = BinaryArray.get_dword array (40 + Int32.to_int phdr) in
 	    let entry_offset = Int32.sub entry_point rva in
 	    let sec_tab_ptr_offset = Int32.sub entry_offset (Int32.of_int 4) in
-	    let sec_tab_offset = BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in
+            let sec_tab_offset = BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in
+(*	    let sec_tab_offset = (BinaryArray.get_dword array 4096) in (*BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in *) *)
 	    let section_tab_offset = Int32.to_int (Int32.sub sec_tab_offset rva) in
 	      Printf.printf "Entry point: %lx\n" entry_point;
-	      Printf.printf "Entry offset: %lx\n" rva;
-	      Printf.printf "Section tab offset: %lx\n" sec_tab_ptr_offset;
-	      Int32.to_int entry_offset-4, section_tab_offset
+	      Printf.printf "Entry offset: %lx\n" entry_offset;
+	      Printf.printf "Section tab offset: %x\n" section_tab_offset;
+             Int32.to_int entry_offset-4, section_tab_offset
+(*
+	      4096, 0xf326 (*section_tab_offset*) *)
 	  end
 	else 0, Int32.to_int (BinaryArray.get_dword array 0)
       in
@@ -207,8 +210,8 @@ module Image = struct
 	       let o = image_start + ofs' in
 		 if len > 0 && o >= 0 then
 		   begin
-		     Printf.printf "%s:: %x\n" name ofs;
-		     let  sec_im = Array.sub array o len in
+		     Printf.printf "%s:: %d\n" name o;
+		     let sec_im = Array.sub array o len in
 		       ofs,name, (let s =
 				    { offset   = o;
 				      name     = name';
@@ -384,7 +387,7 @@ module Words = struct
 	  | []      -> Core (Array.make 0 0)
 
     let make_word i (o,l) word_arr name code =
-      { name   =name;
+      { name   = name;
         index  = i  ;
 	offset = o  ;
 	len    = l  ;
@@ -396,10 +399,7 @@ module Words = struct
 
 
     let words (code_sec,name_sec) =
-
       let word_image = Image.to_list code_sec in
-
-
       let rec offsets lst =
 	let rec drop_bytecode n = function
 	  | [] -> [],n
@@ -497,6 +497,7 @@ module Words = struct
       (List.fold_left (fun (i,acc) bc ->
 			 match bc with
 			   | Prefix32 (opc,v) ->  i+5, acc @ [i, bc]
+			   | Opcode opc when opc >= 253 -> i+2, acc @ [i, bc]
 			   | Opcode opc       ->  i+1, acc @ [i, bc] 
 			   | Prefix   (opc,v) ->  i+2, acc @ [i, bc]
 			   | Branch ofs       ->  i+2, acc @ [i, bc]
@@ -532,11 +533,17 @@ module Words = struct
 	  loop ((String.length str)-1) []
       in
 	ignore(List.fold_left
-	  (fun i w ->
+	  (fun (i,ofs) w ->
 	     let str = explode w.name in
 	     let arr = Array.make 32 0 in
 	       ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
-	       Array.blit arr 0 sec.Image.image (32*w.index) 32; i+1) 0 w)
+	       if i = 253 then
+		 let arr' = Array.make (3*32) 0 in
+		   Array.blit arr' 0 sec.Image.image (32*253) (3*32); 
+		   Array.blit arr 0 sec.Image.image (32*256) 32;
+		    257,3
+	       else
+		 (Array.blit arr 0 sec.Image.image (32*(w.index+ofs)) 32; (i+1,ofs))) (0,0) w)
 	  in
     let rec emit_words i =
       function
@@ -586,14 +593,14 @@ module Words = struct
 	(fun (i,w) ->
 	   match w.code with
 	     | Core _ -> i,w
-	     | Bytecode b -> i, { w with code=Bytecode (loop b) }) words in
+	     | Bytecode b -> i, { w with code=Bytecode (loop b) } ) words in
 	  
 	let words' = List.map
-	(fun  (i,w) ->
-	   w.index <- i;
-	 words_ar.(i) <- w; w) words' in
-	  
-	  List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs+w.len+1,{w with offset = ofs}::acc) (0,[]) words'))
+	  (fun  (i,w) ->
+	     w.index <- i;
+	     words_ar.(i) <- w; w) words' 
+	in
+	  List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs + w.len + 1, { w with offset = ofs }::acc) (0,[]) words'))
     in
 
     let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in

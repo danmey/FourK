@@ -350,9 +350,9 @@ drop ;
     Default
     render-loop
     SDL_Quit drop
-|	a-sound
+ |   a-sound
 |	then
-|    bye
+    bye
 |    cylinder @ .
 ;
 save-image im.4ki

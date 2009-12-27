@@ -95,15 +95,15 @@ variable #cmove
 0 #cmove !
 create Moves
 data:
-3 c, 1 c, 3 c, 3 c,
-3 c, 7 c, 3 c, 5 c,
-
+4 c, 1 c, 4 c, 3 c,
+4 c, 6 c, 4 c, 4 c,
+3 c, 0 c, 6 c, 3 c,
 data;
 : move #cf @ 4 * Moves + ;
 : from dup c@ swap 1+ c@ ;
 : to 2 + from ;
 
-: place-checker move from place@ move to place! ;
+: place-checker move from place@ move to place! 0 move from place! ;
 
 | Camera neaty-cutie stuff
 require" demos/robots/camera.4k"
@@ -331,8 +331,8 @@ data;
 : nip swap drop ;
 : Mover
     0 >r >r 0 >r >r
-    i 100 * 20 move to drop move from drop  - * Linear f>i X By
-    j 100 * 20 move to nip move from nip - * Linear f>i Y By
+    i 100 * 33 move to drop move from drop  - * Linear f>i X By
+    j 100 * 33 move to nip move from nip - * Linear f>i Y By
     i j place@ Draw
     r> r> r> r> drop drop drop
 ;
@@ -393,17 +393,24 @@ data;
     End
 ;
 
-
-: T-Camera
-    1 X Up
+: BaseCamera
+    >r >r 1 X Up
     0.0 1.0 1.0
     20.0 
-    -30 10 Linear 0 eye
+    r> r> Linear 0 eye
     Scene
 ;
 
+: WhitesCamera
+    -30 12 BaseCamera
+;
+: BlacksCamera
+    30 -12 BaseCamera
+;
 
-5 s Frame: f1 T-Camera
+
+3 s Frame: f1 WhitesCamera
+3 s Frame: f2 BlacksCamera
 | 200 ms Frame: f3 ccam
 | 300 ms Frame: f4 acam
 
@@ -412,7 +419,8 @@ data;
 Script: camera
 10 0
 do
-f1
+    f1
+    f2
 loop
     
  ;

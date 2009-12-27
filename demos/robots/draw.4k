@@ -143,9 +143,15 @@ data;
 
 : Cylinder Size Height Prim ;
 
-: Tile 4 Tess 50 Cylinder ;
-: Floor
-    p1 p1 Join
+: Tile 4 Tess 10 50 Cylinder ;
+: Table
+|    4 Tess 255 Cylinder
+;
+
+: Board
+    4 Tess 32 400 Cylinder
+    p3 p1 Join
+    -350 X By -350 Y By
     7 0 do
 	7 0 do
 	    Begin i j + 1 and 0= if 4 color1 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
@@ -208,7 +214,7 @@ data;
 : T-Camera
     1 X Up
     1.0 1.0 0
-    10.0 
+    20.0 
     20 0 Linear 0 eye ;
 
 
@@ -228,15 +234,15 @@ Script: camera
 f1
 ;
 
+
 : Base
-    8 40 Cylinder
-    p3 p1 Join
     16 32 Cylinder
     20 Height 32 Bottom 24 Top p3 p1 Join Prim
     16 Height 24 Bottom 14 Top p3 p1 Join Prim
     16 Height 14 Bottom 24 Top p3 p1 Join Prim
     p3 p1 Join 8 24 Cylinder
-;    
+;
+
 : Pawn
     Base
     p3 p1 Join 4 16 Cylinder
@@ -262,6 +268,14 @@ f1
 
 : Queen
     Base
+    4 0 do Begin i 72 * RotZ p3 p1 Join 30 RotX 64 Height 8 Bottom 4 Top Prim 10 Height color2 Color p3 p1 Join Sphere color1 Color End loop
+;
+
+: King Base 32 Height Sphere
+    color2 Color
+    64 Height 4 Tess 10 Size p3 p1 Join Prim
+    p2 p2 Join 90 RotY 64 Height 4 Tess 10 Size  Prim
+    color1 Color
 ;
 
 : Rook
@@ -275,7 +289,8 @@ f1
 : Scene
     finit
     Begin
-	Floor
+	Table
+	Board
 	7 0 do
 	    Begin
 		100 Y By
@@ -290,12 +305,23 @@ f1
 	Begin 0 X By Rook End
 	Begin 100 X By Knight End
 	Begin 200 X By Bishop End
-	Begin 300 X By Queen End	
+        Begin 300 X By Queen End
+	Begin 400 X By King End
 	Begin 500 X By Bishop End
 	Begin 600 X By Knight End
 	Begin 700 X By Rook End
     End
 ;
+
+: a 0 ;
+: b 1 ;
+: c 2 ;
+: d 3 ;
+: e 4 ;
+: f 6 ;
+: g 6 ;
+: h 7 ;
+
 
 
 

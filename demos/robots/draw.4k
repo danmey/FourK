@@ -144,9 +144,6 @@ data;
 : Cylinder Size Height Prim ;
 
 : Tile 4 Tess 10 50 Cylinder ;
-: Table
-|    4 Tess 255 Cylinder
-;
 
 : Board
     4 Tess 32 400 Cylinder
@@ -218,21 +215,19 @@ data;
     20 0 Linear 0 eye ;
 
 
-: acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
-: ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
+| : acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
+| : ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
 | : ccam FF @ dup . TT 0 0 0 20.0  fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
-
-0 first !
 
 
 10 s Frame: f1 T-Camera
-200 ms Frame: f3 ccam
-300 ms Frame: f4 acam
+| 200 ms Frame: f3 ccam
+| 300 ms Frame: f4 acam
 
 
-Script: camera
-f1
-;
+ Script: camera
+ f1
+ ;
 
 
 : Base
@@ -289,7 +284,6 @@ f1
 : Scene
     finit
     Begin
-	Table
 	Board
 	7 0 do
 	    Begin
@@ -312,17 +306,6 @@ f1
 	Begin 700 X By Rook End
     End
 ;
-
-: a 0 ;
-: b 1 ;
-: c 2 ;
-: d 3 ;
-: e 4 ;
-: f 6 ;
-: g 6 ;
-: h 7 ;
-
-
 
 
 : clear
@@ -380,15 +363,5 @@ f1
     Default
     render-loop
     SDL_Quit drop
- |   a-sound
-|	then
-|    bye
-|    cylinder @ .
 ;
-| save-image im.4ki
 
-| : main
-|    main main
-| ;
-
-| main

@@ -54,8 +54,30 @@ data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
+create board 8 8 * allot
+
 variable BlacksColor
 variable WhitesColor
+
+: place 8 * + board + ;
+: place! place c! ;
+: place@ place c@ ;
+: black $8 or ;
+: reset-board
+    7 0 do 7 0 do 0 i j place! loop loop
+    7 0 do 1 i 1 place! 1 black i 6 place! loop
+    3 0 do
+	i 2 + i 0 place!
+	i 2 black + i 7 place!
+	i 2 black + 7 i - 7 place!
+	i 2 + dup 5 = if drop 6 then 7 i - 0 place!
+	i 2 black + dup 5 = if drop 6 then 7 i - 7 place!
+    loop
+;
+
+
+
+
 
 
 | This is sort of messy
@@ -66,6 +88,22 @@ require" demos/robots/stack.4k"
 | Mutable time ;-)
 variable time
 : F SDL_GetTicks dup time @ - swap time ! ;
+
+variable #cf
+
+variable #cmove
+0 #cmove !
+create Moves
+data:
+3 c, 1 c, 3 c, 3 c,
+3 c, 7 c, 3 c, 5 c,
+
+data;
+: move #cf @ 4 * Moves + ;
+: from dup c@ swap 1+ c@ ;
+: to 2 + from ;
+
+: place-checker move from place@ move to place! ;
 
 | Camera neaty-cutie stuff
 require" demos/robots/camera.4k"
@@ -212,29 +250,10 @@ data;
 |    Fader
 ;
 
-: T-Camera
-    1 X Up
-    0.0 1.0 1.0
-    20.0 
-    -30 10 Linear 0 eye
-;
 
 
-| : acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
-| : ccam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f  f* 30 i>>f f+ f> eye ;
-| : ccam FF @ dup . TT 0 0 0 20.0  fsincos 12 i>>f f* f> 12 i>>f f* f> eye ;
 
-
-10 s Frame: f1 T-Camera
-| 200 ms Frame: f3 ccam
-| 300 ms Frame: f4 acam
-
-
- Script: camera
- f1
- ;
-
-
+ 
 : Base
     16 32 Cylinder
     20 Height 32 Bottom 24 Top p3 p1 Join Prim
@@ -280,15 +299,65 @@ data;
 	WhitesColor @ Color
 ;
 
+
 : Rook
     Base 
 | More general loop would be needed here, temporary workaround
     4 4 2 do 16 Height dup 6 * Bottom dup 6 * 100 * 100 /  Top Prim  p3 p1 Join 1- loop
     10 Bottom 20 Top 20 Height Prim
 ;
+
+: SwapColors BlacksColor @ WhitesColor @ BlacksColor ! WhitesColor ! ;
+
+| this bit should be really done in different way but due to the current limitations in compiler it is not possible
+| do it in array (the words will be optimised out) and dispatch it
+| also didn't have much time to add `case of' construct
+
+: Draw ( n -- )
+    dup $8 and 0= 0= dup >r if SwapColors then
+    dup $7 and
+    WhitesColor @ Color
+    dup 1 = if Pawn then
+    dup 2 = if Rook then
+    dup 3 = if Knight then
+    dup 4 = if Bishop then
+    dup 5 = if Queen then
+    dup 6 = if King then
+    drop
+    r> if SwapColors then
+;
     
+
+: nip swap drop ;
+: Mover
+    0 >r >r 0 >r >r
+    i 100 * 20 move to drop move from drop  - * Linear f>i X By
+    j 100 * 20 move to nip move from nip - * Linear f>i Y By
+    i j place@ Draw
+    r> r> r> r> drop drop drop
+;
+
+: Checkers2
+    7 0 do
+	7 0 do
+	    Begin
+		finit
+		move from j = swap i = and
+		if
+		    i j Mover
+		else
+		    i 100 * X By
+		    j 100 * Y By
+		    i j place@ Draw
+		then
+		End
+	    loop
+	loop
+    ;
+
+
 : Checkers
-    	7 0 do
+    7 0 do
 	    Begin
 		100 Y By
 		i 100 * X By
@@ -309,7 +378,6 @@ data;
 	Begin 700 X By Rook End
 	;
 
-: SwapColors BlacksColor @ WhitesColor @ BlacksColor ! WhitesColor ! ;
 : Scene
     finit
     Begin
@@ -317,14 +385,37 @@ data;
 	p3 p1 Join 
 	Board
 	WhitesColor @ Color
-	Checkers
-	SwapColors
+	Checkers2
+|	SwapColors
 	WhitesColor @ Color
-	700 Y By 700 X By 180 RotZ Checkers
-	SwapColors
+|	700 Y By 700 X By 180 RotZ Checkers
+|	SwapColors
     End
 ;
 
+
+: T-Camera
+    1 X Up
+    0.0 1.0 1.0
+    20.0 
+    -30 10 Linear 0 eye
+    Scene
+;
+
+
+5 s Frame: f1 T-Camera
+| 200 ms Frame: f3 ccam
+| 300 ms Frame: f4 acam
+
+
+
+Script: camera
+10 0
+do
+f1
+loop
+    
+ ;
 
 : clear
     0 0.0 0 0 glClearColor drop
@@ -341,7 +432,7 @@ data;
     proj
 |    GL_LIGHTING glEnable drop
     let-there-be-light
-    Scene
+|    Scene
     camera
     | time @ Fade
     update
@@ -370,7 +461,8 @@ data;
 : main
 color4 BlacksColor !
 color2 WhitesColor !
-    
+    reset-board
+
     |    0 if
     4 #ithere !
     WhitesColor @ Color

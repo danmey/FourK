@@ -41,13 +41,15 @@ $0308 const			GL_SRC_ALPHA_SATURATE
 
 | Some colors (should be HSV)
 create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
+create light_s data: 0.0 , 0.0 , 0.0 , 1.0 , data;
+
 create light_pos data: 1.0 , 0.0 , 0.0 , 10.0 , data;
 1203 const GL_POSITION
 create up-vec data: 0.0 , 1.0 , 0.0 , data;
 
 create solid
 data:
-0.94 , 0.5 , 0.0 , 1.0 ,
+1.0 , 1.0 , 1.0 , 1.0 ,
 data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
@@ -108,12 +110,23 @@ require" demos/robots/camera.4k"
 
 create color1
 data:
-200 c, 128 c, 0  c, 128 c,
+| 200 c, 128 c, 0  c, 128 c,
+0 c, 0 c, 0  c, 0 c,
+data;
+
+create color4
+data:
+160 c, 80 c, 0  c, 128 c,
 data;
 
 create color2
 data:
-128 c, 200 c, 0  c, 128 c,
+200 c, 200 c, 200  c, 128 c,
+data;
+
+create color3
+data:
+60 c, 150 c, 30  c, 0 c,
 data;
 
 create black
@@ -136,39 +149,25 @@ data;
     24 Scale 4 Tess dup Bottom 100 * 150 / Top Prim
 ;
 
-: Pivot-0 Height Size Prim ;
-: Smaller 12 40 ;
-: Bigger 18 44 ;
-: Side 16 4 ;
-: Pivot
-    90 RotY
-    Pivot-0
-    Begin p3 p1 Join Side Pivot-0 End
-    Begin p1 p3 Join Side Pivot-0 End
-;
-
 : Cylinder Size Height Prim ;
 
 : Tile 4 Tess 10 50 Cylinder ;
 
 : Board
+    color1 Color
     4 Tess 32 400 Cylinder
     p3 p1 Join
     -350 X By -350 Y By
     7 0 do
 	7 0 do
-	    Begin i j + 1 and 0= if 4 WhitesColor @ else 8 BlacksColor @ then Color 100 j * X By 100 i * Y By Tile End
+	    Begin i j + 1 and 0= if 4 color4 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
 	loop
     loop
 ;
 
+: Table color3 Color 20 Tess 32 800 Cylinder ;
     
 \ | finit clear 3 6 5 eye  Base p3 p1 Join -30 RotY 16 8 Cylinder update
-: Base0 0 3 0 do p3 p1 Join 16 50 Cylinder 16 Z By loop drop ;
-: Base1 114 32 Cylinder ;
-: Base Begin WhitesColor @ Color Base0 End BlacksColor @  Color p1 p1 Join Base1 ;
-    \ : Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
-: Arm Smaller Pivot p2 p1 Join 90 RotY 128 Height 20 Arm0 p3 p2 Join Bigger Pivot ;
 
 : Fade
     GL_BLEND glEnable drop
@@ -195,7 +194,6 @@ data;
     GL_BLEND glDisable drop
 ;
 
-: Arms Arm p1 p2 Join 90 RotX Arm ;
 : dupf f> dup >f >f ;
 
 : Linear ( a b -- rf ) FF @ TT i>>f f* i>>f f+ f> ;
@@ -270,14 +268,16 @@ data;
 
 : Queen
     Base
-    4 0 do Begin i 72 * RotZ p3 p1 Join 30 RotX 64 Height 8 Bottom 4 Top Prim 10 Height BlacksColor @ Color p3 p1 Join Sphere WhitesColor @ Color End loop
+    4 0 do Begin i 72 * RotZ p3 p1 Join 30 RotX 64 Height 8 Bottom 4 Top Prim 10 Height WhitesColor @ Color p3 p1 Join Sphere BlacksColor @ Color End loop
+	WhitesColor @ Color
 ;
 
-: King Base 32 Height Sphere
+: King
+    Base 32 Height Sphere
     BlacksColor @ Color
     64 Height 4 Tess 10 Size p3 p1 Join Prim
     p2 p2 Join 90 RotY 64 Height 4 Tess 10 Size  Prim
-    WhitesColor @ Color
+	WhitesColor @ Color
 ;
 
 : Rook
@@ -313,9 +313,13 @@ data;
 : Scene
     finit
     Begin
+	Table
+	p3 p1 Join 
 	Board
+	WhitesColor @ Color
 	Checkers
 	SwapColors
+	WhitesColor @ Color
 	700 Y By 700 X By 180 RotZ Checkers
 	SwapColors
     End
@@ -362,10 +366,10 @@ data;
 \     " play test.wav" >cstr system
 \   |  0 exit
 \ ;
-    color2 BlacksColor !
-    color1 WhitesColor !
 
 : main
+color4 BlacksColor !
+color2 WhitesColor !
     
     |    0 if
     4 #ithere !

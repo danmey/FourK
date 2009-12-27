@@ -75,6 +75,7 @@ variable disc
     GL_SMOOTH glShadeModel drop
     | GL_FLAT glShadeModel drop
     light GL_DIFFUSE GL_LIGHT1 glLightfv drop
+    light_s GL_SPECULAR GL_LIGHT1 glLightfv drop
     light_pos GL_POSITION GL_LIGHT1 glLightfv drop
     GL_COLOR_MATERIAL glEnable drop
     GL_NORMALIZE glEnable drop
@@ -104,13 +105,13 @@ variable disc
      GLU_FILL cylinder @ gluQuadricDrawStyle drop
      
      | GLU_SMOOTH cylinder @ gluQuadricNormals drop
-    | |	GLU_INSIDE disc @ gluQuadricOrientation drop
+    | GLU_INSIDE disc @ gluQuadricOrientation drop
     
-	2
-	tess @
-	bottom w>fixup>d
-	0 f>d
-	disc @ gluDisk drop
+     2
+     tess @
+     bottom w>fixup>d
+     0 f>d
+     disc @ gluDisk drop
 	
 	height @w>d f> 0 0 glTranslatef drop
      2 tess @ top    w>fixup>d 0 f>d disc @ gluDisk drop

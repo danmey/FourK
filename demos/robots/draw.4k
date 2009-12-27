@@ -71,7 +71,7 @@ variable WhitesColor
 	i 2 black + i 7 place!
 	i 2 black + 7 i - 7 place!
 	i 2 + dup 5 = if drop 6 then 7 i - 0 place!
-	i 2 black + dup 5 = if drop 6 then 7 i - 7 place!
+	i 2 + dup 5 = if drop 6 then black  7 i - 7 place!
     loop
 ;
 
@@ -97,7 +97,22 @@ create Moves
 data:
 4 c, 1 c, 4 c, 3 c,
 4 c, 6 c, 4 c, 4 c,
-3 c, 0 c, 6 c, 3 c,
+
+5 c, 0 c, 2 c, 3 c,
+3 c, 6 c, 3 c, 5 c,
+
+3 c, 0 c, 7 c, 4 c,
+2 c, 7 c, 7 c, 2 c,
+
+|
+5 c, 6 c, 5 c, 10 c,
+7 c, 4 c, 5 c, 6 c,
+
+2 c, 7 c, 7 c, 2 c,
+
+
+
+
 data;
 : move #cf @ 4 * Moves + ;
 : from dup c@ swap 1+ c@ ;
@@ -399,13 +414,17 @@ data;
     20.0 
     r> r> Linear 0 eye
     Scene
+    Fader
 ;
 
 : WhitesCamera
-    -30 12 BaseCamera
+       -30 12 BaseCamera
+|      -15 0 BaseCamera
 ;
 : BlacksCamera
-    30 -12 BaseCamera
+     30 -12 BaseCamera
+|    -15 0 BaseCamera
+|        0 0 BaseCamera
 ;
 
 
@@ -485,4 +504,4 @@ color2 WhitesColor !
     SDL_Quit drop
 ;
 
-: a main main ;
+| : a main main ;

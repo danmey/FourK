@@ -52,6 +52,10 @@ data;
 
 create solid2 data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
+variable BlacksColor
+variable WhitesColor
+
+
 | This is sort of messy
 require" demos/robots/stack.4k"
 | require" demos/robots/synth.4k"
@@ -65,7 +69,9 @@ variable time
 require" demos/robots/camera.4k"
 
 | our construction
-: init gluNewQuadric cylinder ! gluNewQuadric disc ! ;
+: init gluNewQuadric cylinder ! gluNewQuadric disc !
+
+;
 
 | Simulate time flow
 : T 1000 i>>f F i>>f f/ ;
@@ -151,7 +157,7 @@ data;
     -350 X By -350 Y By
     7 0 do
 	7 0 do
-	    Begin i j + 1 and 0= if 4 color1 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
+	    Begin i j + 1 and 0= if 4 WhitesColor @ else 8 BlacksColor @ then Color 100 j * X By 100 i * Y By Tile End
 	loop
     loop
 ;
@@ -160,7 +166,7 @@ data;
 \ | finit clear 3 6 5 eye  Base p3 p1 Join -30 RotY 16 8 Cylinder update
 : Base0 0 3 0 do p3 p1 Join 16 50 Cylinder 16 Z By loop drop ;
 : Base1 114 32 Cylinder ;
-: Base Begin color1 Color Base0 End color2 Color p1 p1 Join Base1 ;
+: Base Begin WhitesColor @ Color Base0 End BlacksColor @  Color p1 p1 Join Base1 ;
     \ : Arms Begin 180 RotY Arm p1 p2 Join Arm End  ;
 : Arm Smaller Pivot p2 p1 Join 90 RotY 128 Height 20 Arm0 p3 p2 Join Bigger Pivot ;
 
@@ -210,9 +216,10 @@ data;
 
 : T-Camera
     1 X Up
-    1.0 1.0 0
+    0.0 1.0 1.0
     20.0 
-    20 0 Linear 0 eye ;
+    -30 10 Linear 0 eye
+;
 
 
 | : acam FF @  >r 1.0 1.0 0 15.0 0 r> TT -50 i>>f f* 30 i>>f f+ f> eye ;
@@ -263,14 +270,14 @@ data;
 
 : Queen
     Base
-    4 0 do Begin i 72 * RotZ p3 p1 Join 30 RotX 64 Height 8 Bottom 4 Top Prim 10 Height color2 Color p3 p1 Join Sphere color1 Color End loop
+    4 0 do Begin i 72 * RotZ p3 p1 Join 30 RotX 64 Height 8 Bottom 4 Top Prim 10 Height BlacksColor @ Color p3 p1 Join Sphere WhitesColor @ Color End loop
 ;
 
 : King Base 32 Height Sphere
-    color2 Color
+    BlacksColor @ Color
     64 Height 4 Tess 10 Size p3 p1 Join Prim
     p2 p2 Join 90 RotY 64 Height 4 Tess 10 Size  Prim
-    color1 Color
+    WhitesColor @ Color
 ;
 
 : Rook
@@ -280,12 +287,8 @@ data;
     10 Bottom 20 Top 20 Height Prim
 ;
     
-
-: Scene
-    finit
-    Begin
-	Board
-	7 0 do
+: Checkers
+    	7 0 do
 	    Begin
 		100 Y By
 		i 100 * X By
@@ -304,6 +307,17 @@ data;
 	Begin 500 X By Bishop End
 	Begin 600 X By Knight End
 	Begin 700 X By Rook End
+	;
+
+: SwapColors BlacksColor @ WhitesColor @ BlacksColor ! WhitesColor ! ;
+: Scene
+    finit
+    Begin
+	Board
+	Checkers
+	SwapColors
+	700 Y By 700 X By 180 RotZ Checkers
+	SwapColors
     End
 ;
 
@@ -348,12 +362,14 @@ data;
 \     " play test.wav" >cstr system
 \   |  0 exit
 \ ;
+    color2 BlacksColor !
+    color1 WhitesColor !
 
 : main
     
     |    0 if
     4 #ithere !
-    color1 Color
+    WhitesColor @ Color
     finit
     imports
     SDL_GetTicks time !
@@ -365,3 +381,4 @@ data;
     SDL_Quit drop
 ;
 
+: a main main ;

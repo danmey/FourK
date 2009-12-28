@@ -102,17 +102,6 @@ build_dispatch:
 	mov	$dsptch, %edi	#load destination table of dwords
 	mov	$_words_start, %esi	#begining of the dictionary
 .loop:
-#	mov	%edi,%eax
-#	sub	$dsptch, %eax
-#	shr	$2,%eax
-#	cmp	$253,%eax
-#	jb	.ok
-#	cmp	$255,%eax
-#	ja	.ok
-#	xor	%eax,%eax
-#	stosl
-#	jmp	.loop
-.ok:
 	xor	%eax,%eax	#clear out eax
 	lodsb
 	mov	%eax,%ecx
@@ -127,6 +116,16 @@ build_dispatch:
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .loop2:
+## 	mov	%edi,%eax	
+## 	sub	$dsptch, %eax
+## 	shr	$2,%eax
+## 	cmp	$253, %eax
+## 	jne	.ok
+## 	xor	%eax,%eax
+## #	stosl
+## #	stosl
+## #	stosl
+## .ok:
 	xor	%eax,%eax
 	lodsb
 .user_dictionary:

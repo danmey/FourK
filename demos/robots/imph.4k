@@ -35,6 +35,10 @@
 36 ccall: glVertex3i
 37 ccall: glBlendFunc
 38 ccall: SDL_GetTicks
+39 ccall: malloc
+40 ccall: open
+41 ccall: ioctl
+42 ccall: write
 
 | 38 ccall: fwrite
 | 39 ccall: fopen

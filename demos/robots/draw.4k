@@ -6,6 +6,7 @@ mark
 4 #ithere !
 
 require" demos/robots/gl.4k"
+require" demos/robots/synth-oss.4k"
 
 | Some needed constants
 100012 const GLU_FILL
@@ -252,6 +253,7 @@ data;
 : Linear ( a b -- rf ) FF @ TT i>>f f* i>>f f+ f> ;
 : Linear/ FF @ TT i>>f fswap f/ i>>f f+ f> ;
 : Fader 1 50 Linear f>i Fade ;
+
 : Up
     3>f
     up-vec 2 rcells + !
@@ -325,9 +327,8 @@ data;
 : SwapColors BlacksColor @ WhitesColor @ BlacksColor ! WhitesColor ! ;
 
 | this bit should be really done in different way but due to the current limitations in compiler it is not possible
-| do it in array (the words will be optimised out) and dispatch it
+| do it in array (words will be optimised out) and dispatch it
 | also didn't have much time to add `case of' construct
-
 : Draw ( n -- )
     dup $8 and 0= 0= dup >r if SwapColors then
     dup $7 and
@@ -341,7 +342,7 @@ data;
     drop
     r> if SwapColors then
 ;
-    
+
 
 : nip swap drop ;
 : Mover
@@ -427,21 +428,29 @@ data;
 |        0 0 BaseCamera
 ;
 
+: LastCamera
+     0 0 BaseCamera
+;
+
 
 3 s Frame: f1 WhitesCamera
 3 s Frame: f2 BlacksCamera
+10 s Frame: f3 LastCamera
+10 s Frame: f4 LastCamera
+
 | 200 ms Frame: f3 ccam
 | 300 ms Frame: f4 acam
 
 
 
 Script: camera
-10 0
+2 0
 do
     f1
     f2
 loop
-    
+f3
+f4
  ;
 
 : clear
@@ -455,6 +464,7 @@ loop
 
 : render
     | time @ 1+ time !
+    render-noise
     clear
     proj
 |    GL_LIGHTING glEnable drop
@@ -489,19 +499,19 @@ loop
 color4 BlacksColor !
 color2 WhitesColor !
     reset-board
-
     |    0 if
     4 #ithere !
     WhitesColor @ Color
     finit
     imports
+    init-synth
     SDL_GetTicks time !
     video
     init
     Init-Cam
     Default
-    render-loop
-    SDL_Quit drop
+	render-loop
+    bye
 ;
 
 | : a main main ;

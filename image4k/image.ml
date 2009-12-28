@@ -517,7 +517,7 @@ module Words = struct
 			  match op with
 			    | Prefix   (i,v) -> acc @ [i;v] 
 			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
-			    | Opcode i when i >= 253 -> Printf.printf "pref: %d\n" i; acc @ [253; i-250]
+			    | Opcode i when i >= 253 -> Printf.printf "pref: %d\n" i; acc @ [253; i-253]
 			    | Opcode i               -> acc @ [i]
 			    | Label i   -> acc
 			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]

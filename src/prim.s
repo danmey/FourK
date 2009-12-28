@@ -538,8 +538,9 @@ DEF_CODE(exit,";;")
 	pop	%esi
 END_CODE
 DEF_CODE(bye, "bye")
-	pushl	$_exit2
-	ret
+	movl $1,%eax
+	xor %ebx,%ebx	
+	int $128	
 END_CODE
 
 DEF_CODE(cback, "cback")

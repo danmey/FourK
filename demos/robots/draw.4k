@@ -4,9 +4,9 @@ mark
 
 | ...
 4 #ithere !
+: fswap f> f> swap >f >f ;
 
 require" demos/robots/gl.4k"
-require" demos/robots/synth-oss.4k"
 
 | Some needed constants
 100012 const GLU_FILL
@@ -59,13 +59,15 @@ create board 8 8 * allot
 
 variable BlacksColor
 variable WhitesColor
-
+variable #checkers-visible
+variable #checker
 : place 8 * + board + ;
-: place! place c! ;
+: place! #checker @ #checkers-visible @ < if place c! then #checker 1+! ;
 : place@ place c@ ;
 : black $8 or ;
 : reset-board
-    7 0 do 7 0 do 0 i j place! loop loop
+    0 #checker !
+    7 0 do 7 0 do 0 i j place c! loop loop
     7 0 do 1 i 1 place! 1 black i 6 place! loop
     3 0 do
 	i 2 + i 0 place!
@@ -94,28 +96,87 @@ variable #cf
 
 variable #cmove
 0 #cmove !
+| Moves
 create Moves
 data:
+\ 4 c, 1 c, 4 c, 3 c,
+\ 4 c, 6 c, 4 c, 4 c,
+
+\ 5 c, 0 c, 2 c, 3 c,
+\ 3 c, 6 c, 3 c, 5 c,
+
+\ 3 c, 0 c, 7 c, 4 c,
+\ 2 c, 7 c, 6 c, 3 c,
+
+\ |
+\ 5 c, 6 c, 5 c, 1 c,
+\ 7 c, 4 c, 5 c, 6 c,
+
+\ 2 c, 7 c, 7 c, 2 c,
+| 6 c, 0 c, 5 c, 2 c,
+| 3 c, 6 c, 3 c, 4 c,
 4 c, 1 c, 4 c, 3 c,
-4 c, 6 c, 4 c, 4 c,
+2 c, 6 c, 2 c, 5 c,
 
-5 c, 0 c, 2 c, 3 c,
-3 c, 6 c, 3 c, 5 c,
+3 c, 1 c, 3 c, 3 c,
+3 c, 6 c, 3 c, 4 c,
 
-3 c, 0 c, 7 c, 4 c,
-2 c, 7 c, 7 c, 2 c,
+1 c, 0 c, 2 c, 2 c,
+3 c, 4 c, 4 c, 3 c,
 
-|
-5 c, 6 c, 5 c, 10 c,
-7 c, 4 c, 5 c, 6 c,
+2 c, 2 c, 4 c, 3 c,
+1 c, 7 c, 1 c, 5 c,
 
-2 c, 7 c, 7 c, 2 c,
+4 c, 3 c, 6 c, 4 c,
+6 c, 7 c, 5 c, 5 c,
 
+5 c, 0 c, 3 c, 2 c, 
+4 c, 6 c, 4 c, 5 c,
 
+6 c, 0 c, 5 c, 2 c,
+7 c, 6 c, 7 c, 6 c,
 
+6 c, 4 c, 4 c, 3 c,
+3 c, 7 c, 4 c, 6 c,
+
+4 c, 0 c, 6 c, 0 c,
+7 c, 0 c, 5 c, 0 c,
+5 c, 6 c, 4 c, 5 c,
+
+3 c, 2 c, 6 c, 5 c,
+4 c, 7 c, 3 c, 7 c,
+
+2 c, 0 c, 5 c, 3 c,
+1 c, 6 c, 1 c, 4 c,
+
+0 c, 1 c, 0 c, 3 c,
+2 c, 7 c, 1 c, 6 c,
+
+5 c, 0 c, 4 c, 0 c,
+5 c, 5 c, 4 c, 3 c,
+
+5 c, 3 c, 6 c, 2 c,
+3 c, 7 c, 2 c, 7 c,
+
+0 c, 3 c, 1 c, 4 c,
+2 c, 5 c, 1 c, 4 c,
+
+3 c, 0 c, 3 c, 2 c,
+1 c, 6 c, 2 c, 5 c,
+
+6 c, 5 c, 5 c, 4 c,
+4 c, 5 c, 5 c, 4 c,
+
+4 c, 0 c, 4 c, 6 c,
+5 c, 7 c, 4 c, 6 c,
+
+2 c, 1 c, 2 c, 3 c,
 
 data;
-: move #cf @ 4 * Moves + ;
+variable #move
+0 #move !
+
+: move #move @ 4 * Moves + ;
 : from dup c@ swap 1+ c@ ;
 : to 2 + from ;
 
@@ -132,6 +193,8 @@ require" demos/robots/camera.4k"
 | Simulate time flow
 : T 1000 i>>f F i>>f f/ ;
 : TT >r 1000 i>>f r> i>>f f/ ;
+
+| require" demos/robots/synth-oss.4k"
 
 | some conv word
 : i>d i>f f>d ;
@@ -158,7 +221,7 @@ require" demos/robots/camera.4k"
 : proj
     GL_PROJECTION glMatrixMode drop
     glLoadIdentity drop
-    1000.0 f>d 1.1 f>d 0.66 f>d -0.66 f>d 1.00 f>d -1.00 f>d glFrustum drop
+    1000.0 f>d 1.1 f>d 0.5625 f>d -0.5625 f>d 1.00 f>d -1.00 f>d glFrustum drop
     GL_MODELVIEW glMatrixMode drop
 ;   
 
@@ -207,16 +270,27 @@ data;
 
 : Tile 4 Tess 10 50 Cylinder ;
 
+variable board-rot
+: RotB 3 = if board-rot @  FRotX then  ;
+    
 : Board
     color1 Color
     4 Tess 32 400 Cylinder
     p3 p1 Join
     -350 X By -350 Y By
-    7 0 do
+    Begin
+	
 	7 0 do
-	    Begin i j + 1 and 0= if 4 color4 else 8 color2 then Color 100 j * X By 100 i * Y By Tile End
-	loop
+	    i 0 = if board-rot @  FRotX then 
+	    7 0 do
+		Begin
+		    i j + 1 and 0= if 4 color4 else 8 color2 then Color 100 i * X By Tile
+		    End
+		loop
+		100 Y By
+		i RotB
     loop
+    End
 ;
 
 : Table color3 Color 20 Tess 32 800 Cylinder ;
@@ -252,8 +326,8 @@ data;
 
 : Linear ( a b -- rf ) FF @ TT i>>f f* i>>f f+ f> ;
 : Linear/ FF @ TT i>>f fswap f/ i>>f f+ f> ;
-: Fader 1 50 Linear f>i Fade ;
-
+: Fader 1 150 Linear f>i dup 255 <= if Fade then ;
+: FaderOut 100 -15 Linear f>i dup 0 >= if Fade then ;
 : Up
     3>f
     up-vec 2 rcells + !
@@ -345,22 +419,34 @@ data;
 
 
 : nip swap drop ;
+: Follow
+     >r
+    100 * 25 move to drop move from drop  - * Linear f>i
+    r> 100 * 25 move to nip move from nip - * Linear f>i
+    swap
+;
+
+variable checker-x
+variable checker-y
+variable checkers-visible
+1 checkers-visible !
 : Mover
     0 >r >r 0 >r >r
-    i 100 * 33 move to drop move from drop  - * Linear f>i X By
-    j 100 * 33 move to nip move from nip - * Linear f>i Y By
+    i j Follow 2dup checker-x ! checker-y ! X By Y By
     i j place@ Draw
     r> r> r> r> drop drop drop
 ;
 
-: Checkers2
+-1 game-play !
+: Checkers
+    checkers-visible @ 0= if ;; then
     7 0 do
 	7 0 do
 	    Begin
 		finit
-		move from j = swap i = and
+		move from j = swap i = and game-play @ and
 		if
-		    i j Mover
+		    i j Mover 
 		else
 		    i 100 * X By
 		    j 100 * Y By
@@ -371,87 +457,80 @@ data;
 	loop
     ;
 
-
-: Checkers
-    7 0 do
-	    Begin
-		100 Y By
-		i 100 * X By
-		Pawn
-	    End
-	    Begin	
-		700 Y By
-		i 100 * X By
-		End
-	    loop
-	Begin 0 X By Rook End
-	Begin 100 X By Knight End
-	Begin 200 X By Bishop End
-        Begin 300 X By Queen End
-	Begin 400 X By King End
-	Begin 500 X By Bishop End
-	Begin 600 X By Knight End
-	Begin 700 X By Rook End
-	;
-
 : Scene
     finit
     Begin
 	Table
 	p3 p1 Join 
-	Board
+	 Board
 	WhitesColor @ Color
-	Checkers2
-|	SwapColors
-	WhitesColor @ Color
-|	700 Y By 700 X By 180 RotZ Checkers
-|	SwapColors
+	Checkers
     End
 ;
 
 : BaseCamera
-    >r >r 1 X Up
-    0.0 1.0 1.0
-    20.0 
-    r> r> Linear 0 eye
+    >r >r
+    1 X Up
+    0.0 1.0 1.0 | checker-y @  i>f dup .f cr checker-x @ i>f dup .f cr cr
+    20.0 r> r> Linear 0 eye
     Scene
     Fader
 ;
 
 : WhitesCamera
-       -30 12 BaseCamera
+    -30 4 BaseCamera
+    0 6 Linear f>i  #checkers-visible ! reset-board
 |      -15 0 BaseCamera
 ;
 : BlacksCamera
-     30 -12 BaseCamera
+     30 -12 BaseCamera Fader
 |    -15 0 BaseCamera
 |        0 0 BaseCamera
 ;
 
-: LastCamera
-     0 0 BaseCamera
+: WMoveCamera
+    -1 game-play !
+     30 -12 BaseCamera Fader
 ;
 
+: BMoveCamera
+    -1 game-play !
+     -30 12 BaseCamera Fader
+;
 
-3 s Frame: f1 WhitesCamera
-3 s Frame: f2 BlacksCamera
-10 s Frame: f3 LastCamera
-10 s Frame: f4 LastCamera
+: LookCamera 200 #checkers-visible ! reset-board -30 4 BaseCamera Fader ;
 
-| 200 ms Frame: f3 ccam
-| 300 ms Frame: f4 acam
+: StandCamera
+      0 board-rot ! 0 0 BaseCamera Fader
+;
 
+: IntroCamera FF @ 1000000 > if 0 FF ! then 180 -30 Linear dup 0 >= if board-rot ! then 30 0 BaseCamera
+ ;
+
+ 6 s Frame: f0 IntroCamera
+ 2 s Frame: f01 StandCamera
+10 s Frame: f1 WhitesCamera
+4 s Frame: f2 BlacksCamera
+ 12 s Frame: f3 LookCamera
+ 4 s Frame: f5 WMoveCamera
+ 4 s Frame: f6 BMoveCamera
+| 10 s Frame: f3 LastCamera
+| 10 s Frame: f4 LastCamera
 
 
 Script: camera
-2 0
-do
-    f1
-    f2
-loop
-f3
-f4
- ;
+ f0
+ f01
+ f2
+ f1
+ f3
+  30 0
+  do
+    f5
+    f6
+  loop
+  f2
+;
 
 : clear
     0 0.0 0 0 glClearColor drop
@@ -463,17 +542,13 @@ f4
 ;
 
 : render
-    | time @ 1+ time !
-    render-noise
     clear
     proj
-|    GL_LIGHTING glEnable drop
     let-there-be-light
-|    Scene
     camera
-    | time @ Fade
     update
 ;
+
 : render-loop
     begin
 	event SDL_PollEvent 0= invert
@@ -481,37 +556,32 @@ f4
 	    event e>type Keydown = if event e>key Esc = if ;; then then
 	then
 	render
-|	SDL_GetTicks .
     again
 ;
-\ : a-sound
-\ |    imports
-\     reset
-\     0 sample !
 
-\ |    " HiHat" find
-\      sound
-\     " play test.wav" >cstr system
-\   |  0 exit
-\ ;
+    0 FF !
 
 : main
-color4 BlacksColor !
-color2 WhitesColor !
-    reset-board
-    |    0 if
+    color4 BlacksColor !
+    color2 WhitesColor !
+    
+    0 game-play !
     4 #ithere !
     WhitesColor @ Color
     finit
     imports
-    init-synth
     SDL_GetTicks time !
     video
     init
     Init-Cam
     Default
-	render-loop
+    0 #checkers-visible !
+|    200 #checkers-visible !
+
+|    -1 game-play !
+    reset-board
+    render-loop
+    SDL_Quit drop
     bye
 ;
 
-| : a main main ;

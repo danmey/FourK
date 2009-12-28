@@ -40,9 +40,13 @@
 41 ccall: ioctl
 42 ccall: write
 
-| 38 ccall: fwrite
-| 39 ccall: fopen
-| 40 ccall: fclose
+43 ccall: fopen
+44 ccall: fwrite
+45 ccall: fclose
+ 46 ccall: rand
+ 47 ccall: powf
+ 48 ccall: system
+
 | 41 ccall: rand
 | 42 ccall: powf
 | 43 ccall: system

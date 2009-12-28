@@ -4,6 +4,8 @@ variable first
 
 variable FF
 variable #f
+variable game-play
+0 game-play !
 : Init-Cam
     0 first !
     -1 escape !
@@ -14,7 +16,7 @@ variable #f
 
 | swap F swap - first @ +  FF
 | it used to be done in `smart' way i am sure you can have it in 5 lines ;)
-: check FF @ > if FF @ F + FF ! -1 else place-checker #cf 1+! 0 FF ! 0 then #cf @ #f @ = #f 1+! ;
+: check #cf @ #f @ = dup >r if FF @ > if FF @ F  + FF ! else game-play @ if place-checker #move 1+! then #cf 1+! 0 FF ! then then #f 1+! r> ;
 : Frame:  ( len -- )  : rliteral postpone check postpone if ' compile postpone then postpone ; ;
 : Script:
     | Compile our shit

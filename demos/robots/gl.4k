@@ -11,6 +11,8 @@ include" demos/robots/imph.4k"
 
 
 2 const SDL_OPENGL
+ $40000000	const SDL_DOUBLEBUF	
+ $80000000	const SDL_FULLSCREEN	
 
 
 : libm " libm.so" lib ;
@@ -64,12 +66,17 @@ include" demos/robots/imph.4k"
     libc " open" 3 hdl
     libc " ioctl"  3 hdl
     libc " write"  3 hdl
-
+    libc " fopen" 2 hdl
+    libc " fwrite" 4 hdl
+    libc " fclose" 1 hdl
+    libc " rand" 0 hdl
+    libm " powf" 2 hdl
+    libc " system" 1 hdl
 ;
 
 \ some constants
- 800 const width
- 600 const height
+ 1280 const width
+ 720 const height
  32  const bpp
 | bpp 8 / const point
 
@@ -90,7 +97,7 @@ create event 20 cells allot
 create pallete 256 rcells allot
 
 \ set the video mode
-: video SDL_OPENGL bpp height width SDL_SetVideoMode ;
+: video SDL_OPENGL SDL_FULLSCREEN or bpp height width SDL_SetVideoMode ;
 
 
 | : main

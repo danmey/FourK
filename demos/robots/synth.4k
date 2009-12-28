@@ -1,5 +1,4 @@
-| forget
-| mark
+forget mark
 
 4 #ithere !
 
@@ -200,7 +199,7 @@ variable tmp
     | 0.01 FConst 0.3 FConst Sr
     0.02 FConst 0.2 FConst Sr 0.005 FConst Mul Pitch
     |        1 IConst
-    55 IConst Osc
+    65.4064 FConst Osc
     0.02 FConst 0.2 FConst Sr 2 IConst Mul Mul
     Clamp 0.5 FConst Mul
 ;
@@ -222,6 +221,7 @@ variable tmp
 ;
 
 : Add f+ ;
+
 
 | : Chorus 440 IConst SimpleOsc 220 IConst SimpleOsc Add 100 IConst SimpleOsc 200 Add IConst SimpleOsc Add 0.25 FConst Mul ;
 

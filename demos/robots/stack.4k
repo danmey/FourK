@@ -22,7 +22,6 @@ variable disc
 : X 0 0 rot ;
 : Y 0 swap 0 ;
 : Z 0 0 ;
-: fswap f> f> swap >f >f ;
 
 : w>d i>>f 32 i>>f fswap f/ ;
 : w>d> w>d f> ;

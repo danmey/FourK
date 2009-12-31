@@ -82,12 +82,6 @@ define([END_DICT],
 	.FILL DICT_SIZE
 	.equ NCORE_WORDS, CORE_COUNT
 	
-	.align 4
-
-	undivert(3)
-	SECTION(there)
-	there:
-       	.FILL 8192
 
 	SECTION(name)
 	ntab:
@@ -104,5 +98,10 @@ define([END_DICT],
 	undivert(2)
         semantic_end:
        .FILL 8*MAX_WORDS*4
+	.align 4
+	undivert(3)
+	SECTION(there)
+	there:
+       	.FILL 8192
 ])
 

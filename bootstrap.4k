@@ -374,11 +374,13 @@ variable #ithere
 : in ( -- ) + ;
 : new ( str c -- ) 
   1+ #section @ th table in 
-  dup :pointer there @ swap ! #section 1+! copy 
+    dup :pointer there @ imbase @ - dup . swap ! #section 1+! copy
+    0 #section @ th table in !
 ;
 : forall ( -- max min ) #section @ 0 ; 
 
-: dump ( -- ) forall do i th table in dup count type cr loop ;
+: dump ( -- )  forall do i th table in dup dup count type :pointer space . cr loop  ;
+
 : mark ( -- )  here @ there @ 
   " *marker*" make rliteral rliteral postpone ; 
 ; immediate
@@ -411,4 +413,5 @@ variable #ithere
 | section data
 | 64 allot
 
+| dump
 

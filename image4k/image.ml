@@ -148,44 +148,29 @@ module Image = struct
       done;
       close_in file;
 
-      let image_start,sec_tab_ofs =
+      let section_tab_offset =
 	if
 	  array.(0)    = 0x7F
 	  && array.(1) = int_of_char 'E'
 	  && array.(2) = int_of_char 'L'
 	  && array.(3) = int_of_char 'F'
 	then
-	  begin
-	    let entry_point  = BinaryArray.get_dword array 24 in
-	      Printf.printf "Entry: %lx\n" entry_point; (*08049004 *)
-	    let phdr = BinaryArray.get_dword array 28 in
-	    let rva = BinaryArray.get_dword array (40 + Int32.to_int phdr) in
-	    let entry_offset = Int32.sub entry_point rva in
-	    let sec_tab_ptr_offset = Int32.sub entry_offset (Int32.of_int 4) in
-            let sec_tab_offset = BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in
-(*	    let sec_tab_offset = (BinaryArray.get_dword array 4096) in (*BinaryArray.get_dword array (Int32.to_int sec_tab_ptr_offset) in *) *)
-	    let section_tab_offset = Int32.to_int (Int32.sub sec_tab_offset rva) in
+	  (* Parse ELF header etc.
+           *
+	   *)
+	  let entry_point  = BinaryArray.get_dword array 24 in
+	  let phdr = BinaryArray.get_dword array 28 in
+	  let rva = BinaryArray.get_dword array (40 + Int32.to_int phdr) in
+	  let entry_offset = Int32.sub entry_point rva in
+	  let section_table_addr_offset = Int32.to_int (Int32.sub entry_offset (Int32.of_int 4)) in
+	   let section_table_offset = Int32.to_int (Int32.sub (BinaryArray.get_dword array section_table_addr_offset) rva) in
 	      Printf.printf "Entry point: %lx\n" entry_point;
 	      Printf.printf "Entry offset: %lx\n" entry_offset;
-	      Printf.printf "Section tab offset: %x\n" section_tab_offset;
-             Int32.to_int entry_offset-4, section_tab_offset
-(*
-	      4096, 0xf326 (*section_tab_offset*) *)
-	  end
-	else 0, Int32.to_int (BinaryArray.get_dword array 0)
+	      Printf.printf "Section tab offset: %d\n" section_table_offset;
+	      section_table_offset
+	else 
+	  Int32.to_int (BinaryArray.get_dword array 0)
       in
-
-      let rec loop acc ofs =
-	let dw = BinaryArray.get_dword array ofs in
-	  if Int32.to_int dw = 0x1111
-	  then
-	    ofs+4,List.rev acc
-	  else
-	    begin
-	      loop ((Int32.to_int dw)::acc) (ofs+4)
-	    end
-      in
-      let ofs_next, sections = loop [] sec_tab_ofs in
 
       let rec strsz' acc i ofs =
 	let b = array.(i+ofs) in
@@ -194,38 +179,46 @@ module Image = struct
 	  else
 	    strsz' ((char_of_int b)::acc) (i+1) ofs in
 
-      let strsz = strsz' [] 0 in
+      let strsz ofs = snd (strsz' [] 0 ofs) in
+
       let rec loop acc ofs =
-	let ofs',n = strsz ofs in
-	  if n = "" then List.rev acc else
-	    loop (n::acc) ofs'
+	  if BinaryArray.get_dword array ofs <> Int32.zero then
+	    let dw = BinaryArray.get_dword array (ofs+28) in
+	    let nm = strsz ofs in
+	      loop ((Int32.to_int dw, nm)::acc) (ofs+32)
+	  else 
+	    acc
       in
-      let section_names = loop [] ofs_next in
-	Printf.printf "names: %d sections: %d\n" (List.length section_names) (List.length sections);
-	let combined = (List.combine sections section_names)@[Array.length array-image_start,""] in
+      let sections = List.rev (loop [] section_tab_offset) in
+	let rec loop prev_offs = 
+	  function
+	    | [] -> []
+	    | (offs, _)::xs -> (offs - prev_offs)::(loop offs xs)
+	in
+	let lst x = List.hd (List.rev x) in
+	let first_offset,_ = List.hd sections in
+	let section_lengths = (loop first_offset (List.tl sections)) @ [Array.length array - (fst (lst sections))] in
+	let scs offs len name =
+	  let sec_im = Array.sub array offs len in
+	    { offset   = offs;
+	      name     = name;
+	      len      = len;
+	      image    = sec_im;
+	      markers  = [];
+	      real_len = 0  } 
+	in
+	let sections = sections in
 	  print_endline "Sections:";
-	  let _,_,sections = List.fold_left
-	    (fun (ofs',name',acc) (ofs,name) ->
-	       let len = ofs-ofs'  in
-	       let o = image_start + ofs' in
-		 if len > 0 && o >= 0 then
-		   begin
-		     Printf.printf "%s:: %d\n" name o;
-		     let sec_im = Array.sub array o len in
-		       ofs,name, (let s =
-				    { offset   = o;
-				      name     = name';
-				      len      = len;
-				      image    = sec_im;
-				      markers  = [];
-				      real_len = 0  } in s::acc)
-		   end
-		 else ofs,name,acc
-	    ) (-image_start,"default",[]) combined
-
+	  let sections = List.fold_left
+	    (fun acc ((offs,name),len) ->
+	       Printf.printf "%s:: %d,%d\n" name offs len;
+	       let s = scs offs len name in
+		 s::acc
+	    ) [] (List.combine sections section_lengths)
 	  in
-	    {sections=List.rev sections; rva = Int32.zero}
-
+	  let default_section = scs 0 (List.hd sections).offset "default" in
+	  {sections=default_section:: (List.rev sections); rva = Int32.zero}
+  
   let find_marker image nm =
     let fm = List.find (fun (ofs,nm') -> nm' = nm) in
 	let sec = List.find

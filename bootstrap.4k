@@ -67,9 +67,9 @@ token : (:) token (:) ;
 : create token (create) ;
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
-variable #section
-0 #section !
 create table 16 32 * allot
+variable #section
+7 #section !
 
 
 : 2dup swap dup rot dup rot swap ;
@@ -358,15 +358,15 @@ variable #ithere
 (*
 	Sections, lenght 32 bytes 
 	----------------------
-	| string < 1-23 byte > + 1 Byte |
-	| offset < 4 byte >   | 
-	| pointer < 4 byte>  | 
-	----------------------
+	| string  < 1-23 byte > + 1 Byte |
+	| offset  < 4 byte >             | 
+	| pointer < 4 byte>              | 
+        ----------------------------------
 *)
-
 
 | Sections support
 32 const section
+: table stab @ ;
 : th section * ;
 : :pointer ( section -- adr-ptr ) section + rcell - ;
 : :offset ( section -- adr-offset ) :pointer rcell - ; 
@@ -377,7 +377,6 @@ variable #ithere
   dup :pointer there @ swap ! #section 1+! copy 
 ;
 : forall ( -- max min ) #section @ 0 ; 
-
 
 : dump ( -- ) forall do i th table in dup count type cr loop ;
 : mark ( -- )  here @ there @ 

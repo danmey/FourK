@@ -2,9 +2,10 @@ define([STD_DIVERT], [divert(0)])
 define([SECTION], [
  	.equ sec_$1, . - _image_start
  	divert(6)
- 	.LONG sec_$1
-	divert(7)
-	.ASCIZ "$1"
+	.ASCII "$1"
+	.FILL eval(24 - len($1))
+	.LONG 0	      # offset
+ 	.LONG sec_$1  # section offset
 	divert
 ])
 
@@ -197,9 +198,7 @@ define([ELF_CODE_END],
 [
 _section_tab:
 	undivert(6)
-	.long 0x1111
-	undivert(7)
-	.byte 0
+	.long 0x0
 ])
 define([ELF_DATA_END],
 [

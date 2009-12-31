@@ -568,6 +568,8 @@ DEF_VAR(here, here)
 DEF_VAR(there, there)
 DEF_VAR(ithere, ccall_tab)
 
+DEF_VAR(stab, _section_tab)
+DEF_VAR(imbase, _image_start)
 DEF_VAR(base,10)
 DEF_VAR(state, 1)
 DEF_VAR(last, [NCORE_WORDS])

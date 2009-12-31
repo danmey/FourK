@@ -169,7 +169,7 @@ module Image = struct
 	      Printf.printf "Section tab offset: %d\n" section_table_offset;
 	      section_table_offset,(Int32.to_int entry_offset)-4
 	else 
-	  Int32.to_int (BinaryArray.get_dword array 0),-4
+	  Int32.to_int (BinaryArray.get_dword array 0),0
       in
 
       let rec strsz' acc i ofs =
@@ -185,6 +185,7 @@ module Image = struct
 	  if BinaryArray.get_dword array ofs <> Int32.zero then
 	    let dw = BinaryArray.get_dword array (ofs+28) in
 	    let nm = strsz ofs in
+	      Printf.printf "%s\n" nm;
 	      loop ((Int32.to_int dw+image_start, nm)::acc) (ofs+32)
 	  else 
 	    acc

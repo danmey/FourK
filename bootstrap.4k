@@ -408,7 +408,7 @@ variable #ithere
   postpone there postpone ! 
 ; immediate
 
-section data
-64 allot
+| section data
+| 64 allot
 
 

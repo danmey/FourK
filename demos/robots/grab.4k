@@ -1,0 +1,50 @@
+forget mark
+include" demos/robots/draw.4k"
+include" src/file.4k"
+
+variable surface
+
+: init
+    imports
+    init
+    720 576 4 * * malloc surface !
+;
+$1908 const					GL_RGBA
+$1400 const					GL_BYTE
+$1405			const	GL_UNSIGNED_INT
+$1907 const					GL_RGB
+
+
+: store
+    swap 720 * + 4 * surface @ (* 20 + @ *) + @  $ff000000 or i>file
+;
+
+: save-it " tmp.raw" file: 576 1- 0 do 720 1- 0 do j i store loop loop file;  ;
+
+: render-to-mem
+    render
+|    SDL_GetVideoSurface surface !
+|    SDL_GL_SwapBuffers drop
+    surface @ GL_BYTE GL_RGBA 576 720 0 0 glReadPixels
+;
+
+variable fr
+0 fr !
+| include" base.4k"
+
+: save0
+    init
+    6960
+    0
+    do 
+	render-to-mem
+	save-it
+	" /bin/bash -c 'export c=`ls frames/raw | wc -w`; cp tmp.raw $(printf 'frames/raw/frame%04d.raw' $((c)))'" drop system drop
+	| fr @ " %d
+| " drop printf drop
+	fr 1+!
+    loop
+    deinit
+;
+
+save0

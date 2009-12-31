@@ -72,11 +72,14 @@ include" demos/robots/imph.4k"
     libc " rand" 0 hdl
     libm " powf" 2 hdl
     libc " system" 1 hdl
+    libGL " glReadPixels" 7 hdl
+    libSDL " SDL_GetVideoSurface"       0 hdl
+    libc " printf" 2 hdl
 ;
 
 \ some constants
- 1280 const width
- 720 const height
+ 720 const width
+ 576 const height
  32  const bpp
 | bpp 8 / const point
 
@@ -97,7 +100,7 @@ create event 20 cells allot
 create pallete 256 rcells allot
 
 \ set the video mode
-: video SDL_OPENGL SDL_FULLSCREEN or bpp height width SDL_SetVideoMode ;
+: video SDL_OPENGL (* SDL_FULLSCREEN or *) bpp height width SDL_SetVideoMode ;
 
 
 | : main

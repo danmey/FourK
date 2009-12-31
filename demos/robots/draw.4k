@@ -79,10 +79,6 @@ variable #checker
 ;
 
 
-
-
-
-
 | This is sort of messy
 require" demos/robots/stack.4k"
 | require" demos/robots/synth.4k"
@@ -91,6 +87,7 @@ require" demos/robots/stack.4k"
 | Mutable time ;-)
 variable time
 : F SDL_GetTicks dup time @ - swap time ! ;
+| : F 20 20 time +!  ;
 
 variable #cf
 
@@ -221,7 +218,7 @@ require" demos/robots/camera.4k"
 : proj
     GL_PROJECTION glMatrixMode drop
     glLoadIdentity drop
-    1000.0 f>d 1.1 f>d 0.5625 f>d -0.5625 f>d 1.00 f>d -1.00 f>d glFrustum drop
+    1000.0 f>d 1.1 f>d 0.8 f>d -0.8 f>d 1.00 f>d -1.00 f>d glFrustum drop
     GL_MODELVIEW glMatrixMode drop
 ;   
 
@@ -341,10 +338,6 @@ variable board-rot
 |    Fader
 ;
 
-
-
-
- 
 : Base
     16 32 Cylinder
     20 Height 32 Bottom 24 Top p3 p1 Join Prim
@@ -387,7 +380,7 @@ variable board-rot
     BlacksColor @ Color
     64 Height 4 Tess 10 Size p3 p1 Join Prim
     p2 p2 Join 90 RotY 64 Height 4 Tess 10 Size  Prim
-	WhitesColor @ Color
+    WhitesColor @ Color
 ;
 
 
@@ -561,7 +554,7 @@ Script: camera
 
     0 FF !
 
-: main
+: init
     color4 BlacksColor !
     color2 WhitesColor !
     
@@ -580,8 +573,16 @@ Script: camera
 
 |    -1 game-play !
     reset-board
+;
+
+: deinit
+        SDL_Quit drop
+;
+
+: main
+    init
     render-loop
-    SDL_Quit drop
+    deinit
     bye
 ;
 

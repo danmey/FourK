@@ -46,6 +46,9 @@
  46 ccall: rand
  47 ccall: powf
  48 ccall: system
+49 ccall: glReadPixels
+50 ccall: SDL_GetVideoSurface
+51 ccall: printf
 
 | 41 ccall: rand
 | 42 ccall: powf

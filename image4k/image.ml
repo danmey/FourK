@@ -167,9 +167,9 @@ module Image = struct
 	      Printf.printf "Entry point: %lx\n" entry_point;
 	      Printf.printf "Entry offset: %lx\n" entry_offset;
 	      Printf.printf "Section tab offset: %d\n" section_table_offset;
-	      section_table_offset,(Int32.to_int entry_offset)+4
+	      section_table_offset,(Int32.to_int entry_offset)-4
 	else 
-	  Int32.to_int (BinaryArray.get_dword array 0),4
+	  Int32.to_int (BinaryArray.get_dword array 0),-4
       in
 
       let rec strsz' acc i ofs =
@@ -216,8 +216,9 @@ module Image = struct
 		 s::acc
 	    ) [] (List.combine sections section_lengths)
 	  in
+	  let sections = List.rev sections in
 	  let default_section = scs 0 (List.hd sections).offset "default" in
-	  {sections=default_section:: (List.rev sections); rva = Int32.zero}
+	  {sections=default_section:: sections; rva = Int32.zero}
   
   let find_marker image nm =
     let fm = List.find (fun (ofs,nm') -> nm' = nm) in

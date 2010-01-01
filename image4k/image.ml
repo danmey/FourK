@@ -629,7 +629,7 @@ module FourkImage = struct
       { image with Image.sections = secs }
 *)
 
-  let copied_sections = ["words";"name";"semantic";"there"]
+  let copied_sections = ["words";"name";"semantic";"there";"data"]
 
   let link base_image image word_count =
     let dict_section = Image.find_section base_image "dict" in

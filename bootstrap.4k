@@ -377,7 +377,7 @@ variable #ithere
     dup :pointer there @ imbase @ - dup . swap ! #section 1+! copy
     0 #section @ th table in !
 ;
-: forall ( -- max min ) #section @ 0 ; 
+: forall ( -- max min ) #section @ 1- 0 ; 
 
 : dump ( -- )  forall do i th table in dup dup count type :pointer space . cr loop  ;
 
@@ -410,8 +410,8 @@ variable #ithere
   postpone there postpone ! 
 ; immediate
 
-| section data
-| 64 allot
+section data
+64 allot
 
-| dump
+dump
 

@@ -44,7 +44,7 @@ module Image = struct
 		   markers  : (int*string) list;
 		   mutable name     : string;
 		   image    : BinaryArray.t }
-  type t = {rva:Int32.t;sections:section list;}
+  type t = {rva:Int32.t;mutable sections:section list;}
 
   let real_len s e image =
     let rec zeroes i =
@@ -133,7 +133,9 @@ module Image = struct
     let file = open_out_bin nm in
     let write_section sec =
       (* write header *)
+      Printf.printf "sec.offset: %d\n" sec.offset;
       seek_out file sec.offset;
+      Printf.printf "OK.\n";
       Array.iter (output_byte file) sec.image;
     in
       List.iter write_section image.sections;
@@ -630,16 +632,28 @@ module FourkImage = struct
 *)
 
   let copied_sections = ["words";"name";"semantic";"there"]
+  let std_sections = ["dict"; "interpret"; "dsptch"; "default"; "words";"name";"semantic";"there"]
 
   let link base_image image word_count =
     let dict_section = Image.find_section base_image "dict" in
+    let there_section = Image.find_section base_image "there" in
       print_endline "bla------------";
       Array.fill dict_section.Image.image 0 5 0x90; 
       BinaryArray.set_dword dict_section.Image.image 6 word_count;
+      
       List.iter (fun nm ->
 		   let src = Image.find_section image nm in
 		   let dst = Image.find_section base_image nm in
 		      Image.copy src dst ) copied_sections;
+      let cp src dst i1 i2 l = Array.blit src i1 dst i2 l in
+	List.iter (fun sec -> 
+		     Printf.printf "sec: %s\n" sec.Image.name;
+		     if not (List.mem sec.Image.name std_sections) then
+		       (
+			 Printf.printf "SECTION!!%s %d %d %d\n" sec.Image.name sec.Image.offset there_section.Image.offset there_section.Image.len ; 
+			 cp sec.Image.image there_section.Image.image 0 (sec.Image.offset - there_section.Image.offset + dict_section.Image.offset-4) sec.Image.len;
+			   Printf.printf "whoa\n";
+		       ))  image.Image.sections;
 (*      Image.relocate (image, ref_image) (Image.find_section base_image "dict") (Image.find_section base_image "interpret"); *)
       ()
 
@@ -718,7 +732,8 @@ module Options = struct
 				     Image.zero nsec; 
 				     Words.emit words nsec sec; 
 				     FourkImage.link base_image image (Int32.of_int (List.length words));
-				     Image.save base_image core_name)]
+				     Image.save base_image core_name
+)]
 	       ),
       "Link with fourk engine";
       "-strip", String

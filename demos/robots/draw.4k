@@ -448,7 +448,7 @@ variable checkers-visible
 		End
 	    loop
 	loop
-    ;
+;
 
 : Scene
     finit

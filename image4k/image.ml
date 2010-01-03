@@ -238,11 +238,9 @@ module Image = struct
     List.iter (fun x -> print_endline (to_string x)) image.sections
 end
 
-
 module Symbol = struct
   type t = {name:int; offset:int; backpatch: int list }
 end
-
 
 module Words = struct
   type opcode = 
@@ -253,7 +251,7 @@ module Words = struct
     | Branch of int
     | Branch0 of int
 
-  type code = Bytecode of opcode list ref | Core of int array
+  type code = Bytecode of opcode list | Core of int array
     
   type t =
       { name:string;
@@ -261,10 +259,15 @@ module Words = struct
 	mutable index:int;
 	len:int;
 	code:code;
-	called_by:t list;
 	mutable used:int;
 	prefix:bool }
-
+(*	
+  let eq w1 w2 = 
+    w1.name = w2.name 
+    && w1.offset = w2.offset 
+    && w1.index = w2.index
+    && 
+*)
   let to_string w =
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset w.len w.index w.used
 
@@ -380,7 +383,7 @@ module Words = struct
 		 List.iter (fun (ofs, el) -> Printf.printf "%d|%s " ofs (string_of_bytecode word_arr el)) bc;
 		 print_endline "";
 *)
-	       ref bc'')
+	        bc'')
 	  | s::xs   -> Core (Array.of_list xs)
 	  | []      -> Core (Array.make 0 0)
 
@@ -391,7 +394,6 @@ module Words = struct
 	len    = l  ;
 	code   = disassemble_word name word_arr code;
 	used   = 0;
-	called_by = [];
 	prefix = i < 5;
       }
 
@@ -472,7 +474,7 @@ module Words = struct
 			     end
 			 |  None -> ()
 		     end
-		     ) !b in
+		     ) b in
 	    traverse' words word in
 	  let rec traverse_count words word =
 	    match word.code with
@@ -484,7 +486,7 @@ module Words = struct
 			       word'.used <- word'.used+1;
 			       traverse_count words word'
 			 |  None -> ()
-		     ) !b
+		     ) b
 	      | _ -> ()
 	  in
 							     
@@ -566,7 +568,7 @@ module Words = struct
 		   Array.blit im 0 section.Image.image (i+1) (Array.length im);
 		   emit_words (i+1+(Array.length im)) xs
 	       | Bytecode bc ->
-		   let im = Array.of_list (emit_bytecode !bc) 
+		   let im = Array.of_list (emit_bytecode bc) 
 		   in
 		     section.Image.image.(i) <- 255;
 		     Array.blit im 0 section.Image.image (i+1) (Array.length im);
@@ -577,38 +579,63 @@ module Words = struct
 (*      Printf.printf "%d\n\n" i; *)
       section.Image.image.(i) <- 254
 
-  let inline_words ws =
-    let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in
+    let rec loop ok f v = if ok v then v else loop ok f (f v)
       
+    let ins w = match w.code with Bytecode b -> b | Core _ -> []
 
-    let rec inline_words' words = function
-      | [] -> ()
-      | first::xs ->
-	  (*  List.iter (fun x -> print_endline (to_string x)) used_once *)
-	  (*		Printf.printf "last name: %s\n" first.name; *)
-	  let ins w = match w.code with Bytecode b -> !b | Core _ -> [] in
-	    Array.iter (fun word -> 
-			  match word.code with 
-			    | Bytecode b -> 
-				let rec loop =
-				  function 
-				    | x::xs -> (match bytecode_id' x with 
-						  | Some id -> if id = first.index then ins first@loop xs else x::loop xs
-						  | None -> x::loop xs)
-				    | [] -> [] 
-				in
-				  b := loop !b;
-				  print_endline (to_string word)
-			    | b -> ()) words;
-      inline_words' words xs
-    in
-    let used_once = (List.rev (List.tl (List.rev used_once))) in
-      List.iter (fun w -> w.used <- 0) used_once;
-      inline_words' (Array.of_list ws) used_once;
-      print_endline "";
-      List.iter (fun w -> print_endline (to_string w)) used_once
+    let inline_single word first =
+      match word.code with 
+	| Bytecode b -> 
+	    let rec loop =
+	      function 
+		| ok,x::xs -> (match bytecode_id' x with 
+				 | Some id -> if id = first.index then ok,(ins first@(snd (loop (false, xs)))) else ok,(x::(snd (loop (ok,xs))))
+				 | None -> ok, x::(snd (loop (ok,xs))))
+		| ok,[] -> ok,[] 
+	    in
+	    let ok,b = loop (true,b) in
+	      ok,{word with code=Bytecode b}
+	| b -> true, word
+
+(*
+    let rec inline_words used_words =
+      loop (fun (ok, inlined, singles) -> ok) (fun (ok,inlined,singles -> (List.map (fun word -> inline_single word) lst) 
+*)
+(*
+    let inline_words ws =
+      let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in
+	
+	
+	
+								 
+						     | [] -> ()
+						     | first::xs ->
+							 let rec inner_loop = function
+							   | [] -> []
+							   | word::rest ->
+							       match word.code with 
+								 | Bytecode b -> 
+								     let rec loop =
+								       function 
+									 | x::xs -> (match bytecode_id' x with 
+										       | Some id -> if id = first.index then ins first@loop xs else x::loop xs
+										       | None -> x::loop xs)
+									 | [] -> [] 
+								     in
+								       b := loop !b;
+								       print_endline (to_string word)
+								 | b -> ()) words;
+
+						     inline_words' words xs
+						     in
+	let used_once = (List.rev (List.tl (List.rev used_once))) in
+	  List.iter (fun w -> w.used <- 0) used_once;
+	  inline_words' ws used_once;
+	  print_endline "";
+	  List.iter (fun w -> print_endline (to_string w)) used_once
 (*      List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used' *)
-    
+*)
+  
   let optimise' words_list =
     let words_ar = Array.of_list words_list in
     let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index < 5 then w::acc else acc) [] words_ar in
@@ -637,7 +664,7 @@ module Words = struct
 	(fun (i,w) ->
 	   match w.code with
 	     | Core _ -> i,w
-	     | Bytecode b -> i, { w with code=Bytecode (ref (loop !b)) } ) words in
+	     | Bytecode b -> i, { w with code=Bytecode (loop b) } ) words in
 	  
 	let words' = List.map
 	  (fun  (i,w) ->
@@ -651,7 +678,7 @@ module Words = struct
 
     let spacer =
       let rec loop = function
-	  i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; len=0; code=Core [||]; used=1; called_by=[]; prefix=true})::(loop (i+1)) | _ -> [] in
+	  i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; len=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
 	loop (List.length prefix)
       in
     let ofs = 5-List.length prefix in
@@ -662,7 +689,7 @@ module Words = struct
 			  | Bytecode b -> List.iter (fun x' -> 
 						       match bytecode_id' x' with
 							 | Some id -> words_ar.(id).used <- words_ar.(id).used + 1
-							 | None -> ()) !b
+							 | None -> ()) b
 			  | Core b -> ()) words_ar;
 
 (*      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) u; *)
@@ -670,7 +697,7 @@ module Words = struct
 
   let optimise words = 
     let w = optimise' words in
-      inline_words w;
+(*      inline_words w; *)
       optimise' w 
 	  
 end
@@ -820,11 +847,11 @@ module Options = struct
 
 					      | Words.Bytecode lst' -> 
 						  begin
-						    let x' = Words.disassemble_word x.Words.name (Array.map (fun el -> el.Words.name) wordsa) (255::(Words.emit_bytecode !lst')) in
+						    let x' = Words.disassemble_word x.Words.name (Array.map (fun el -> el.Words.name) wordsa) (255::(Words.emit_bytecode lst')) in
 
 						    match x' with
 						      | Words.Bytecode lst -> 
-							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) !lst)
+							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst)
 						  end
 
 					      | _ -> ()) words;
@@ -876,7 +903,7 @@ module Options = struct
 		 let wordsa = Array.of_list words in
 		   List.iter (fun x ->
 				match x.Words.code with
-				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) !lst)
+				  | Words.Bytecode lst -> Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst)
 				  | _ -> ()) (Words.optimise words))
       ,"Show optimised dictionary layout"
     ]

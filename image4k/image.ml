@@ -583,7 +583,7 @@ module Words = struct
       
     let ins w = match w.code with Bytecode b -> b | Core _ -> []
 
-    let inline_single word first =
+    let inline_single inlined word =
       match word.code with 
 	| Bytecode b -> 
 	    let rec loop =
@@ -597,10 +597,17 @@ module Words = struct
 	      ok,{word with code=Bytecode b}
 	| b -> true, word
 
-(*
-    let rec inline_words used_words =
-      loop (fun (ok, inlined, singles) -> ok) (fun (ok,inlined,singles -> (List.map (fun word -> inline_single word) lst) 
-*)
+
+    let rec inline_words words singles =
+      loop (fun (ok, inlined, singles) -> ok) 
+	(fun (ok,inlines,singles) -> 
+	   List.map (fun word -> let lst = List.map (fun i -> (inline_single i word)) inlined in
+		     try 
+		       List.find (fun (ok,l) ->  ok = false) lst;
+		       
+			 
+
+
 (*
     let inline_words ws =
       let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in

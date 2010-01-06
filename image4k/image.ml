@@ -257,10 +257,11 @@ module Words = struct
       { name:string;
 	offset:int;
 	mutable index:int;
-	len:int;
 	code:code;
 	mutable used:int;
 	prefix:bool }
+
+  let code_len = function Bytecode l -> List.length l | Core a -> Array.length a
 (*	
   let eq w1 w2 = 
     w1.name = w2.name 
@@ -268,8 +269,9 @@ module Words = struct
     && w1.index = w2.index
     && 
 *)
+  let len w = code_len w.code
   let to_string w =
-      Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset w.len w.index w.used
+      Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset (len w) w.index w.used
 
     let bytecode_id = function
       | Prefix (id,_) -> Some id
@@ -387,11 +389,10 @@ module Words = struct
 	  | s::xs   -> Core (Array.of_list xs)
 	  | []      -> Core (Array.make 0 0)
 
-    let make_word i (o,l) word_arr name code =
+    let make_word i o word_arr name code =
       { name   = name;
         index  = i  ;
 	offset = o  ;
-	len    = l  ;
 	code   = disassemble_word name word_arr code;
 	used   = 0;
 	prefix = i < 5;
@@ -445,7 +446,7 @@ module Words = struct
 (*					     Printf.printf "%d %d\n" o l; *)
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
-					       (i+1), (make_word i (o,l) (Array.of_list names) name code)::acc
+					       (i+1), (make_word i o (Array.of_list names) name code)::acc
 					  )
 					  (0,[]) words_pre)) in
 (*	  print_endline "----"; *)
@@ -546,18 +547,18 @@ module Words = struct
 	  loop ((String.length str)-1) []
       in
 	ignore(List.fold_left
-	  (fun (i,ofs) w ->
-	     let str = explode w.name in
-	     let arr = Array.make 32 0 in
-	       ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
-	       if i = 253 then
-		 let arr' = Array.make (3*32) 0 in
-		   Array.blit arr' 0 sec.Image.image (32*253) (3*32); 
-		   Array.blit arr 0 sec.Image.image (32*256) 32;
-		    257,3
-	       else
-		 (Array.blit arr 0 sec.Image.image (32*(w.index+ofs)) 32; (i+1,ofs))) (0,0) w)
-	  in
+		 (fun (i,ofs) w ->
+		    let str = explode w.name in
+		    let arr = Array.make 32 0 in
+		      ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
+		      if i = 253 then
+			let arr' = Array.make (3*32) 0 in
+			  Array.blit arr' 0 sec.Image.image (32*253) (3*32); 
+			  Array.blit arr 0 sec.Image.image (32*256) 32;
+			  257,3
+		      else
+			(Array.blit arr 0 sec.Image.image (32*(w.index+ofs)) 32; (i+1,ofs))) (0,0) w)
+    in
     let rec emit_words i =
       function
 	| [] -> i
@@ -576,121 +577,130 @@ module Words = struct
     in
     let i = emit_words 0 words in
       emit_names words name_section; 
-(*      Printf.printf "%d\n\n" i; *)
+      (*      Printf.printf "%d\n\n" i; *)
       section.Image.image.(i) <- 254
+	
+  let rec loop ok f v = if ok v then v else loop ok f (f v)
+    
+  let ins w = match w.code with Bytecode b -> b | Core _ -> []
+   
+  let inline_single inlined word  =
+    match word.code with 
+      | Bytecode b -> 
+	  let rec loop =
+	    function 
+	      | ok,x::xs -> (match bytecode_id' x with 
+			       | Some id -> if id = inlined.index then ok,(ins inlined@(snd (loop (false, xs)))) else ok,(x::(snd (loop (ok,xs))))
+			       | None -> ok, x::(snd (loop (ok,xs))))
+	      | ok,[] -> ok,[] 
+	  in
+	  let ok,b = loop (true,b) in
+	    ok,{word with code=Bytecode b}
+      | b -> true, word
+    
 
-    let rec loop ok f v = if ok v then v else loop ok f (f v)
-      
-    let ins w = match w.code with Bytecode b -> b | Core _ -> []
-
-    let inline_single inlined word =
-      match word.code with 
-	| Bytecode b -> 
-	    let rec loop =
-	      function 
-		| ok,x::xs -> (match bytecode_id' x with 
-				 | Some id -> if id = first.index then ok,(ins first@(snd (loop (false, xs)))) else ok,(x::(snd (loop (ok,xs))))
-				 | None -> ok, x::(snd (loop (ok,xs))))
-		| ok,[] -> ok,[] 
-	    in
-	    let ok,b = loop (true,b) in
-	      ok,{word with code=Bytecode b}
-	| b -> true, word
-
-
-    let rec inline_words words singles =
-      loop (fun (ok, inlined, singles) -> ok) 
-	(fun (ok,inlines,singles) -> 
-	   List.map (fun word -> let lst = List.map (fun i -> (inline_single i word)) inlined in
-		     try 
-		       List.find (fun (ok,l) ->  ok = false) lst;
-		       
-			 
-
+  let inline words = 
+    let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) words in
+    let w::_ = List.rev (List.map (fun x -> List.map (inline_single x) used_once) words) in
+    let ws = List.map snd w in
+      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) ws ;
+	ws
+	
 
 (*
-    let inline_words ws =
-      let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in
-	
-	
-	
-								 
-						     | [] -> ()
-						     | first::xs ->
-							 let rec inner_loop = function
-							   | [] -> []
-							   | word::rest ->
-							       match word.code with 
-								 | Bytecode b -> 
-								     let rec loop =
-								       function 
-									 | x::xs -> (match bytecode_id' x with 
-										       | Some id -> if id = first.index then ins first@loop xs else x::loop xs
-										       | None -> x::loop xs)
-									 | [] -> [] 
-								     in
-								       b := loop !b;
-								       print_endline (to_string word)
-								 | b -> ()) words;
+  let rec inline_words words singles =
+    loop (fun (ok, inlined, singles) -> ok) 
+      (fun (ok,inlines,singles) -> 
+	 List.map (fun word -> let lst = List.map (fun i -> (inline_single i word)) inlined in
+		     try 
+		       List.find (fun (ok,l) ->  ok = false) lst;
+*)		       
+		       
 
-						     inline_words' words xs
-						     in
-	let used_once = (List.rev (List.tl (List.rev used_once))) in
-	  List.iter (fun w -> w.used <- 0) used_once;
-	  inline_words' ws used_once;
-	  print_endline "";
-	  List.iter (fun w -> print_endline (to_string w)) used_once
-(*      List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used' *)
-*)
-  
+
+		       (*
+			 let inline_words ws =
+			 let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in
+			 
+			 
+			 
+			 
+			 | [] -> ()
+			 | first::xs ->
+			 let rec inner_loop = function
+			 | [] -> []
+			 | word::rest ->
+			 match word.code with 
+			 | Bytecode b -> 
+			 let rec loop =
+			 function 
+			 | x::xs -> (match bytecode_id' x with 
+			 | Some id -> if id = first.index then ins first@loop xs else x::loop xs
+			 | None -> x::loop xs)
+			 | [] -> [] 
+			 in
+			 b := loop !b;
+			 print_endline (to_string word)
+			 | b -> ()) words;
+
+			 inline_words' words xs
+			 in
+			 let used_once = (List.rev (List.tl (List.rev used_once))) in
+			 List.iter (fun w -> w.used <- 0) used_once;
+			 inline_words' ws used_once;
+			 print_endline "";
+			 List.iter (fun w -> print_endline (to_string w)) used_once
+		       (*      List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used' *)
+		       *)
+		       
   let optimise' words_list =
     let words_ar = Array.of_list words_list in
     let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index < 5 then w::acc else acc) [] words_ar in
       print_endline "------1";
       let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
 	print_endline "------2";
-      
-      let replace_opcode new_op = function
-	| Prefix   (_,v) -> Prefix   (new_op,v)
-	| Prefix32 (_,v) -> Prefix32 (new_op,v)
-	| Opcode    _    -> Opcode new_op
-	| a -> a in
-
-    let rec swap_ids words =
-      let rec loop = function
-	| [] -> []
-	| w::ws ->
-	    match bytecode_id w with
-	      | Some id ->
-		  let i,w' = List.find (fun (i',w') -> id = w'.index) words 
-		  in
-		    (replace_opcode i w)::(loop ws)
-	      | None -> w::(loop ws) in
-
-      let words' = List.map
-	(fun (i,w) ->
-	   match w.code with
-	     | Core _ -> i,w
-	     | Bytecode b -> i, { w with code=Bytecode (loop b) } ) words in
+	
+	let replace_opcode new_op = function
+	  | Prefix   (_,v) -> Prefix   (new_op,v)
+	  | Prefix32 (_,v) -> Prefix32 (new_op,v)
+	  | Opcode    _    -> Opcode new_op
+	  | a -> a in
 	  
-	let words' = List.map
-	  (fun  (i,w) ->
-	     w.index <- i;
-	     words_ar.(i) <- w; w) words' 
+	let rec swap_ids words =
+	  let rec loop = function
+	    | [] -> []
+	    | w::ws ->
+		match bytecode_id w with
+		  | Some id ->
+		      let i,w' = List.find (fun (i',w') -> id = w'.index) words 
+		      in
+			(replace_opcode i w)::(loop ws)
+		  | None -> w::(loop ws) in
+	    
+	  let words' = List.map
+	    (fun (i,w) ->
+	       match w.code with
+		 | Core _ -> i,w
+		 | Bytecode b -> i, { w with code=Bytecode (loop b) } ) words in
+	    
+	  let words' = List.map
+	    (fun  (i,w) ->
+	       w.index <- i;
+	       words_ar.(i) <- w; w) words' 
+	  in
+	    List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs + (len w) + 1, { w with offset = ofs }::acc) (0,[]) words'))
 	in
-	  List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs + w.len + 1, { w with offset = ofs }::acc) (0,[]) words'))
-    in
 
-    let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
-
-    let spacer =
-      let rec loop = function
-	  i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; len=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
-	loop (List.length prefix)
-      in
-    let ofs = 5-List.length prefix in
-    let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
-    let u = swap_ids used' in
+	let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
+	  
+	let spacer =
+	  let rec loop = function
+	      i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
+	    loop (List.length prefix)
+	in
+	let ofs = 5-List.length prefix in
+	let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
+	let u = swap_ids used' in
 	  Array.iter (fun word -> 
 			match word.code with 
 			  | Bytecode b -> List.iter (fun x' -> 
@@ -698,14 +708,13 @@ module Words = struct
 							 | Some id -> words_ar.(id).used <- words_ar.(id).used + 1
 							 | None -> ()) b
 			  | Core b -> ()) words_ar;
-
-(*      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) u; *)
-      u
-
-  let optimise words = 
-    let w = optimise' words in
-(*      inline_words w; *)
-      optimise' w 
+	  
+	  (*      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) u; *)
+	  u
+	
+		     let optimise words = 
+		       let w = optimise' words in
+			  w
 	  
 end
 module FourkImage = struct

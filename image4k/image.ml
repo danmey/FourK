@@ -398,6 +398,39 @@ module Words = struct
 	prefix = i < 5;
       }
 
+    let rec traverse0 words word =
+      match word.code with
+	| Core a -> word.used <- 1
+	| Bytecode b -> 
+	    word.used <- 1; 
+	    List.iter
+	    (fun x ->
+	       match bytecode_id' x with
+		 | Some id ->
+		     (let word' = words.(id) in
+			traverse0 words word')
+		 |  None -> ()
+	    ) b
+
+    let rec traverse_count words =
+      Array.iter (fun w -> match w.code with
+		   | Core a -> ()
+		   | Bytecode b -> 
+		       List.iter
+			 (fun x ->
+			    match bytecode_id' x with
+			      | Some id ->
+				  (let word' = words.(id) in
+				     (if word'.used >= 1 then word'.used <- word'.used + 1 else ()))
+			      |  None -> ()) b) words
+	
+    let traverse words word =
+      traverse0 words word;
+      traverse_count words;
+      Array.iter (fun w -> if w.used > 0 then w.used <- w.used - 1 else ()) words;
+      word.used <- 1
+
+
 
     let words (code_sec,name_sec) =
       let word_image = Image.to_list code_sec in
@@ -437,68 +470,20 @@ module Words = struct
 	  else [] in
 	  names' 0
       in
-
-(*	Printf.printf "Offsets: %d\nNames: %d\n" (List.length ofs) (List.length names); *)
-	let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
-	let words_pre = List.combine ofs names in
-	let words_list = List.rev (snd (List.fold_left
+      let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
+      let words_pre = List.combine ofs names in
+      let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
-(*					     Printf.printf "%d %d\n" o l; *)
 					     let ar = Array.sub code_sec.Image.image o l in
 					     let code = Array.to_list ar in
 					       (i+1), (make_word i o (Array.of_list names) name code)::acc
 					  )
 					  (0,[]) words_pre)) in
-(*	  print_endline "----"; *)
 	let words_ar = Array.of_list words_list in
-
-	let traverse words word =
-	  let rec traverse' words word =
-	    match word.code with
-	      | Core a -> word.used <- word.used+1
-	      | Bytecode b -> List.iter
-		  (fun x ->
-		     begin
-		       match bytecode_id' x with
-			 | Some id ->
-			     begin
-(*			       Printf.printf "Id: %d\n" id;
-			       Printf.printf "L: %d\n" (Array.length words);
-			       Printf.printf "Nm: %s\n"  words.(id).name;
-*)
-			       let word' = words.(id) in
-				 if word'.used = 0 then
-				   begin
-				     word'.used <- 1; 
-				     traverse' words word'
-				   end
-			     end
-			 |  None -> ()
-		     end
-		     ) b in
-	    traverse' words word in
-	  let rec traverse_count words word =
-	    match word.code with
-	      | Bytecode b -> List.iter
-		  (fun x ->
-		       match bytecode_id' x with
-			 | Some id ->
-			     let word' = words.(id) in
-			       word'.used <- word'.used+1;
-			       traverse_count words word'
-			 |  None -> ()
-		     ) b
-	      | _ -> ()
-	  in
-							     
-
-(*	  print_endline "----"; *)
-
 	let last_word = words_ar.(Array.length words_ar-1) in
-(*	  print_endline "----"; *)
 	  last_word.used <- 1;
 	  traverse words_ar last_word;
-	    words_list
+	  words_list
 	    
   let dw dword =
     let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
@@ -590,21 +575,32 @@ module Words = struct
 	  let rec loop =
 	    function 
 	      | ok,x::xs -> (match bytecode_id' x with 
-			       | Some id -> if id = inlined.index then ok,(ins inlined@(snd (loop (false, xs)))) else ok,(x::(snd (loop (ok,xs))))
+			       | Some id -> if id = inlined.index then false,(ins inlined@(snd (loop (false, xs)))) else ok,(x::(snd (loop (ok,xs))))
 			       | None -> ok, x::(snd (loop (ok,xs))))
 	      | ok,[] -> ok,[] 
 	  in
 	  let ok,b = loop (true,b) in
 	    ok,{word with code=Bytecode b}
-      | b -> true, word
+      | b -> false, word
     
 
-  let inline words = 
+  let rec inline words  = 
     let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) words in
-    let w::_ = List.rev (List.map (fun x -> List.map (inline_single x) used_once) words) in
+    let w = (List.fold_left (fun acc x -> (List.map (inline_single x) (List.map snd acc))) (List.map (fun x -> (true,x)) words) used_once) in
+    let ok = List.map fst w in
+(*    let ok = List.fold_left (fun acc b -> if b then false else acc) true ok' in
+      List.iter (fun (b,x) -> Printf.printf "%s\n" (if b then "True" else "False")) w;
+      print_endline (if ok then "True" else "False");
+      print_endline "--------------"; 
+*)
     let ws = List.map snd w in
-      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) ws ;
-	ws
+	ws (*inline' ok ws*)
+
+(*
+  let inline words =
+    let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) words in
+*)  
+
 	
 
 (*
@@ -672,9 +668,9 @@ module Words = struct
 	    | w::ws ->
 		match bytecode_id w with
 		  | Some id ->
-		      let i,w' = List.find (fun (i',w') -> id = w'.index) words 
+			 let i,w' = List.find (fun (i',w') -> id = w'.index) words 
 		      in
-			(replace_opcode i w)::(loop ws)
+			   (replace_opcode i w)::(loop ws)
 		  | None -> w::(loop ws) in
 	    
 	  let words' = List.map
@@ -701,20 +697,26 @@ module Words = struct
 	let ofs = 5-List.length prefix in
 	let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
 	let u = swap_ids used' in
-	  Array.iter (fun word -> 
-			match word.code with 
-			  | Bytecode b -> List.iter (fun x' -> 
-						       match bytecode_id' x' with
-							 | Some id -> words_ar.(id).used <- words_ar.(id).used + 1
-							 | None -> ()) b
-			  | Core b -> ()) words_ar;
-	  
-	  (*      List.iter (fun w -> Printf.printf "%s\n" (to_string w)) u; *)
 	  u
 	
-		     let optimise words = 
-		       let w = optimise' words in
-			  w
+  let tag_unused ws =
+    let l::ws' = List.rev ws in
+    let ws'' = List.map (fun w -> if w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false then {w with used=0} else w ) (List.rev ws') in
+      ws''@[l]
+
+  let optimise words = 
+    let w = inline(inline(inline(inline (inline (inline (optimise' words)))))) in
+    let wa = Array.of_list w in
+    let last_word = wa.(Array.length wa-1) in
+      last_word.used <- 1;
+      traverse wa last_word;
+(*      List.iter (fun w -> print_endline (to_string w)) w; *)
+      let ws = optimise' w in
+	List.iter (fun w -> print_endline (to_string w)) ws;
+	ws
+      (*optimise' w*)
+	
+    
 	  
 end
 module FourkImage = struct

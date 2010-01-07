@@ -330,6 +330,7 @@ module Words = struct
 	function
 	  | []                                             -> [],ofs
 	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
+	  | a::i::xs when a = 5 || a = 6                   -> let bc, ofs' = adv 3 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
 	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
 	  | 1::b1::b2::b3::b4::xs                          -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
 	  | c::xs                                          -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
@@ -388,7 +389,7 @@ module Words = struct
 	offset = o  ;
 	code   = disassemble_word name word_arr code;
 	used   = 0;
-	prefix = i < 5;
+	prefix = i <= 6;
       }
 
     let rec traverse0 words word =
@@ -433,6 +434,7 @@ module Words = struct
 	  | 254::_                         -> [],n
 	  | x::_::_::_::_::xs when x = 1   -> drop_bytecode (n+5) xs
 	  | x::_::xs          when x < 5   -> drop_bytecode (n+2) xs
+	  | x::_::xs          when x = 5 || x = 6 -> drop_bytecode (n+3) xs
 	  | x::_::xs          when x = 253 -> drop_bytecode (n+2) xs
 	  | 255::xs as l                   -> l,n
 	  | x::xs                          -> drop_bytecode (n+1) xs in
@@ -488,13 +490,14 @@ module Words = struct
     let tag bc = snd 
       (List.fold_left (fun (i,acc) bc ->
 			 match bc with
-			   | Prefix32 (opc,v) ->  i+5, acc @ [i, bc]
-			   | Opcode opc when opc >= 253 -> i+2, acc @ [i, bc]
-			   | Opcode opc       ->  i+1, acc @ [i, bc] 
-			   | Prefix   (opc,v) ->  i+2, acc @ [i, bc]
-			   | Branch ofs       ->  i+2, acc @ [i, bc]
-			   | Branch0 ofs      ->  i+2, acc @ [i, bc]
-			   | Label l          ->  i+0, acc @ [i, bc])
+			   | Prefix32 (opc,v)              ->  i+5, acc @ [i, bc]
+			   | Opcode opc when opc >= 253    -> i+2, acc @ [i, bc]
+			   | Opcode opc                    ->  i+1, acc @ [i, bc] 
+			   | Prefix   (opc,v) when opc = 5 || opc = 6 ->  i+3, acc @ [i, bc]
+			   | Prefix   (opc,v)              ->  i+2, acc @ [i, bc]
+			   | Branch ofs                    ->  i+2, acc @ [i, bc]
+			   | Branch0 ofs                   ->  i+2, acc @ [i, bc]
+			   | Label l                       ->  i+0, acc @ [i, bc])
 	 (0,[]) bc)
 
     let collect_labels bc = 
@@ -644,7 +647,7 @@ module Words = struct
 		       
   let optimise' words_list =
     let words_ar = Array.of_list words_list in
-    let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index < 5 then w::acc else acc) [] words_ar in
+    let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index <= 6 then w::acc else acc) [] words_ar in
       print_endline "------1";
       let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
 	print_endline "------2";
@@ -684,10 +687,10 @@ module Words = struct
 	  
 	let spacer =
 	  let rec loop = function
-	      i when i < 5 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
+	      i when i <= 6 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
 	    loop (List.length prefix)
 	in
-	let ofs = 5-List.length prefix in
+	let ofs = 7-List.length prefix in
 	let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
 	let u = swap_ids used' in
 	  u
@@ -698,7 +701,8 @@ module Words = struct
       ws''@[l]
 
   let optimise words = 
-    let w = inline(inline(inline(inline (inline (inline (optimise' words)))))) in
+(*    let w = inline(inline(inline(inline (inline (inline (optimise' words)))))) in *)
+(*    let w = (optimise' words) in 
     let wa = Array.of_list w in
     let last_word = wa.(Array.length wa-1) in
       last_word.used <- 1;
@@ -706,6 +710,8 @@ module Words = struct
 (*      List.iter (fun w -> print_endline (to_string w)) w; *)
       let ws = optimise' w in
 	List.iter (fun w -> print_endline (to_string w)) ws;
+*)
+    let ws = optimise' words in
 	ws
       (*optimise' w*)
 	

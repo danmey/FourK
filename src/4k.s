@@ -1,7 +1,7 @@
 include(macros.m4)
 include(dict.m4)
 include(elf.m4)
-define([PREFIX_WORDS_INDEX], 5)
+define([PREFIX_WORDS_INDEX], 7)
 
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there

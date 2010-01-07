@@ -72,6 +72,10 @@ DEF_CODE(ccall,"ccall")
 	push	%eax
 	xchg	%ebx,%esp
 END_CODE
+DEF_CODE(lbranch, "lbranch")
+END_CODE
+DEF_CODE(lbranch0, "lbranch0")
+END_CODE
 # If you move below *three* definitions, you need to update the TOKEN
 # constants in dict.m4
 DEF_CODE(compile, "compile")

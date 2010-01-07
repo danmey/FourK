@@ -503,7 +503,7 @@ variable checkers-visible
 2  s  Frame: f01 StandCamera
 10 s  Frame: f1  WhitesCamera
 4  s  Frame: f2  BlacksCamera
-12 s  Frame: f3  LookCamera
+12 s  Frame: f3  WhitesCamera
 4  s  Frame: f5  WMoveCamera
 4  s  Frame: f6  BMoveCamera
 | 10 s Frame: f3 LastCamera

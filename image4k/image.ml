@@ -609,17 +609,18 @@ module Words = struct
 	
   let rec loop ok f v = if ok v then v else loop ok f (f v)
     
+  let no_labels = List.fold_left (fun i x -> 
+				    match x with
+				      | Label _ -> i+1 
+				      | a -> i) 0
   let ins i w = 
     match w.code with Bytecode b -> 
-      List.map (function 
+      List.map (function
 		  | Branch0 c -> Branch0 (c + i)
 		  | Branch c  -> Branch (c + i)
 		  | Label c -> Label (c+i)
 		  | a -> a 
-	       ) b, List.fold_left (fun i x -> 
-				      match x with
-					| Label _ -> i+1 
-					| a -> i) 0 b
+	       ) b, i+no_labels b
       | Core _ -> [],0
    
   let inline_single inlined word  =
@@ -628,12 +629,14 @@ module Words = struct
 	  let rec loop oi =
 	    function 
 	      | x::xs -> (match bytecode_id' x with 
-			    | Some id -> if id = inlined.index then let l,oi' = ins oi inlined in l @ loop oi' xs else x :: (loop oi xs)
-			    | None    ->                                                       x :: (loop oi xs)
+			    | Some id -> if id = inlined.index then 
+				let l,oi' = ins oi inlined in 
+				  l @ loop oi' xs else x :: (loop oi xs)
+			    | None    -> x :: (loop oi xs)
 			 )
 	      | [] -> [] 
 	  in
-	  let b = loop 0 b in
+	  let b = loop (no_labels b) b in
 	    { word with code=Bytecode b }
       | b -> word
     

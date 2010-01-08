@@ -583,68 +583,7 @@ module Words = struct
   let rec inline words  = 
     let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) words in
     let w = (List.fold_left (fun acc x -> (List.map (inline_single x) (List.map snd acc))) (List.map (fun x -> (true,x)) words) used_once) in
-    let ok = List.map fst w in
-(*    let ok = List.fold_left (fun acc b -> if b then false else acc) true ok' in
-      List.iter (fun (b,x) -> Printf.printf "%s\n" (if b then "True" else "False")) w;
-      print_endline (if ok then "True" else "False");
-      print_endline "--------------"; 
-*)
-    let ws = List.map snd w in
-	ws (*inline' ok ws*)
-
-(*
-  let inline words =
-    let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) words in
-*)  
-
-	
-
-(*
-  let rec inline_words words singles =
-    loop (fun (ok, inlined, singles) -> ok) 
-      (fun (ok,inlines,singles) -> 
-	 List.map (fun word -> let lst = List.map (fun i -> (inline_single i word)) inlined in
-		     try 
-		       List.find (fun (ok,l) ->  ok = false) lst;
-*)		       
-		       
-
-
-		       (*
-			 let inline_words ws =
-			 let used_once = List.filter (fun w -> w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false ) ws in
-			 
-			 
-			 
-			 
-			 | [] -> ()
-			 | first::xs ->
-			 let rec inner_loop = function
-			 | [] -> []
-			 | word::rest ->
-			 match word.code with 
-			 | Bytecode b -> 
-			 let rec loop =
-			 function 
-			 | x::xs -> (match bytecode_id' x with 
-			 | Some id -> if id = first.index then ins first@loop xs else x::loop xs
-			 | None -> x::loop xs)
-			 | [] -> [] 
-			 in
-			 b := loop !b;
-			 print_endline (to_string word)
-			 | b -> ()) words;
-
-			 inline_words' words xs
-			 in
-			 let used_once = (List.rev (List.tl (List.rev used_once))) in
-			 List.iter (fun w -> w.used <- 0) used_once;
-			 inline_words' ws used_once;
-			 print_endline "";
-			 List.iter (fun w -> print_endline (to_string w)) used_once
-		       (*      List.iter (fun (i,w) -> Printf.printf "%d: %s\n" i (to_string w)) used' *)
-		       *)
-		       
+      List.map snd w
   let optimise' words_list =
     let words_ar = Array.of_list words_list in
     let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index <= 6 then w::acc else acc) [] words_ar in
@@ -701,21 +640,13 @@ module Words = struct
       ws''@[l]
 
   let optimise words = 
-(*    let w = inline(inline(inline(inline (inline (inline (optimise' words)))))) in *)
-(*    let w = (optimise' words) in 
+    let process = inline % inline % inline % inline % inline % inline % optimise' in
+    let w = process words in 
     let wa = Array.of_list w in
     let last_word = wa.(Array.length wa-1) in
       last_word.used <- 1;
       traverse wa last_word;
-(*      List.iter (fun w -> print_endline (to_string w)) w; *)
-      let ws = optimise' w in
-	List.iter (fun w -> print_endline (to_string w)) ws;
-*)
-    let ws = optimise' words in
-	ws
-      (*optimise' w*)
-	
-    
+      optimise' w
 	  
 end
 module FourkImage = struct

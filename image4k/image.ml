@@ -44,7 +44,7 @@ module Image = struct
 		   markers  : (int*string) list;
 		   mutable name     : string;
 		   image    : BinaryArray.t }
-  type t = {rva:Int32.t;mutable sections:section list;}
+  type t = { rva:Int32.t;mutable sections:section list; }
 
   let real_len s e image =
     let rec zeroes i =
@@ -253,7 +253,8 @@ module Words = struct
     | Branch0 of int
 
   type code = Bytecode of opcode list | Core of int array
-    
+
+  (* TODO: Remove mutable fields completely, let's make a purely functional approach! *)
   type t =
       { name:string;
 	offset:int;
@@ -274,7 +275,7 @@ module Words = struct
 
     let bytecode_id' = function
       | Prefix (id,_)    -> None
-      | Prefix16 (id,_)  -> Some id
+      | Prefix16 (id,_)  -> None
       | Prefix32 (id,_)  -> None
       | Opcode id        -> Some id
       | Label id         -> None
@@ -383,8 +384,8 @@ module Words = struct
 	   match bytecode with
 	     | Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> 
 		 let offset' = offset + index + 1 in
-		       let lab = List.assoc offset' labels in
-			 acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
+		 let lab = List.assoc offset' labels in
+		   acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
 	     | Prefix16(opcode, offset) when opcode = 5 || opcode = 6 -> 
 		 let offset' = offset + index + 2 in
 		 let lab = List.assoc offset' labels in
@@ -463,13 +464,13 @@ module Words = struct
       let rec offsets lst =
 	let rec drop_bytecode n = function
 	  | [] -> [],n
-	  | 254::_                         -> [],n
-	  | x::_::_::_::_::xs when x = 1   -> drop_bytecode (n+5) xs
-	  | x::_::xs          when x < 5   -> drop_bytecode (n+2) xs
-	  | x::_::_::xs          when x = 5 || x = 6 -> drop_bytecode (n+3) xs
-	  | x::_::xs          when x = 253 -> drop_bytecode (n+2) xs
-	  | 255::xs as l                   -> l,n
-	  | x::xs                          -> drop_bytecode (n+1) xs in
+	  | 254::_                                -> [],n
+	  | x::_::_::_::_::xs when x = 1          -> drop_bytecode (n+5) xs
+	  | x::_::xs          when x < 5          -> drop_bytecode (n+2) xs
+	  | x::_::_::xs       when x = 5 || x = 6 -> drop_bytecode (n+3) xs
+	  | x::_::xs          when x = 253        -> drop_bytecode (n+2) xs
+	  | 255::xs as l                          -> l,n
+	  | x::xs                                 -> drop_bytecode (n+1) xs in
 	let next = drop_bytecode 0 in
 	let rec offsets' prev offset = function
 	  | []                -> []
@@ -699,14 +700,14 @@ module Words = struct
       | _ -> failwith "tag_unused"
 
   let optimise words = 
-    let process = inline % inline % inline % inline % inline % inline % optimise' in
+    let process = inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % optimise' in
 (*    let process =  optimise' in *)
     let w = process words in 
     let wa = Array.of_list w in
     let last_word = wa.(Array.length wa-1) in
       last_word.used <- 1;
       traverse wa last_word;
-      optimise' % optimise' $ w
+      optimise' $ w
 	  
 end
 module FourkImage = struct

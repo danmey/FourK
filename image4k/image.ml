@@ -262,17 +262,6 @@ module Words = struct
 	mutable used:int;
 	prefix:bool }
 
-  let code_len = function Bytecode l -> List.length l | Core a -> Array.length a
-(*	
-  let eq w1 w2 = 
-    w1.name = w2.name 
-    && w1.offset = w2.offset 
-    && w1.index = w2.index
-    && 
-*)
-  let len w = code_len w.code
-  let to_string w =
-      Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset (len w) w.index w.used
 
     let bytecode_id = function
       | Prefix (id,_)   -> Some id
@@ -352,10 +341,10 @@ module Words = struct
 	List.map (fun (t,op) ->
 		    let emit_branch ind i =
 		      let v = List.assoc i labels - t-1 in
-			if i >= -127 && i <= 128 then
+			if v >= -127 && v <= 128 then
 			  Prefix (ind, v)
-			else
-			  Prefix16 (ind+3,v) in
+			else(
+			  Prefix16 (ind + 3,v)) in
 		      match op with
 			| Branch  i -> emit_branch 2 i
 			| Branch0 i -> emit_branch 3 i
@@ -364,7 +353,7 @@ module Words = struct
 
   let disassemble_word name word_arr lst =
     let rec pass0 ofs =
-      let adv n = pass0 (ofs+n) in
+      let adv n = pass0 $ ofs+n in
 	function
 	  | []                                                  -> [],ofs
 	  | a::i::xs      when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
@@ -378,17 +367,15 @@ module Words = struct
       function
       | [] -> ass
       | (ofs, Prefix(opcode, offset))   :: xs when opcode = 2 || opcode = 3 -> 
+	  (*Printf.printf "lab: %d %d\n" opcode offset;*)
 	  let o = offset + ofs+1 in 
 	    pass1' (add o ass) xs
-      | (ofs, Prefix16(opcode, offset)) :: xs when opcode = 5 || opcode = 6 -> 
-	  let o = offset + ofs+1 in 
+      | (ofs, Prefix16(opcode, offset)) :: xs ->
+	  (*Printf.printf "lab: %d %d\n" opcode offset;*)
+	  let o = offset + ofs+2 in 
 	    pass1' (add o ass) xs
-      | (ofs, Prefix(_))              :: xs -> pass1' ass xs
-      | (ofs, Prefix32(_))            :: xs -> pass1' ass xs
-      | (ofs, x)                      :: xs -> pass1' ass xs 
+      | _                               :: xs -> pass1' ass xs 
     in
-
-  	  
   let pass1 = pass1' [] in
     let rec pass2 labels = 
       List.fold_left 
@@ -396,20 +383,20 @@ module Words = struct
 	   match bytecode with
 	     | Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> 
 		 let offset' = offset + index + 1 in
-		   begin
-		     try
 		       let lab = List.assoc offset' labels in
 			 acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
-		     with _ -> acc
-		   end
+	     | Prefix16(opcode, offset) when opcode = 5 || opcode = 6 -> 
+		 let offset' = offset + index + 2 in
+		 let lab = List.assoc offset' labels in
+		   acc @ [index, if opcode = 5 then Branch lab else Branch0 lab]
 	     | a -> acc@[index,a]) []
     in
     let insert_labels labels =
       List.fold_left 
 	(fun acc (ofs,a) -> 
-	   try let l = (List.assoc ofs labels) in 
-	     acc @ [ofs,Label l] @ [ofs,a]
-	   with Not_found -> acc @ [ofs,a]) []
+          try let l = (List.assoc ofs labels) in 
+            acc @ [ofs,Label l] @ [ofs,a]
+          with Not_found -> acc @ [ofs,a]) []
     in
 	  
     let rec untag = function
@@ -420,9 +407,10 @@ module Words = struct
     match lst with
       | 255::xs -> Bytecode 
 	  (let bc',ofs = (pass0 0 xs) in
-	   let bc = bc'@[ofs, Label 255] in
+	   let bc = bc' @ [ofs, Label 255] in
 	   let lb = pass1 bc in
- 	   let bc'' = (snd (List.split (insert_labels lb (pass2 lb bc)))) in
+	     (*Printf.printf "Heyah!\n";*)
+ 	   let bc'' = snd % List.split % insert_labels lb $ pass2 lb bc in
 	     rem_last bc'')
       | s::xs   -> Core (Array.of_list xs)
       | []      -> Core (Array.make 0 0)
@@ -478,7 +466,7 @@ module Words = struct
 	  | 254::_                         -> [],n
 	  | x::_::_::_::_::xs when x = 1   -> drop_bytecode (n+5) xs
 	  | x::_::xs          when x < 5   -> drop_bytecode (n+2) xs
-	  | x::_::xs          when x = 5 || x = 6 -> drop_bytecode (n+3) xs
+	  | x::_::_::xs          when x = 5 || x = 6 -> drop_bytecode (n+3) xs
 	  | x::_::xs          when x = 253 -> drop_bytecode (n+2) xs
 	  | 255::xs as l                   -> l,n
 	  | x::xs                          -> drop_bytecode (n+1) xs in
@@ -509,7 +497,10 @@ module Words = struct
 	  else [] in
 	  names' 0
       in
+	(*Printf.printf "n:%d, o:%d\n" (List.length ofs) (List.length names);*)
       let ofs = List.rev (drop (List.length ofs - List.length names) (List.rev ofs)) in
+      let names = List.rev (drop (List.length names - List.length ofs) (List.rev names)) in
+	(*Printf.printf "n:%d, o:%d\n" (List.length ofs) (List.length names);*)
       let words_pre = List.combine ofs names in
       let words_list = List.rev (snd (List.fold_left
 					  (fun (i,acc) ((o,l),name) ->
@@ -523,7 +514,10 @@ module Words = struct
 	  last_word.used <- 1;
 	  traverse words_ar last_word;
 	  words_list
-	    
+	
+  let to_string w =
+      Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset 0 w.index w.used
+    
   let dw dword =
     let b4 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 24) (Ni.of_int 255)) in
     let b3 = Ni.to_int (Ni.logand (Ni.shift_right_logical dword 16) (Ni.of_int 255)) in
@@ -547,13 +541,14 @@ module Words = struct
       let pass0 = tag bc in
       let labels = collect_labels pass0 in
 	List.fold_left (fun acc (t,op) ->
-			  let emit_branch ind i =
+			  (*let emit_branch ind i =
 			    let v = List.assoc i labels - t-1 in
-			    if i >= -127 && i <= 128 then
+			    if v  >= -127 && v <= 128 then
 			      [ind;v]
 			    else
 			      [ind+3] @ (wd%Int32.of_int $ v)
 			  in
+			  *)
 			  match op with
 			    | Prefix   (i,v)         -> acc @ [i;v] 
 			    | Prefix16 (i,v)         -> acc @ [i] @ (wd%Int32.of_int $ v)
@@ -561,8 +556,11 @@ module Words = struct
 			    | Opcode i when i >= 253 -> acc @ [253; i-253]
 			    | Opcode i               -> acc @ [i]
 			    | Label i                -> acc
+(*      			    | Branch i               -> acc @ emit_branch 2 i
 			    | Branch0 i              -> acc @ emit_branch 3 i
-      			    | Branch i               -> acc @ emit_branch 2 i
+				    
+*)
+			    | _ -> failwith "emit_bytecode"
 		       ) [] % reduce_pass labels $ pass0
       	  
   
@@ -610,20 +608,31 @@ module Words = struct
 	
   let rec loop ok f v = if ok v then v else loop ok f (f v)
     
-  let ins w = match w.code with Bytecode b -> b | Core _ -> []
+  let ins i w = 
+    match w.code with Bytecode b -> 
+      List.map (function 
+		  | Branch0 c -> Branch0 (c + i)
+		  | Branch c  -> Branch (c + i)
+		  | Label c -> Label (c+i)
+		  | a -> a 
+	       ) b, List.fold_left (fun i x -> 
+				      match x with
+					| Label _ -> i+1 
+					| a -> i) 0 b
+      | Core _ -> [],0
    
   let inline_single inlined word  =
     match word.code with 
       | Bytecode b -> 
-	  let rec loop =
+	  let rec loop oi =
 	    function 
 	      | x::xs -> (match bytecode_id' x with 
-			    | Some id -> if id = inlined.index then ins inlined @ loop xs else x :: (loop xs)
-			    | None    ->                                                       x :: (loop xs)
+			    | Some id -> if id = inlined.index then let l,oi' = ins oi inlined in l @ loop oi' xs else x :: (loop oi xs)
+			    | None    ->                                                       x :: (loop oi xs)
 			 )
 	      | [] -> [] 
 	  in
-	  let b = loop b in
+	  let b = loop 0 b in
 	    { word with code=Bytecode b }
       | b -> word
     
@@ -668,7 +677,7 @@ module Words = struct
 	       w.index <- i;
 	       words_ar.(i) <- w; w) words' 
 	  in
-	    List.rev (snd (List.fold_left (fun (ofs,acc) w -> ofs + (len w) + 1, { w with offset = ofs }::acc) (0,[]) words'))
+	    words'
 	in
 
 	let prefix,non_prefix = List.partition (fun (i,w) -> w.prefix) used in
@@ -684,9 +693,10 @@ module Words = struct
 	  u
 	
   let tag_unused ws =
-    let l::ws' = List.rev ws in
-    let ws'' = List.map (fun w -> if w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false then {w with used=0} else w ) (List.rev ws') in
-      ws''@[l]
+    match List.rev ws with
+      | l::ws' -> (let ws'' = List.map (fun w -> if w.used = 1 && match w.code with Bytecode _ -> true | Core _ -> false then {w with used=0} else w ) (List.rev ws') in
+      ws''@[l])
+      | _ -> failwith "tag_unused"
 
   let optimise words = 
     let process = inline % inline % inline % inline % inline % inline % optimise' in
@@ -850,6 +860,7 @@ module Options = struct
 						    match x' with
 						      | Words.Bytecode lst -> 
 							  Printf.printf ": %s %s ;\n" x.Words.name (Words.string_of_bytecodes (Array.map (fun el -> el.Words.name) wordsa) lst)
+						      | _ -> failwith "-disass"
 						  end
 
 					      | _ -> ()) words;

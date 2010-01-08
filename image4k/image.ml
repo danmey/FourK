@@ -345,7 +345,8 @@ module Words = struct
 			if v >= -127 && v <= 128 then
 			  Prefix (ind, v)
 			else(
-			  Prefix16 (ind + 3,v)) in
+			  Prefix16 (ind + 3,v)) 
+		    in
 		      match op with
 			| Branch  i -> emit_branch 2 i
 			| Branch0 i -> emit_branch 3 i
@@ -462,21 +463,23 @@ module Words = struct
     let words (code_sec,name_sec) =
       let word_image = Image.to_list code_sec in
       let rec offsets lst =
-	let rec drop_bytecode n = function
-	  | [] -> [],n
-	  | 254::_                                -> [],n
-	  | x::_::_::_::_::xs when x = 1          -> drop_bytecode (n+5) xs
-	  | x::_::xs          when x < 5          -> drop_bytecode (n+2) xs
-	  | x::_::_::xs       when x = 5 || x = 6 -> drop_bytecode (n+3) xs
-	  | x::_::xs          when x = 253        -> drop_bytecode (n+2) xs
-	  | 255::xs as l                          -> l,n
-	  | x::xs                                 -> drop_bytecode (n+1) xs in
+	let rec drop_bytecode n = 
+	  function
+	    | [] -> [],n
+	    | 254::_                                -> [],n
+	    | x::_::_::_::_::xs when x = 1          -> drop_bytecode (n+5) xs
+	    | x::_::xs          when x < 5          -> drop_bytecode (n+2) xs
+	    | x::_::_::xs       when x = 5 || x = 6 -> drop_bytecode (n+3) xs
+	    | x::_::xs          when x = 253        -> drop_bytecode (n+2) xs
+	    | 255::xs as l                          -> l,n
+	    | x::xs                                 -> drop_bytecode (n+1) xs in
 	let next = drop_bytecode 0 in
-	let rec offsets' prev offset = function
-	  | []                -> []
-	  | 254::_            -> []
-          | 255::xs           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
-	  | n::xs             ->                        (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
+	let rec offsets' prev offset = 
+	  function
+	    | []                -> []
+	    | 254::_            -> []
+            | 255::xs           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
+	    | n::xs             ->                        (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
 	  offsets' false 0 lst in
       let ofs = offsets word_image in
 
@@ -493,7 +496,7 @@ module Words = struct
 	let rec names' i =
 	  if i * 32 + 32 <= name_sec.Image.len then
 	    let n = name i in
-(*	      Printf.printf "Name:: %d %s\n" i n; *)
+	      (*	      Printf.printf "Name:: %d %s\n" i n; *)
 	      if n = "" then names' (i+1) else n::(names' (i+1))
 	  else [] in
 	  names' 0
@@ -504,17 +507,17 @@ module Words = struct
 	(*Printf.printf "n:%d, o:%d\n" (List.length ofs) (List.length names);*)
       let words_pre = List.combine ofs names in
       let words_list = List.rev (snd (List.fold_left
-					  (fun (i,acc) ((o,l),name) ->
-					     let ar = Array.sub code_sec.Image.image o l in
-					     let code = Array.to_list ar in
-					       (i+1), (make_word i o (Array.of_list names) name code)::acc
-					  )
-					  (0,[]) words_pre)) in
-	let words_ar = Array.of_list words_list in
-	let last_word = words_ar.(Array.length words_ar-1) in
-	  last_word.used <- 1;
-	  traverse words_ar last_word;
-	  words_list
+					(fun (i,acc) ((o,l),name) ->
+					   let ar = Array.sub code_sec.Image.image o l in
+					   let code = Array.to_list ar in
+					     (i+1), (make_word i o (Array.of_list names) name code)::acc
+					)
+					(0,[]) words_pre)) in
+      let words_ar = Array.of_list words_list in
+      let last_word = words_ar.(Array.length words_ar-1) in
+	last_word.used <- 1;
+	traverse words_ar last_word;
+	words_list
 	
   let to_string w =
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset 0 w.index w.used

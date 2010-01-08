@@ -308,6 +308,12 @@ module Words = struct
       else
 	Ni.to_int (dword 0x00 0x00 0x00 b)
 
+    let ext_sign16 b1 b2 =
+      if b2 land 0x80 = 0x80 then
+	Ni.to_int (dword 0xff 0xff b2 b1)
+      else
+	Ni.to_int (dword 0x00 0x00 b2 b1)
+
     let rec drop n = function
 	| []               -> []
 	| x::xs when n > 0 -> drop (n-1) xs
@@ -332,17 +338,21 @@ module Words = struct
     let rec pass0 ofs =
       let adv n = pass0 (ofs+n) in
 	function
-	  | []                                             -> [],ofs
-	  | a::i::xs when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
-	  | a::i::xs when a = 5 || a = 6                   -> let bc, ofs' = adv 3 xs in (ofs, Prefix (a, ext_sign i))            :: bc, ofs'
-	  | 253::i::xs                                     -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
-	  | 1::b1::b2::b3::b4::xs                          -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
-	  | c::xs                                          -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
+	  | []                                                  -> [],ofs
+	  | a::i::xs      when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
+	  | a::b1::b2::xs when a = 5 || a = 6                   -> let bc, ofs' = adv 3 xs in (ofs, Prefix16 (a, ext_sign16 b1 b2))    :: bc, ofs'
+	  | 1::b1::b2::b3::b4::xs                               -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
+	  | 253::i::xs                                          -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
+	  | c::xs                                               -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
     in
     let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
-    let rec pass1' ass = function
+    let rec pass1' ass = 
+      function
       | [] -> ass
-      | (ofs, Prefix(opcode, offset)) :: xs when opcode = 2 || opcode = 3 -> 
+      | (ofs, Prefix(opcode, offset))   :: xs when opcode = 2 || opcode = 3 -> 
+	  let o = offset + ofs+1 in 
+	    pass1' (add o ass) xs
+      | (ofs, Prefix16(opcode, offset)) :: xs when opcode = 5 || opcode = 6 -> 
 	  let o = offset + ofs+1 in 
 	    pass1' (add o ass) xs
       | (ofs, Prefix(_))              :: xs -> pass1' ass xs
@@ -603,6 +613,7 @@ module Words = struct
 	
 	let replace_opcode new_op = function
 	  | Prefix   (_,v) -> Prefix   (new_op,v)
+	  | Prefix16 (_,v) -> Prefix16 (new_op,v)
 	  | Prefix32 (_,v) -> Prefix32 (new_op,v)
 	  | Opcode    _    -> Opcode new_op
 	  | a -> a in

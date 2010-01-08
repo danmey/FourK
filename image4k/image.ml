@@ -528,6 +528,13 @@ module Words = struct
       let pass0 = tag bc in
       let labels = collect_labels pass0 in
 	List.fold_left (fun acc (t,op) ->
+			  let emit_branch ind i =
+			    let v = List.assoc i labels - t-1 in
+			    if i >= -127 && i <= 128 then
+			      [ind;v]
+			    else
+			      [ind+3] @ (wd%Int32.of_int $ v)
+			  in
 			  match op with
 			    | Prefix   (i,v)         -> acc @ [i;v] 
 			    | Prefix16 (i,v)         -> acc @ [i] @ (wd%Int32.of_int $ v)
@@ -535,8 +542,9 @@ module Words = struct
 			    | Opcode i when i >= 253 -> acc @ [253; i-253]
 			    | Opcode i               -> acc @ [i]
 			    | Label i                -> acc
-			    | Branch0 i              -> acc @ [3;List.assoc i labels - t-1]
-      			    | Branch i               ->  acc @ [2;List.assoc i labels - t-1]) [] pass0
+			    | Branch0 i              -> acc @ emit_branch 3 i
+      			    | Branch i               -> acc @ emit_branch 2 i
+		       ) [] pass0
       	  
   
   let emit words name_section section =
@@ -662,12 +670,13 @@ module Words = struct
 
   let optimise words = 
     let process = inline % inline % inline % inline % inline % inline % optimise' in
+    let process =  optimise' in
     let w = process words in 
-    let wa = Array.of_list w in
+(*    let wa = Array.of_list w in
     let last_word = wa.(Array.length wa-1) in
       last_word.used <- 1;
-      traverse wa last_word;
-      optimise' w
+      traverse wa last_word; *)
+      optimise' % optimise' $ w
 	  
 end
 module FourkImage = struct

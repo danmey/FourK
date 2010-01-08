@@ -244,8 +244,9 @@ end
 
 module Words = struct
   type opcode = 
-      Prefix32 of int * int32
-    | Prefix of int * int 
+    | Prefix of int * int
+    | Prefix16 of int * int
+    | Prefix32 of int * int32
     | Opcode of int 
     | Label of int
     | Branch of int
@@ -274,20 +275,22 @@ module Words = struct
       Printf.sprintf "Name: %.16s\tOffset: %d\tLen: %d\tIndex: %d\tUsed: %d" w.name w.offset (len w) w.index w.used
 
     let bytecode_id = function
-      | Prefix (id,_) -> Some id
+      | Prefix (id,_)   -> Some id
+      | Prefix16 (id,_) -> Some id
       | Prefix32 (id,_) -> Some id
-      | Opcode id -> Some id
-      | Label id -> None
-      | Branch id -> None
-      | Branch0 id -> None
+      | Opcode id       -> Some id
+      | Label id        -> None
+      | Branch id       -> None
+      | Branch0 id      -> None
 
     let bytecode_id' = function
-      | Prefix (id,_) -> None
-      | Prefix32 (id,_) -> None
-      | Opcode id -> Some id
-      | Label id -> None
-      | Branch id -> None
-      | Branch0 id -> None
+      | Prefix (id,_)    -> None
+      | Prefix16 (id,_)  -> Some id
+      | Prefix32 (id,_)  -> None
+      | Opcode id        -> Some id
+      | Label id         -> None
+      | Branch id        -> None
+      | Branch0 id       -> None
 	  
     let dword b1' b2' b3' b4' =
       let b1 = Ni.of_int b1' in
@@ -318,6 +321,7 @@ module Words = struct
   let string_of_bytecode names_arr = function
 	| Prefix   (i,v) -> Printf.sprintf "%s(%d)"  names_arr.(i) v
 	| Prefix32 (i,v) -> Printf.sprintf "%s(%lx)" names_arr.(i) v
+	| Prefix16 (i,v) -> Printf.sprintf "%s(%x)" names_arr.(i) v
 	| Opcode i       -> names_arr.(i)                             
 	| Label l        -> Printf.sprintf "label%d" l                  
 	| Branch l       -> Printf.sprintf "goto(label%d)" l          
@@ -487,14 +491,19 @@ module Words = struct
     let b1 = Ni.to_int (Ni.logand dword (Ni.of_int 255)) in
       b1::b2::b3::b4::[]
 
+  let wd word =
+    let b2 = Ni.to_int (Ni.logand (Ni.shift_right_logical word 8)  (Ni.of_int 255)) in
+    let b1 = Ni.to_int (Ni.logand word (Ni.of_int 255)) in
+      [b1;b2]
+
     let tag bc = snd 
       (List.fold_left (fun (i,acc) bc ->
 			 match bc with
-			   | Prefix32 (opc,v)              ->  i+5, acc @ [i, bc]
-			   | Opcode opc when opc >= 253    -> i+2, acc @ [i, bc]
-			   | Opcode opc                    ->  i+1, acc @ [i, bc] 
-			   | Prefix   (opc,v) when opc = 5 || opc = 6 ->  i+3, acc @ [i, bc]
 			   | Prefix   (opc,v)              ->  i+2, acc @ [i, bc]
+			   | Prefix16 (opc,v)              ->  i+3, acc @ [i, bc]
+			   | Prefix32 (opc,v)              ->  i+5, acc @ [i, bc]
+			   | Opcode opc when opc >= 253    ->  i+2, acc @ [i, bc]
+			   | Opcode opc                    ->  i+1, acc @ [i, bc] 
 			   | Branch ofs                    ->  i+2, acc @ [i, bc]
 			   | Branch0 ofs                   ->  i+2, acc @ [i, bc]
 			   | Label l                       ->  i+0, acc @ [i, bc])
@@ -510,13 +519,14 @@ module Words = struct
       let labels = collect_labels pass0 in
 	List.fold_left (fun acc (t,op) ->
 			  match op with
-			    | Prefix   (i,v) -> acc @ [i;v] 
-			    | Prefix32 (i,v) -> acc @ [i]@(dw v)
+			    | Prefix   (i,v)         -> acc @ [i;v] 
+			    | Prefix16 (i,v)         -> acc @ [i] @ (wd%Int32.of_int $ v)
+			    | Prefix32 (i,v)         -> acc @ [i] @ (dw v)
 			    | Opcode i when i >= 253 -> acc @ [253; i-253]
 			    | Opcode i               -> acc @ [i]
-			    | Label i   -> acc
-			    | Branch0 i -> acc @ [3;List.assoc i labels - t-1]
-      			    | Branch i  ->  acc @ [2;List.assoc i labels - t-1]) [] pass0
+			    | Label i                -> acc
+			    | Branch0 i              -> acc @ [3;List.assoc i labels - t-1]
+      			    | Branch i               ->  acc @ [2;List.assoc i labels - t-1]) [] pass0
       	  
   
   let emit words name_section section =

@@ -73,8 +73,21 @@ DEF_CODE(ccall,"ccall")
 	xchg	%ebx,%esp
 END_CODE
 DEF_CODE(lbranch, "lbranch")
+	movw	(%esi),%ax
+	movswl 	%ax,%eax      # clear all the other bytes
+	add	%eax,%esi     # indirect jump ( 8 bit )
 END_CODE
 DEF_CODE(lbranch0, "lbranch0")
+	mov	(%ebx),%eax   # TOS -> eax
+	add	$4,%ebx       # drop
+	or	%eax,%eax     # refresh flags
+	jnz	1f            # if zero eax=0
+	movw	(%esi),%ax
+	movswl 	%ax,%eax      # clear all the other bytes
+	add	%eax,%esi     # do an indirect jump ( 8 bit )
+	jmp	*%ebp
+1:
+	add $2,%esi
 END_CODE
 # If you move below *three* definitions, you need to update the TOKEN
 # constants in dict.m4

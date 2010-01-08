@@ -148,9 +148,9 @@ build_dispatch:
 .cont:
 	cmp	$1,%al
 	jz	.lit4
-	cmp	$6,%al
-	jz	.lit2
 	cmp	$5,%al
+	jz	.lit2
+	cmp	$6,%al
 	jz	.lit2
 	lodsb
 	jmp	.loop2

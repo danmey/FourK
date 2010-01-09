@@ -707,7 +707,7 @@ module Words = struct
 
   let optimise words = 
     let process = inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % inline % optimise' in
-(*    let process =  optimise' in *)
+    let process =  optimise' in
     let w = process words in 
     let wa = Array.of_list w in
     let last_word = wa.(Array.length wa-1) in

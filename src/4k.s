@@ -1,7 +1,7 @@
 include(macros.m4)
 include(dict.m4)
 include(elf.m4)
-define([PREFIX_WORDS_INDEX], 5)
+define([PREFIX_WORDS_INDEX], 7)
 
 # If we use debug version we need to place everything in code section, because GDB resolves symbols
 # only there
@@ -148,12 +148,18 @@ build_dispatch:
 .cont:
 	cmp	$1,%al
 	jz	.lit4
+	cmp	$5,%al
+	jz	.lit2
+	cmp	$6,%al
+	jz	.lit2
 	lodsb
 	jmp	.loop2
 .lit4:
 	lodsl
 	jmp	.loop2
-
+.lit2:
+	lodsw
+	jmp	.loop2
 .done:
 #	K4_SAFE_CALL(printf, $fmt_hex, var_here)
 #	K4_SAFE_CALL(printf, $fmt_hex, %esi)

@@ -413,5 +413,5 @@ variable #ithere
 section data
 64 allot
 
-dump
+| dump
 

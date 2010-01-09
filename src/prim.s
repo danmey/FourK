@@ -20,24 +20,24 @@ SECTION(words)
 BEGIN_DICT
 _words_start:
 # Define prefix words here!
-DEF_CODE(lit, "lit")
+DEF_CODE(lit, "lit") #0
 	xor	%eax,%eax
 	lodsb
 	movsbl	%al,%eax
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
-DEF_CODE(lit4, "lit4")
+DEF_CODE(lit4, "lit4") #1
 	lodsl
 	sub	$4,%ebx
 	mov	%eax,(%ebx)
 END_CODE
-DEF_CODE(branch, "branch")
+DEF_CODE(branch, "branch") #2
 	movb	(%esi),%al
 	movsbl 	%al,%eax      # clear all the other bytes
 	add	%eax,%esi     # indirect jump ( 8 bit )
 END_CODE
-DEF_CODE(branch0, "branch0")
+DEF_CODE(branch0, "branch0") #3
 	mov	(%ebx),%eax   # TOS -> eax
 	add	$4,%ebx       # drop
 	or	%eax,%eax     # refresh flags
@@ -49,7 +49,7 @@ DEF_CODE(branch0, "branch0")
 1:
 	inc %esi
 END_CODE
-DEF_CODE(ccall,"ccall")
+DEF_CODE(ccall,"ccall") #4
 	xchg	%ebx,%esp
 	xor	%eax,%eax
 	lodsb
@@ -71,6 +71,23 @@ DEF_CODE(ccall,"ccall")
 	add	(ccall_tab+4)(,%ecx,8),%esp
 	push	%eax
 	xchg	%ebx,%esp
+END_CODE
+DEF_CODE(lbranch, "lbranch") 	#5
+	movw	(%esi),%ax
+	movswl 	%ax,%eax      # clear all the other bytes
+	add	%eax,%esi     # indirect jump ( 8 bit )
+END_CODE
+DEF_CODE(lbranch0, "lbranch0") 	#6
+	mov	(%ebx),%eax   # TOS -> eax
+	add	$4,%ebx       # drop
+	or	%eax,%eax     # refresh flags
+	jnz	1f            # if zero eax=0
+	movw	(%esi),%ax
+	movswl 	%ax,%eax      # clear all the other bytes
+	add	%eax,%esi     # do an indirect jump ( 8 bit )
+	jmp	*%ebp
+1:
+	add 	$2,%esi
 END_CODE
 # If you move below *three* definitions, you need to update the TOKEN
 # constants in dict.m4

@@ -448,7 +448,7 @@ variable checkers-visible
 		End
 	    loop
 	loop
-    ;
+;
 
 : Scene
     finit
@@ -497,32 +497,32 @@ variable checkers-visible
       0 board-rot ! 0 0 BaseCamera Fader
 ;
 
-: IntroCamera FF @ 1000000 > if 0 FF ! then 180 -30 Linear dup 0 >= if board-rot ! then 30 0 BaseCamera
- ;
+: IntroCamera FF @ 1000000 > if 0 FF ! then 180 -30 Linear dup 0 >= if board-rot ! then 30 0 BaseCamera ;
 
- 6 s Frame: f0 IntroCamera
- 2 s Frame: f01 StandCamera
-10 s Frame: f1 WhitesCamera
-4 s Frame: f2 BlacksCamera
- 12 s Frame: f3 LookCamera
- 4 s Frame: f5 WMoveCamera
- 4 s Frame: f6 BMoveCamera
+6  s  Frame: f0  IntroCamera
+2  s  Frame: f01 StandCamera
+10 s  Frame: f1  WhitesCamera
+4  s  Frame: f2  BlacksCamera
+12 s  Frame: f3  WhitesCamera
+4  s  Frame: f5  WMoveCamera
+4  s  Frame: f6  BMoveCamera
 | 10 s Frame: f3 LastCamera
 | 10 s Frame: f4 LastCamera
 
 
-Script: camera
- f0
- f01
- f2
- f1
- f3
+Script:
+  camera
+  f0
+  f01
+  f2
+  f1
+  f3
   30 0
   do
     f5
     f6
   loop
-  f2
+ f2
 ;
 
 : clear

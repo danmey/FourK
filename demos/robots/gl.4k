@@ -75,6 +75,13 @@ include" demos/robots/imph.4k"
     libGL " glReadPixels" 7 hdl
     libSDL " SDL_GetVideoSurface"       0 hdl
     libc " printf" 2 hdl
+    libGL " glCreateShader" 1 hdl
+    libGL " glShaderSource" 3 hdl
+    libGL " glCompileShader" 1 hdl
+    libGL " glCreateProgram" 0 hdl
+    libGL " glAttachShader" 2 hdl
+    libGL " glLinkProgram" 1 hdl
+    libGL " glUseProgram" 1 hdl
 ;
 
 \ some constants

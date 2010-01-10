@@ -49,6 +49,13 @@
 49 ccall: glReadPixels
 50 ccall: SDL_GetVideoSurface
 51 ccall: printf
+52 ccall: glCreateShader
+53 ccall: glShaderSource
+54 ccall: glCompileShader
+55 ccall: glCreateProgram
+56 ccall: glAttachShader
+57 ccall: glLinkProgram
+58 ccall: glUseProgram
 
 | 41 ccall: rand
 | 42 ccall: powf

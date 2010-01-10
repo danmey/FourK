@@ -102,6 +102,6 @@ define([END_DICT],
 	undivert(3)
 	SECTION(there)
 	there:
-       	.FILL 8192
+       	.FILL 2*8192
 ])
 

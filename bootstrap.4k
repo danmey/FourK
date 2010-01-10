@@ -164,7 +164,7 @@ comment
 | strings
 
 create #str
-1024 allot
+10000 allot
 
 
 : parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
@@ -223,6 +223,8 @@ variable flag
    sliteral then
 ; immediate
 
+: " \" inline there @ dup 0 swap c! 1+ there !
+    state @ 0 = if sliteral then ; immediate
 
  : ." ( -- ) postpone " 
   state @ 0 = if postpone type ;; then type 

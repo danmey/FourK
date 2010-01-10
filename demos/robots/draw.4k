@@ -554,6 +554,8 @@ Script:
 
     0 FF !
 
+include" demos/robots/shader.4k"
+
 : init
     color4 BlacksColor !
     color2 WhitesColor !
@@ -573,6 +575,7 @@ Script:
 
 |    -1 game-play !
     reset-board
+    setup-shaders
 ;
 
 : deinit
@@ -583,6 +586,6 @@ Script:
     init
     render-loop
     deinit
-    bye
+|    bye
 ;
 

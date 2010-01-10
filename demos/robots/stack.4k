@@ -1,5 +1,7 @@
 100021 const GLU_INSIDE
 
+: fswap f> f> swap >f >f ;
+
 | Declare list of variables
 | : vars: begin token 2dup 1 = if c: ; swap c@ = if drop drop ;; then else drop then (create) postpone ; rcell allot repeat ;
 
@@ -147,3 +149,17 @@ variable disc
 0 const p1
 1 const p2
 2 const p3
+
+: RotY >r 1 Y 3>f r> i>f Rot ;
+: RotZ >r 1 Z 3>f r> i>f Rot ;
+
+: Join ( p1 p2 -- )
+    pp2 ! pp1 !
+    | pp1 @ pp2 @ >r * 2 / r> height @ * -2 / + w>d> 0 0 glTranslatef drop
+    pp1 @ * 2 / w>d> 0 0 glTranslatef drop
+    | 64 w>d f> 0 0 glTranslatef drop
+;
+
+
+: Cylinder Size Height Prim ;
+

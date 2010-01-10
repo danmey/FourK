@@ -4,40 +4,8 @@ mark
 
 | ...
 4 #ithere !
-: fswap f> f> swap >f >f ;
 
 require" demos/robots/gl.4k"
-
-| Some needed constants
-100012 const GLU_FILL
-$1D00 const  GLU_FLAT
-$1D01 const  GL_SMOOTH
-100000 const GLU_SMOOTH
-$1D00 const GL_FLAT
-$00000100 const GL_DEPTH_BUFFER_BIT			
-$00004000 const GL_COLOR_BUFFER_BIT
-$1700 const GL_MODELVIEW
-$1701 const GL_PROJECTION
-$0B50 const GL_LIGHTING
-$4001 const GL_LIGHT1
-$0BA1 const GL_NORMALIZE
-$1602 const GL_AMBIENT_AND_DIFFUSE
-$0408 const GL_FRONT_AND_BACK
-$1600 const GL_EMISSION
-$1201 const GL_DIFFUSE
-$0B57 const GL_COLOR_MATERIAL
-$1202 const GL_SPECULAR
-$0B71 const GL_DEPTH_TEST
-$0007 const GL_QUADS
-$0BE2 const GL_BLEND
-$0BE1 const GL_BLEND_SRC
-$0BE0 const GL_BLEND_DST
-$1 const					GL_ONE
-$0 const					GL_ZERO
-$303 const			GL_ONE_MINUS_SRC_ALPHA
-$0302 const GL_SRC_ALPHA
-$0304 const				GL_DST_ALPHA
-$0308 const			GL_SRC_ALPHA_SATURATE
 
 
 | Some colors (should be HSV)
@@ -45,7 +13,6 @@ create light data: 1.0 , 1.0 , 1.0 , 1.0 , data;
 create light_s data: 0.0 , 0.0 , 0.0 , 1.0 , data;
 
 create light_pos data: 1.0 , 0.0 , 0.0 , 10.0 , data;
-1203 const GL_POSITION
 create up-vec data: 0.0 , 1.0 , 0.0 , data;
 
 create solid
@@ -259,9 +226,6 @@ data;
     | 64 w>d f> 0 0 glTranslatef drop
 ;
 
-: Arm0 ( size -- height )
-    24 Scale 4 Tess dup Bottom 100 * 150 / Top Prim
-;
 
 : Cylinder Size Height Prim ;
 
@@ -482,11 +446,15 @@ variable checkers-visible
 ;
 
 : WMoveCamera
+  -1 checkers-visible !
+    200 #checkers-visible !
     -1 game-play !
      30 -12 BaseCamera Fader
 ;
 
 : BMoveCamera
+  -1 checkers-visible !
+    200 #checkers-visible !
     -1 game-play !
      -30 12 BaseCamera Fader
 ;
@@ -510,8 +478,7 @@ variable checkers-visible
 | 10 s Frame: f4 LastCamera
 
 
-Script:
-  camera
+Script: camera
   f0
   f01
   f2
@@ -589,3 +556,4 @@ include" demos/robots/shader.4k"
 |    bye
 ;
 
+: m main main ;

@@ -1,0 +1,36 @@
+forget mark
+: while postpone branch0 here@ 0 c, ; immediate
+: repeat postpone branch swap here@ - c, dup here@ swap - swap c! ; immediate
+: ?dup dup if dup then ;
+: case 0 ; immediate
+: of postpone over postpone = postpone if postpone drop ; immediate
+: endof postpone else ; immediate
+: endcase' begin ?dup while postpone then repeat ; immediate
+: endcase postpone drop postpone endcase' ; immediate
+variable $a-var
+: $a $a-var @ ;
+(* : ?$
+    dup $$ = if rot >r else swap >r then
+    dup $$ = if over r = if drop drop r> drop -1 ;; then then
+    dup $$_ = if drop r> drop -1 ;; then
+    dup $$a = if drop r> $a-var ! -1 ;; then
+    r> 
+    0
+;
+*)
+variable matched
+: match: 0 0 literal postpone matched postpone ! ; immediate
+: |; -1 literal postpone matched postpone ! postpone endcase' 0 ; immediate
+: |= postpone over postpone = postpone if postpone drop ; immediate
+: -> postpone matched postpone @ postpone 0= postpone if ; immediate
+: match; postpone endcase' ; immediate
+: nip swap drop ;
+: some-word
+    match:
+    2 |= 1 |= -> ." ala ma kota" |;
+    1 |= 2 |= -> ." kot ma ale"  
+    match;
+;
+
+    
+	

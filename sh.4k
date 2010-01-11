@@ -1,0 +1,112 @@
+require" src/basic.4k"
+forget mark
+(*
+: append 1- 0 do dup i + c@ data: c, data; loop ;
+: a " ala " append " ma " append " kota" append ;
+
+: some-word
+    match:
+    2  |= 1 |= -> ." ala ma kota" |;
+       |a 2 |= -> ." kot ma ale " $a . |;
+    match;
+;
+*)
+(*
+section shader
+2048 allot
+: append section: shader 0 do dup i + c@ c, loop shader; ;
+token ala append
+token ma append
+token kota append
+*)
+
+(*
+shader: one
+void func: main
+  l: gl_LightSource x y z 0 .[] normalize half_vector vec3 let;
+  l: gl_LightSource 0 .[] normalize half_vector +=;
+  l: gl_Position ftransform =;
+end
+shader;
+*)
+
+
+
+
+create token-table 1024 allot
+variable ptr
+token-table ptr !
+variable #tokens
+0 #tokens !
+: t" ptr @ dup >r 1+ begin key dup c: " <> while over c! 1+ repeat drop dup r - 1- r> c! ptr ! 0 ptr @ c! #tokens 1+! ;
+: tok dup c@ swap 1+ swap ;
+: declare here @ >r ptr @ here ! token dup c, 1- 0
+    do dup i + c@ c, loop
+    here @ r> here !
+    ptr @ tok make #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+: print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
+: nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1  ;; then loop then ;
+: ctype dup c@ 1- 0 do 1+ dup c@ emit loop ;
+(* Will be -1 terminated !!! *)
+: nt" t" #tokens @ const #tokens 1+! ;
+: print nth ctype ;
+: lst #tokens @ 1-  ;
+create stream 1024 allot
+variable stream@
+
+: >>> here @ >r stream@ @ here ! 1- 0 do dup i + c@ c, loop here @ stream@ ! r> here ! ;
+: ch>>> stream@ @ c! stream@ 1+! ;
+: ch:>>> postpone c: postpone ch>>> ; immediate
+: sp>>> 32 ch>>> ;
+stream stream@ !
+
+declare void
+declare vars
+declare beg
+declare end
+declare function
+declare main
+declare vec3
+declare ala
+declare end
+: l>>> nth tok >>> sp>>> ;
+variable stacks@
+variable stacke@
+
+: shader1
+    s@ stacke@ !
+    void function main
+    params
+    vec3 ala
+    vec3 kota
+    end
+    end
+    s@ stacks@ !
+;
+
+: rev ( start end -- )
+    rcell -
+    begin
+	2dup
+	<
+    while
+	    2dup 2dup
+	    @ swap @
+	    rot
+	    !
+	    swap !
+	    rcell -
+	    swap rcell +
+	    swap
+    repeat
+    drop drop
+;
+	    
+: compile
+    shader1 stacks@ @ stacke@ @ rev
+    match:
+    |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> 
+    match;
+;
+
+

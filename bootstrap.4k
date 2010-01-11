@@ -67,6 +67,8 @@ token : (:) token (:) ;
 : create token (create) ;
 : variable : there @ rliteral postpone ; rcell allot ;
 : const : rliteral postpone ; ;
+: bconst : literal postpone ; ;
+
 create table 16 32 * allot
 variable #section
 7 #section !
@@ -164,7 +166,7 @@ comment
 | strings
 
 create #str
-10000 allot
+1000 allot
 
 
 : parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
@@ -376,7 +378,7 @@ variable #ithere
 : in ( -- ) + ;
 : new ( str c -- ) 
   1+ #section @ th table in 
-    dup :pointer there @ imbase @ - dup . swap ! #section 1+! copy
+    dup :pointer there @ imbase @ - swap ! #section 1+! copy
     0 #section @ th table in !
 ;
 : forall ( -- max min ) #section @ 1- 0 ; 
@@ -412,8 +414,6 @@ variable #ithere
   postpone there postpone ! 
 ; immediate
 
-section data
-64 allot
 
 | dump
 

@@ -577,7 +577,11 @@ DEF_CODE(cback, "cback")
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
 END_CODE
-
+DEF_CODE(stk, "s@")
+	mov	%ebx,%eax
+	sub	$4,%ebx
+	mov	%eax,(%ebx)
+END_CODE
 DEF_VAR(vtab, dsptch)
 DEF_VAR(ntab, ntab)
 DEF_VAR(here, here)

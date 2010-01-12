@@ -1,4 +1,4 @@
-include" src/basic.4k"
+include" src/basic2.4k"
 forget mark
 
 (*
@@ -6,7 +6,7 @@ shader: one
 void func: main
   l: gl_LightSource x y z 0 .[] normalize half_vector vec3 let;
   l: gl_LightSource 0 .[] normalize half_vector +=;
-  l: gl_Position ftransform =;
+o l: gl_Position ftransform =;
 end
 shader;
 *)
@@ -21,7 +21,7 @@ variable #tokens
 : declare here @ >r ptr @ here ! token dup c, 1- 0
     do dup i + c@ c, loop
     here @ r> here !
-    ptr @ tok make #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+    ptr @ tok (:) #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 : print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
 : nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1 ;; then loop then ;
 : ctype dup c@ 1- 0 do 1+ dup c@ emit loop ;
@@ -48,6 +48,7 @@ declare vec3
 declare ala
 declare end
 declare params
+
 : l>>> nth tok >>> sp>>> ;
 variable stacks@
 variable stacke@
@@ -113,4 +114,5 @@ variable stacke@
     compile-params
 ;
 
-
+: a compile ;
+compile

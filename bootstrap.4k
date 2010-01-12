@@ -100,6 +100,11 @@ variable #section
  : ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
   last @ 253 = if 256 last ! then postpone [ ; immediate
 
+| please note this changes MUST BE HERE! (for some reason i forgot hehehe) 
+: (create) make there @ rliteral postpone ; ;
+: create token (create) ;
+: variable : there @ rliteral postpone ; rcell allot ;
+: const : rliteral postpone ; ;
 
 
 : c: key state @ 0 = if literal then ; immediate

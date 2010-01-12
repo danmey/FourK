@@ -6,20 +6,13 @@
 : endof postpone else ; immediate
 : endcase' begin ?dup while postpone then repeat ; immediate
 : endcase postpone drop postpone endcase' ; immediate
+
 variable $a-var
 variable $b-var
 variable $c-var
 variable matched
-: match: 0 ; immediate
-: |; postpone endcase' 0 ; immediate
-: |= postpone over postpone = postpone if postpone >r ; immediate
-: -> ; immediate
-: |a postpone $a-var postpone ! ; immediate
-: |b postpone $b-var postpone ! ; immediate
 : $a $a-var @ ;
 : $b $b-var @ ;
-: match; postpone endcase' postpone r> postpone drop  ; immediate
-: nip swap drop ;
 
 | -1 >r
 | r if 10 over = if >r 11 over if >r action rdrop rdrop else r> then else r> then rdrop 0 >r then
@@ -30,6 +23,8 @@ variable matched
 : |; postpone r postpone if 0 ; immediate
 : |= postpone over postpone = postpone if postpone >r ; immediate
 : clear-rstack s@ begin dup @ while postpone rdrop rcell + repeat drop ;
+: |a $a-var ! ;
+: |b $b-var ! ;
 : -> ; immediate
 variable matching
 : match-next -1 matching ! ;
@@ -38,6 +33,6 @@ variable matching
 
 : word match:
     |; 10 |= 10 |= -> ." case 2 " cend
-    |; 10 |= -> ." case 1 " cend
+    |; 10 |=       -> ." case 1 " cend
     match;
 ;

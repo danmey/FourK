@@ -100,15 +100,6 @@ variable #section
  : ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
   last @ 253 = if 256 last ! then postpone [ ; immediate
 
-: (create) make there @ rliteral postpone ; ;
-: create token (create) ;
-: variable : there @ rliteral postpone ; rcell allot ;
-: const : rliteral postpone ; ;
-
-| : (create) make there @ rliteral postpone ; ;
-| : create token (create) ;
-| : variable : there @ rliteral postpone ; rcell allot ;
-| : const : rliteral postpone ; ;
 
 
 : c: key state @ 0 = if literal then ; immediate
@@ -315,8 +306,6 @@ variable #ithere
 
 
 
-| little alias to make 4k.el mode happier
-: again postpone again ; immediate
 
 | count the given zero-terminated string
 : count ( str -- c ) 0 >r 

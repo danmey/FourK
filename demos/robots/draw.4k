@@ -521,7 +521,7 @@ Script: camera
 
     0 FF !
 
-include" demos/robots/shader.4k"
+| include" demos/robots/shader.4k"
 
 : init
     color4 BlacksColor !
@@ -542,7 +542,7 @@ include" demos/robots/shader.4k"
 
 |    -1 game-play !
     reset-board
-    setup-shaders
+| |    setup-shaders
 ;
 
 : deinit

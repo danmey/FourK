@@ -1,24 +1,5 @@
-require" src/basic.4k"
+include" src/basic.4k"
 forget mark
-(*
-: append 1- 0 do dup i + c@ data: c, data; loop ;
-: a " ala " append " ma " append " kota" append ;
-
-: some-word
-    match:
-    2  |= 1 |= -> ." ala ma kota" |;
-       |a 2 |= -> ." kot ma ale " $a . |;
-    match;
-;
-*)
-(*
-section shader
-2048 allot
-: append section: shader 0 do dup i + c@ c, loop shader; ;
-token ala append
-token ma append
-token kota append
-*)
 
 (*
 shader: one
@@ -30,10 +11,7 @@ end
 shader;
 *)
 
-
-
-
-create token-table 1024 allot
+create token-table 512 allot
 variable ptr
 token-table ptr !
 variable #tokens
@@ -45,7 +23,7 @@ variable #tokens
     here @ r> here !
     ptr @ tok make #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 : print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
-: nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1  ;; then loop then ;
+: nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1 ;; then loop then ;
 : ctype dup c@ 1- 0 do 1+ dup c@ emit loop ;
 (* Will be -1 terminated !!! *)
 : nt" t" #tokens @ const #tokens 1+! ;
@@ -79,13 +57,6 @@ variable stacke@
 |    void function main
     params
     vec3
-    vec3
-    vec3
-    vec3
-    vec3
-    vec3
-    vec3
-    vec3
     end
     s@ stacks@ !
 ;
@@ -108,23 +79,32 @@ variable stacke@
     drop drop
 ;
 
+: param
+    match:
+    |;  end |= -> ." case3" cend
+    |; vec3 |= -> ." case2" cend
+    | vec3 l>>> c: a ch>>> c: , ch>>>
+    | vec3 l>>> c: a ch>>> |;
+    match;
+;
+: param match:
+    |; end  |=      -> ." case 2 " cend
+    |; vec3 |=      -> ." case 1 " cend
+    match;
+;
+
+: params-s
+    param 
+;
+
 : compile-params
     match:
-    params |= -> 
-    begin
-	match:
-	vec3 |= vec3 |= -> ." case1" |;
-	| vec3 l>>> c: a ch>>> c: , ch>>>
-	vec3 |= -> ." case2" |;
-	| vec3 l>>> c: a ch>>> |;
-	end |= -> ." case3" r> r> drop drop ;;
-	match;
-    again
+    |; params |= -> dup . params-s cend
     match;
 ;
 : compile-fun
    match:
-      |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> |;
+      |; |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> cend
    match;
 ;
 : compile

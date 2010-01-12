@@ -10,13 +10,34 @@ variable $a-var
 variable $b-var
 variable $c-var
 variable matched
-: match: 0 0 literal postpone matched postpone ! ; immediate
-: |; -1 literal postpone matched postpone ! postpone endcase' 0 ; immediate
-: |= postpone over postpone = postpone if postpone drop ; immediate
-: -> postpone matched postpone @ postpone 0= postpone if ; immediate
+: match: 0 ; immediate
+: |; postpone endcase' 0 ; immediate
+: |= postpone over postpone = postpone if postpone >r ; immediate
+: -> ; immediate
 : |a postpone $a-var postpone ! ; immediate
 : |b postpone $b-var postpone ! ; immediate
 : $a $a-var @ ;
 : $b $b-var @ ;
-: match; postpone endcase' ; immediate
+: match; postpone endcase' postpone r> postpone drop  ; immediate
 : nip swap drop ;
+
+| -1 >r
+| r if 10 over = if >r 11 over if >r action rdrop rdrop else r> then else r> then rdrop 0 >r then
+| r if 10 over = if >r action rdrop rdrop 0 else r> then else r> then rdrop 0 >r then
+
+: rdrop postpone r> postpone drop ; immediate
+: match: -1 literal postpone >r ; immediate
+: |; postpone r postpone if 0 ; immediate
+: |= postpone over postpone = postpone if postpone >r ; immediate
+: clear-rstack s@ begin dup @ while postpone rdrop rcell + repeat drop ;
+: -> ; immediate
+variable matching
+: match-next -1 matching ! ;
+: cend clear-rstack 0 literal postpone matching postpone ! begin ?dup while postpone else postpone match-next postpone r> postpone then repeat postpone rdrop postpone matching postpone @ postpone >r postpone then ; immediate
+: match; postpone rdrop ; immediate
+
+: word match:
+    |; 10 |= 10 |= -> ." case 2 " cend
+    |; 10 |= -> ." case 1 " cend
+    match;
+;

@@ -54,7 +54,7 @@ variable #tokens
 create stream 1024 allot
 variable stream@
 
-: >>> here @ >r stream@ @ here ! 1- 0 do dup i + c@ c, loop here @ stream@ ! r> here ! ;
+: >>> here @ >r stream@ @ here ! 1- 0 do dup i + c@ c, loop drop here @ stream@ ! r> here ! ;
 : ch>>> stream@ @ c! stream@ 1+! ;
 : ch:>>> postpone c: postpone ch>>> ; immediate
 : sp>>> 32 ch>>> ;
@@ -69,17 +69,23 @@ declare main
 declare vec3
 declare ala
 declare end
+declare params
 : l>>> nth tok >>> sp>>> ;
 variable stacks@
 variable stacke@
 
 : shader1
     s@ stacke@ !
-    void function main
+|    void function main
     params
-    vec3 ala
-    vec3 kota
-    end
+    vec3
+    vec3
+    vec3
+    vec3
+    vec3
+    vec3
+    vec3
+    vec3
     end
     s@ stacks@ !
 ;
@@ -101,12 +107,30 @@ variable stacke@
     repeat
     drop drop
 ;
-	    
+
+: compile-params
+    match:
+    params |= -> 
+    begin
+	match:
+	vec3 |= vec3 |= -> ." case1" |;
+	| vec3 l>>> c: a ch>>> c: , ch>>>
+	vec3 |= -> ." case2" |;
+	| vec3 l>>> c: a ch>>> |;
+	end |= -> ." case3" r> r> drop drop ;;
+	match;
+    again
+    match;
+;
+: compile-fun
+   match:
+      |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> |;
+   match;
+;
 : compile
     shader1 stacks@ @ stacke@ @ rev
-    match:
-    |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> 
-    match;
+|    compile-fun
+    compile-params
 ;
 
 

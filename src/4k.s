@@ -73,11 +73,11 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 	sub	$4096,%ebx
 	mov	$next_word,%ebp
 	movl	$ ex_bytecode,%ecx
-	cmp	$ PREFIX_TOKEN, %eax
-	jb	1f
+	cmp	$ MAX_VALID_TOKEN, %eax
+	jbe	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
-	sub	$ PREFIX_TOKEN,%eax
+	sub	$ MAX_VALID_TOKEN,%eax
 1:	
 	movb	%al,(%ecx)
 	inc	%ecx
@@ -209,7 +209,7 @@ ifdef([DEBUG],[
 	jne	.regular	# not, then regular
 	lodsb
 #	add	$256,%eax	
-	add	$PREFIX_TOKEN,	%eax 
+	add	$MAX_VALID_TOKEN,	%eax 
 .regular:
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
 	cmpb	$EOW_TOKEN, (%eax)	     # table. Check if it is bytecode or asm code?

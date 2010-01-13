@@ -101,11 +101,11 @@ DEF_CODE(compile, "compile")
 	xchg	%esp,%ebx
 	popl	%eax
 	movl	var_here,%ecx
-	cmp	$ PREFIX_TOKEN, %eax
+	cmp	$ MAX_VALID_TOKEN, %eax
 	jb	1f
 	movb	$ PREFIX_TOKEN, (%ecx)
 	inc	%ecx
-	sub	$ PREFIX_TOKEN,%eax
+	sub	$ MAX_VALID_TOKEN,%eax
 	incl	var_here
 1:	
 	movb	%al,(%ecx)
@@ -116,10 +116,10 @@ DEF_CODE(execute, "execute")
 	xchg	%esp,%ebx
 	popl	%eax
 	xchg 	%esp,%ebx
-	cmp	$ PREFIX_TOKEN, %eax
+	cmp	$ MAX_VALID_TOKEN, %eax
 	jb	1f
 	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ PREFIX_TOKEN,%eax
+	sub	$ MAX_VALID_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
 	movb	$EOW_TOKEN,(ex_bytecode+2)
 	jmp	2f
@@ -566,23 +566,24 @@ DEF_CODE(bye, "bye")
 	int $128	
 END_CODE
 
-DEF_CODE(cback, "cback")
-	xor	%eax,%eax
-	lodsl
-	cmp	$ PREFIX_TOKEN, %eax
-	jb	1f
-	movb	$ PREFIX_TOKEN, ex_bytecode
-	sub	$ PREFIX_TOKEN,%eax
-	movb	%al,(ex_bytecode+1)
-	movb	$EOW_TOKEN,(ex_bytecode+2)
-	jmp	2f
-1:	
-	movb	%al,ex_bytecode
-	movb	$EOW_TOKEN,(ex_bytecode+1)
-2:	
-	mov	$(ex_bytecode-1),%eax
-	jmp	runbyte
-END_CODE
+## DEF_CODE(cback, "cback")
+## 	xor	%eax,%eax
+## 	lodsl
+## 	cmp	$ PREFIX_TOKEN, %eax
+## 	jbe	1f
+## 	movb	$ PREFIX_TOKEN, ex_bytecode
+## 	sub	$ PREFIX_TOKEN,%eax
+## 	movb	%al,(ex_bytecode+1)
+## 	movb	$EOW_TOKEN,(ex_bytecode+2)
+## 	jmp	2f
+## 1:	
+## 	movb	%al,ex_bytecode
+## 	movb	$EOW_TOKEN,(ex_bytecode+1)
+## 2:	
+## 	mov	$(ex_bytecode-1),%eax
+## 	jmp	runbyte
+	## 
+## END_CODE
 DEF_CODE(stk, "s@")
 	mov	%ebx,%eax
 	sub	$4,%ebx

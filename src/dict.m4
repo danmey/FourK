@@ -4,6 +4,7 @@ define([MARKER],[
 	.ASCII "@@!", $1, "!@@"
 9:
 ])
+define([MAX_VALID_TOKEN], [256])dnl
 define([COMPILE_TOKEN],[10])dnl
 define([EXECUTE_TOKEN],[11])dnl
 define([INTERPRET_TOKEN],[12])dnl

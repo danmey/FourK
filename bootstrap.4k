@@ -12,7 +12,7 @@ postpone last
 postpone !
 
 postpone lit
--1 c,
+0 c,
 postpone here
 postpone @
 postpone lit
@@ -55,8 +55,8 @@ token : (:) token (:) ;
 : here@ here @ ;
 
 
-: literal 0 c, c, ;
-: rliteral 1 c, , ;
+: literal 1 c, c, ;
+: rliteral 2 c, , ;
 : sliteral swap rliteral literal ;
 : allot there @ + there ! ;
 : rcell 4 ;
@@ -97,8 +97,8 @@ variable #section
 
 
 | Taking into account prefix word
-: ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
- last @ 253 = if 256 last ! then postpone [ ; immediate
+: ; 0 here @ c! -2 here @ 1+ c! last @ 1+ last !
+   last @ 253 = if 256 last ! then postpone [ ; immediate
 
 | please note this changes MUST BE HERE! (for some reason i forgot hehehe) 
 : (create) make there @ rliteral postpone ; ;
@@ -303,7 +303,6 @@ variable #ithere
 
 : include" \" include ; immediate
 | Hmmmm this does inteerupt compiling
--1 const c-1
 | "    
 | : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
 : require" \" over over find -1 = if over over make postpone ; include ;; then  ;

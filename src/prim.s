@@ -20,6 +20,8 @@ SECTION(words)
 BEGIN_DICT
 _words_start:
 # Define prefix words here!
+DEF_CODE(dummy, "dummy")
+END_CODE
 DEF_CODE(lit, "lit") #0
 	xor	%eax,%eax
 	lodsb
@@ -243,7 +245,7 @@ DEF_CODE(make,"make")
 	lea	dsptch(,%eax,4),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
-	movb	$-1,	(%eax)		#store token indictating that we deal with bytecode
+	movb	$END_TOKEN,	(%eax)		#store token indictating that we deal with bytecode
 	incl	var_here
 	xchg	%esp,%ebx
 	pop	%esi
@@ -293,7 +295,7 @@ DEF_IMM(postpone,"postpone")
 
 1:
 	mov	var_here,%edi
-	movb	$ 1, (%edi)
+	movb	$ LIT4_TOKEN, (%edi)
 	movl	%eax, 1(%edi)
 	addl	$5,	var_here
 	mov	%eax,%ecx

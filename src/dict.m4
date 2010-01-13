@@ -4,13 +4,14 @@ define([MARKER],[
 	.ASCII "@@!", $1, "!@@"
 9:
 ])
-define([COMPILE_TOKEN],[7])dnl
-define([EXECUTE_TOKEN],[8])dnl
-define([INTERPRET_TOKEN],[9])dnl
-define([END_TOKEN],[255])dnl
+define([COMPILE_TOKEN],[8])dnl
+define([EXECUTE_TOKEN],[9])dnl
+define([INTERPRET_TOKEN],[10])dnl
+define([END_TOKEN],[0])dnl
 define([EOD_TOKEN],[254])dnl
 define([PREFIX_TOKEN],[253])dnl
-define([LIT_TOKEN],[0])dnl
+define([LIT_TOKEN],[1])dnl
+define([LIT4_TOKEN],[2])dnl
 define([NTAB_ENTRY_SIZE], 32)dnl
 define([MAX_WORDS],512)dnl
 define([DICT_SIZE], 8*1024)dnl

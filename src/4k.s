@@ -81,7 +81,7 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 1:	
 	movb	%al,(%ecx)
 	inc	%ecx
-	movb	$ END_TOKEN,(%ecx)
+	movb	$ EOW_TOKEN,(%ecx)
 	mov     $(ex_bytecode-1),%eax
 	jmp	runbyte
 dlopen_s:	.asciz "dlopen"
@@ -105,7 +105,7 @@ build_dispatch:
 	xor	%eax,%eax	#clear out eax
 	lodsb
 	mov	%eax,%ecx
-	cmp	$END_TOKEN,%al		#end of core dictionary?
+	cmp	$EOW_TOKEN,%al		#end of core dictionary?
 	je	.user_dictionary
 	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
 	je	.done
@@ -129,7 +129,7 @@ build_dispatch:
 	xor	%eax,%eax
 	lodsb
 .user_dictionary:
-	cmp	$END_TOKEN,%al
+	cmp	$EOW_TOKEN,%al
 	je	.found_word
 	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
 	je	.done
@@ -139,7 +139,7 @@ build_dispatch:
 	je	.cont
 	jmp	.loop2
 .found_word:
-	cmpb	$END_TOKEN,(%esi)
+	cmpb	$EOW_TOKEN,(%esi)
 	jz	.done
 	mov	%esi,%eax
 	dec	%eax
@@ -203,7 +203,7 @@ ifdef([DEBUG],[
 .fetchbyte:
 	xor	%eax,%eax	# fetch the byte, first clear up the %eax
 	lodsb			# byte code in %eax
-	cmpb	$ END_TOKEN,%al		# if it is end of word, escape by returning
+	cmpb	$ EOW_TOKEN,%al		# if it is end of word, escape by returning
 	je	.fold		# the previous byte code pointer
 	cmpb	$ PREFIX_TOKEN,%al		# prefix word
 	jne	.regular	# not, then regular
@@ -212,7 +212,7 @@ ifdef([DEBUG],[
 	add	$PREFIX_TOKEN,	%eax 
 .regular:
 	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
-	cmpb	$END_TOKEN, (%eax)	     # table. Check if it is bytecode or asm code?
+	cmpb	$EOW_TOKEN, (%eax)	     # table. Check if it is bytecode or asm code?
 	je	runbyte		     # if it is byte code then thread again
 	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
 	inc	%ecx		     # asm defined words escape to next_word at the end

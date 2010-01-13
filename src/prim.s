@@ -20,7 +20,11 @@ SECTION(words)
 BEGIN_DICT
 _words_start:
 # Define prefix words here!
-DEF_CODE(dummy, "dummy")
+DEF_CODE(eow, "eow")
+END_CODE
+DEF_CODE(eod, "eod")
+END_CODE
+DEF_CODE(prefix, "prefix")
 END_CODE
 DEF_CODE(lit, "lit") #0
 	xor	%eax,%eax
@@ -117,11 +121,11 @@ DEF_CODE(execute, "execute")
 	movb	$ PREFIX_TOKEN, ex_bytecode
 	sub	$ PREFIX_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
-	movb	$END_TOKEN,(ex_bytecode+2)
+	movb	$EOW_TOKEN,(ex_bytecode+2)
 	jmp	2f
 1:	
 	movb	%al,ex_bytecode
-	movb	$END_TOKEN,(ex_bytecode+1)
+	movb	$EOW_TOKEN,(ex_bytecode+1)
 2:	
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte
@@ -245,7 +249,7 @@ DEF_CODE(make,"make")
 	lea	dsptch(,%eax,4),%edi      	#load address to edi
 	mov	var_here, %eax		#load here address
 	movl	%eax,	(%edi)		#store here address
-	movb	$END_TOKEN,	(%eax)		#store token indictating that we deal with bytecode
+	movb	$EOW_TOKEN,	(%eax)		#store token indictating that we deal with bytecode
 	incl	var_here
 	xchg	%esp,%ebx
 	pop	%esi
@@ -570,11 +574,11 @@ DEF_CODE(cback, "cback")
 	movb	$ PREFIX_TOKEN, ex_bytecode
 	sub	$ PREFIX_TOKEN,%eax
 	movb	%al,(ex_bytecode+1)
-	movb	$END_TOKEN,(ex_bytecode+2)
+	movb	$EOW_TOKEN,(ex_bytecode+2)
 	jmp	2f
 1:	
 	movb	%al,ex_bytecode
-	movb	$END_TOKEN,(ex_bytecode+1)
+	movb	$EOW_TOKEN,(ex_bytecode+1)
 2:	
 	mov	$(ex_bytecode-1),%eax
 	jmp	runbyte

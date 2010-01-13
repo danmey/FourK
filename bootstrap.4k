@@ -21,7 +21,7 @@ postpone +
 postpone c!
 
 postpone lit
--2 c,
+2 c,
 postpone here
 postpone @
 postpone lit
@@ -55,8 +55,8 @@ token : (:) token (:) ;
 : here@ here @ ;
 
 
-: literal 1 c, c, ;
-: rliteral 2 c, , ;
+: literal 3 c, c, ;
+: rliteral 4 c, , ;
 : sliteral swap rliteral literal ;
 : allot there @ + there ! ;
 : rcell 4 ;

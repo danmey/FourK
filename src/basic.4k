@@ -20,7 +20,7 @@ variable matched
 
 : rdrop postpone r> postpone drop ; immediate
 : match: -1 literal postpone >r ; immediate
-: |; postpone r postpone if 0 ; immediate
+: |: postpone r postpone if 0 ; immediate
 : |= postpone over postpone = postpone if postpone >r ; immediate
 : clear-rstack s@ begin dup @ while postpone rdrop rcell + repeat drop ;
 : |a $a-var ! ;
@@ -28,11 +28,12 @@ variable matched
 : -> ; immediate
 variable matching
 : match-next -1 matching ! ;
-: cend clear-rstack 0 literal postpone matching postpone ! begin ?dup while postpone else postpone match-next postpone r> postpone then repeat postpone rdrop postpone matching postpone @ postpone >r postpone then ; immediate
-: match; postpone rdrop ; immediate
+: ;| clear-rstack 0 literal postpone matching postpone ! begin ?dup while postpone else postpone match-next postpone r> postpone then repeat postpone rdrop postpone matching postpone @ postpone >r postpone then ; immediate
+: ;match postpone rdrop ; immediate
 
-: word match:
-    |; 10 |= 10 |= -> ." case 2 " cend
-    |; 10 |=       -> ." case 1 " cend
+: word
+    match:
+    |: 10 |= 10 |= -> ." case 2 " ;|
+    |: 10 |=       -> ." case 1 " ;|
     match;
 ;

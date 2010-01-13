@@ -97,8 +97,8 @@ variable #section
 
 
 | Taking into account prefix word
- : ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
-  last @ 253 = if 256 last ! then postpone [ ; immediate
+: ; -1 here @ c! -2 here @ 1+ c! last @ 1+ last !
+ last @ 253 = if 256 last ! then postpone [ ; immediate
 
 | please note this changes MUST BE HERE! (for some reason i forgot hehehe) 
 : (create) make there @ rliteral postpone ; ;

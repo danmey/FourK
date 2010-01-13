@@ -44,23 +44,23 @@ declare beg
 declare end
 declare function
 declare main
-declare vec3
 declare ala
+declare vec3
 declare end
 declare params
 
-: l>>> nth tok >>> sp>>> ;
-variable stacks@
-variable stacke@
+ : l>>> nth tok >>> sp>>> ;
+ variable stacks@
+ variable stacke@
 
-: shader1
+ : shader1
     s@ stacke@ !
 |    void function main
     params
     vec3
     end
     s@ stacks@ !
-;
+ ;
 
 : rev ( start end -- )
     rcell -
@@ -82,20 +82,15 @@ variable stacke@
 
 : param
     match:
-    |;  end |= -> ." case3" cend
-    |; vec3 |= -> ." case2" cend
-    | vec3 l>>> c: a ch>>> c: , ch>>>
-    | vec3 l>>> c: a ch>>> |;
-    match;
-;
-: param match:
     |; end  |=      -> ." case 2 " cend
     |; vec3 |=      -> ." case 1 " cend
     match;
 ;
 
 : params-s
-    param 
+    begin
+	param
+    again
 ;
 
 : compile-params
@@ -108,11 +103,9 @@ variable stacke@
       |; |a function |= |b -> $a l>>> $b l>>> c: ( ch>>> c: ) ch>>> cend
    match;
 ;
+
 : compile
     shader1 stacks@ @ stacke@ @ rev
-|    compile-fun
     compile-params
 ;
 
-: a compile ;
-compile

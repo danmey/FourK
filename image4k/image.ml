@@ -382,7 +382,7 @@ module Words = struct
 	  | a::i::xs              when is_prefixb a     -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
 	  | a::b1::b2::xs         when is_prefixw a     -> let bc, ofs' = adv 3 xs in (ofs, Prefix16 (a, ext_sign16 b1 b2))    :: bc, ofs'
 	  | a::b1::b2::b3::b4::xs when is_prefixd a     -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (a, (dword b4 b3 b2 b1))) :: bc, ofs'
-	  | c::xs                                       -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
+	  | a::xs                                       -> let bc, ofs' = adv 1 xs in (ofs, Opcode a)                          :: bc, ofs'
     in
     let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
     let rec pass1' ass = 
@@ -406,7 +406,7 @@ module Words = struct
 	     | Prefix(opcode, offset) when opcode = branch_token || opcode = branch0_token -> 
 		 let offset' = offset + index + 1 in
 		 let lab = List.assoc offset' labels in
-		   acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
+		   acc @ [index, if opcode = 5 then Branch lab else Branch0 lab]
 	     | Prefix16(opcode, offset) when opcode = lbranch_token || opcode = lbranch0_token -> 
 		 let offset' = offset + index + 2 in
 		 let lab = List.assoc offset' labels in

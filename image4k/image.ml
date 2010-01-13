@@ -381,7 +381,7 @@ module Words = struct
 	  | a::i::xs              when a = prefix_token -> let bc, ofs' = adv 2 xs in (ofs, Opcode (max_valid_token + i))      :: bc, ofs'
 	  | a::i::xs              when is_prefixb a     -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
 	  | a::b1::b2::xs         when is_prefixw a     -> let bc, ofs' = adv 3 xs in (ofs, Prefix16 (a, ext_sign16 b1 b2))    :: bc, ofs'
-	  | a::b1::b2::b3::b4::xs when is_prefixd a     -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
+	  | a::b1::b2::b3::b4::xs when is_prefixd a     -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (a, (dword b4 b3 b2 b1))) :: bc, ofs'
 	  | c::xs                                       -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
     in
     let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in

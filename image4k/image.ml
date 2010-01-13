@@ -368,8 +368,8 @@ module Words = struct
 			  Prefix16 (ind + 3,v)) 
 		    in
 		      match op with
-			| Branch  i -> emit_branch 2 i
-			| Branch0 i -> emit_branch 3 i
+			| Branch  i -> emit_branch 5 i
+			| Branch0 i -> emit_branch 6 i
 			| rest -> rest) % 
 	List.filter (function _,Label _ -> false | _,_ -> true)
 
@@ -488,8 +488,8 @@ module Words = struct
 	  function
 	    | [] -> [],n
 	    | a::_              when a = eod_token                  -> [],n
-	    | a::_::xs          when a = prefix_token         -> drop_bytecode (n+2) xs
-	    | a::xs as l        when a = eow_token            -> l,n
+	    | a::_::xs          when a = prefix_token               -> drop_bytecode (n+2) xs
+	    | a::xs as l        when a = eow_token                  -> l,n
 	    | x::_::_::_::_::xs when is_prefixd x   -> drop_bytecode (n+5) xs
 	    | x::_::xs          when is_prefixb x   -> drop_bytecode (n+2) xs
 	    | x::_::_::xs       when is_prefixw x   -> drop_bytecode (n+3) xs
@@ -709,7 +709,7 @@ module Words = struct
 	      i when i <= 9 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
 	    loop (List.length prefix)
 	in
-	let ofs = 9-List.length prefix in
+	let ofs = 10-List.length prefix in
 	let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
 	let u = swap_ids used' in
 	  u

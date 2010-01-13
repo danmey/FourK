@@ -116,16 +116,6 @@ build_dispatch:
 	add	%ecx,%esi	#advance to next word
 	jmp	.loop
 .loop2:
-## 	mov	%edi,%eax	
-## 	sub	$dsptch, %eax
-## 	shr	$2,%eax
-## 	cmp	$253, %eax
-## 	jne	.ok
-## 	xor	%eax,%eax
-## #	stosl
-## #	stosl
-## #	stosl
-## .ok:
 	xor	%eax,%eax
 	lodsb
 .user_dictionary:
@@ -133,7 +123,7 @@ build_dispatch:
 	je	.found_word
 	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
 	je	.done
-	cmp	$4,%al
+	cmp	$9,%al
 	jbe	.cont
 	cmp	$ PREFIX_TOKEN,%al
 	je	.cont

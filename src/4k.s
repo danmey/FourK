@@ -148,9 +148,9 @@ build_dispatch:
 .cont:
 	cmp	$LIT4_TOKEN,%al
 	jz	.lit4
-	cmp	$5,%al
+	cmp	$8,%al
 	jz	.lit2
-	cmp	$6,%al
+	cmp	$9,%al
 	jz	.lit2
 	lodsb
 	jmp	.loop2

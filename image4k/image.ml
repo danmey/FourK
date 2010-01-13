@@ -709,7 +709,7 @@ module Words = struct
 	      i when i <= 9 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
 	    loop (List.length prefix)
 	in
-	let ofs = 7-List.length prefix in
+	let ofs = 9-List.length prefix in
 	let used' = prefix @ spacer @ (List.map (fun (i,w) -> (i+ofs,w))) non_prefix in
 	let u = swap_ids used' in
 	  u

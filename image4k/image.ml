@@ -1,6 +1,26 @@
 open Arg
 module Ni = Int32
 
+let eow_token = 0
+let eod_token = 1
+let prefix_token = 2
+let lit_token = 3
+let lit4_token = 4
+let branch_token = 5
+let branch0_token = 6
+let ccall_token = 7
+let lbranch_token = 8
+let lbranch0_token = 9
+let max_valid_token = 256
+let compile_token = 10
+let execute_token = 11
+let interpret_token = 12
+
+let is_prefixb x = x = prefix_token || x = lit_token || x = branch_token || x = branch0_token || x = ccall_token
+let is_prefixd x = x = lit4_token
+let is_prefixw x = x = prefix_token || x = lbranch0_token || x = lbranch_token
+
+
 let ($) f v = f v
 let (%) f g = fun x -> f (g x)
 
@@ -330,7 +350,7 @@ module Words = struct
 			   | Prefix   (opc,v)              ->  i+2, acc @ [i, bc]
 			   | Prefix16 (opc,v)              ->  i+3, acc @ [i, bc]
 			   | Prefix32 (opc,v)              ->  i+5, acc @ [i, bc]
-			   | Opcode opc when opc >= 253    ->  i+2, acc @ [i, bc]
+			   | Opcode opc when opc >= max_valid_token    ->  i+2, acc @ [i, bc]
 			   | Opcode opc                    ->  i+1, acc @ [i, bc] 
 			   | Branch ofs                    ->  i+2, acc @ [i, bc]
 			   | Branch0 ofs                   ->  i+2, acc @ [i, bc]
@@ -357,18 +377,18 @@ module Words = struct
     let rec pass0 ofs =
       let adv n = pass0 $ ofs+n in
 	function
-	  | []                                                  -> [],ofs
-	  | a::i::xs      when a = 0 || a = 2 || a = 3 || a = 4 -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
-	  | a::b1::b2::xs when a = 5 || a = 6                   -> let bc, ofs' = adv 3 xs in (ofs, Prefix16 (a, ext_sign16 b1 b2))    :: bc, ofs'
-	  | 1::b1::b2::b3::b4::xs                               -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
-	  | 253::i::xs                                          -> let bc, ofs' = adv 2 xs in (ofs, Opcode (250 + i))                  :: bc, ofs'
-	  | c::xs                                               -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
+	  | []                                          -> [],ofs
+	  | a::i::xs              when a = prefix_token -> let bc, ofs' = adv 2 xs in (ofs, Opcode (max_valid_token + i))      :: bc, ofs'
+	  | a::i::xs              when is_prefixb a     -> let bc, ofs' = adv 2 xs in (ofs, Prefix   (a, ext_sign i))          :: bc, ofs'
+	  | a::b1::b2::xs         when is_prefixw a     -> let bc, ofs' = adv 3 xs in (ofs, Prefix16 (a, ext_sign16 b1 b2))    :: bc, ofs'
+	  | a::b1::b2::b3::b4::xs when is_prefixd a     -> let bc, ofs' = adv 5 xs in (ofs, Prefix32 (1, (dword b4 b3 b2 b1))) :: bc, ofs'
+	  | c::xs                                       -> let bc, ofs' = adv 1 xs in (ofs, Opcode c)                          :: bc, ofs'
     in
     let add k ass = try let _ = List.assoc k ass in ass with Not_found -> ass@[k,List.length ass] in
     let rec pass1' ass = 
       function
       | [] -> ass
-      | (ofs, Prefix(opcode, offset))   :: xs when opcode = 2 || opcode = 3 -> 
+      | (ofs, Prefix(opcode, offset))   :: xs when opcode = branch_token || opcode = branch0_token -> 
 	  (*Printf.printf "lab: %d %d\n" opcode offset;*)
 	  let o = offset + ofs+1 in 
 	    pass1' (add o ass) xs
@@ -383,11 +403,11 @@ module Words = struct
       List.fold_left 
 	(fun acc (index, bytecode) ->
 	   match bytecode with
-	     | Prefix(opcode, offset) when opcode = 2 || opcode = 3 -> 
+	     | Prefix(opcode, offset) when opcode = branch_token || opcode = branch0_token -> 
 		 let offset' = offset + index + 1 in
 		 let lab = List.assoc offset' labels in
 		   acc @ [index, if opcode = 2 then Branch lab else Branch0 lab]
-	     | Prefix16(opcode, offset) when opcode = 5 || opcode = 6 -> 
+	     | Prefix16(opcode, offset) when opcode = lbranch_token || opcode = lbranch0_token -> 
 		 let offset' = offset + index + 2 in
 		 let lab = List.assoc offset' labels in
 		   acc @ [index, if opcode = 5 then Branch lab else Branch0 lab]
@@ -407,8 +427,9 @@ module Words = struct
     in
     let rec rem_last = List.rev % List.tl % List.rev in
     match lst with
-      | 255::xs -> Bytecode 
-	  (let bc',ofs = (pass0 0 xs) in
+      | a::xs when a = eow_token -> Bytecode 
+	  (
+	    let bc',ofs = (pass0 0 xs) in
 	   let bc = bc' @ [ofs, Label 255] in
 	   let lb = pass1 bc in
 	     (*Printf.printf "Heyah!\n";*)
@@ -423,7 +444,7 @@ module Words = struct
 	offset = o  ;
 	code   = disassemble_word name word_arr code;
 	used   = 0;
-	prefix = i <= 6;
+	prefix = i <= 9;
       }
 
     let rec traverse0 words word =
@@ -466,19 +487,19 @@ module Words = struct
 	let rec drop_bytecode n = 
 	  function
 	    | [] -> [],n
-	    | 254::_                                -> [],n
-	    | x::_::_::_::_::xs when x = 1          -> drop_bytecode (n+5) xs
-	    | x::_::xs          when x < 5          -> drop_bytecode (n+2) xs
-	    | x::_::_::xs       when x = 5 || x = 6 -> drop_bytecode (n+3) xs
-	    | x::_::xs          when x = 253        -> drop_bytecode (n+2) xs
-	    | 255::xs as l                          -> l,n
+	    | a::_              when a = eod_token                  -> [],n
+	    | a::_::xs          when a = prefix_token         -> drop_bytecode (n+2) xs
+	    | a::xs as l        when a = eow_token            -> l,n
+	    | x::_::_::_::_::xs when is_prefixd x   -> drop_bytecode (n+5) xs
+	    | x::_::xs          when is_prefixb x   -> drop_bytecode (n+2) xs
+	    | x::_::_::xs       when is_prefixw x   -> drop_bytecode (n+3) xs
 	    | x::xs                                 -> drop_bytecode (n+1) xs in
 	let next = drop_bytecode 0 in
 	let rec offsets' prev offset = 
 	  function
 	    | []                -> []
-	    | 254::_            -> []
-            | 255::xs           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
+	    | a::_ when a = eod_token            -> []
+            | a::xs when a = eow_token           -> let xs',n = next xs in (offset, n+1)::(offsets' true  (offset+n+1) xs')
 	    | n::xs             ->                        (offset, n+1)::(offsets' false (offset+n+1) (drop n xs)) in
 	  offsets' false 0 lst in
       let ofs = offsets word_image in
@@ -557,7 +578,7 @@ module Words = struct
 			    | Prefix   (i,v)         -> acc @ [i;v] 
 			    | Prefix16 (i,v)         -> acc @ [i] @ (wd%Int32.of_int $ v)
 			    | Prefix32 (i,v)         -> acc @ [i] @ (dw v)
-			    | Opcode i when i >= 253 -> acc @ [253; i-253]
+			    | Opcode i when i >= max_valid_token -> acc @ [prefix_token; i - max_valid_token]
 			    | Opcode i               -> acc @ [i]
 			    | Label i                -> acc
 (*      			    | Branch i               -> acc @ emit_branch 2 i
@@ -581,13 +602,7 @@ module Words = struct
 		    let str = explode w.name in
 		    let arr = Array.make 32 0 in
 		      ignore(List.fold_left (fun i x -> arr.(i) <- int_of_char x; i+1) 0 str);
-		      if i = 253 then
-			let arr' = Array.make (3*32) 0 in
-			  Array.blit arr' 0 sec.Image.image (32*253) (3*32); 
-			  Array.blit arr 0 sec.Image.image (32*256) 32;
-			  257,3
-		      else
-			(Array.blit arr 0 sec.Image.image (32*(w.index+ofs)) 32; (i+1,ofs))) (0,0) w)
+		      (Array.blit arr 0 sec.Image.image (32*(w.index+ofs)) 32; (i+1,ofs))) (0,0) w)
     in
     let rec emit_words i =
       function
@@ -601,14 +616,14 @@ module Words = struct
 	       | Bytecode bc ->
 		   let im = Array.of_list (emit_bytecode bc) 
 		   in
-		     section.Image.image.(i) <- 255;
+		     section.Image.image.(i) <- eow_token;
 		     Array.blit im 0 section.Image.image (i+1) (Array.length im);
 		     emit_words (i+1+(Array.length im)) xs) 
     in
     let i = emit_words 0 words in
       emit_names words name_section; 
       (*      Printf.printf "%d\n\n" i; *)
-      section.Image.image.(i) <- 254
+      section.Image.image.(i) <- eod_token
 	
   let rec loop ok f v = if ok v then v else loop ok f (f v)
     
@@ -650,7 +665,7 @@ module Words = struct
 
   let optimise' words_list =
     let words_ar = Array.of_list words_list in
-    let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index <= 6 then w::acc else acc) [] words_ar in
+    let used = Array.fold_left (fun acc w -> if w.used <> 0 || w.index <= 9 then w::acc else acc) [] words_ar in
       print_endline "------1";
       let used = List.rev (fst (List.fold_right (fun w (acc,i) -> (i,w)::acc,i+1) used ([],0))) in
 	print_endline "------2";
@@ -691,7 +706,7 @@ module Words = struct
 	  
 	let spacer =
 	  let rec loop = function
-	      i when i <= 6 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
+	      i when i <= 9 -> (i,{ name="#spacer#"; index = i; offset=0; code=Core [||]; used=1; prefix=true})::(loop (i+1)) | _ -> [] in
 	    loop (List.length prefix)
 	in
 	let ofs = 7-List.length prefix in
@@ -862,7 +877,7 @@ module Options = struct
 
 					      | Words.Bytecode lst' -> 
 						  begin
-						    let x' = Words.disassemble_word x.Words.name (Array.map (fun el -> el.Words.name) wordsa) (255::(Words.emit_bytecode lst')) in
+						    let x' = Words.disassemble_word x.Words.name (Array.map (fun el -> el.Words.name) wordsa) (eow_token::(Words.emit_bytecode lst')) in
 
 						    match x' with
 						      | Words.Bytecode lst -> 

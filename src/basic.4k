@@ -35,5 +35,5 @@ variable matching
     match:
     |: 10 |= 10 |= -> ." case 2 " ;|
     |: 10 |=       -> ." case 1 " ;|
-    match;
+    ;match
 ;

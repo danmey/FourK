@@ -558,5 +558,6 @@ Script: camera
 
 : m main main ;
 
-m
+save-image im4.4ki
+
 

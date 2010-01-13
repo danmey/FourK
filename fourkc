@@ -73,7 +73,7 @@ cp ${fourk} temp
 ${image4k} -link boot.4ki temp
 cp temp ${out_file}
 
-#${image4k} -strip temp
+${image4k} -strip temp
 
 # Compress it
 cp unpack.header ${out_file}

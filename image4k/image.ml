@@ -58,13 +58,13 @@ module BinaryArray = struct
 end
 
 module Image = struct
-  type section = { offset       : int;
-		   len          : int;
-		   real_len     : int;
-		   markers      : (int * string) list;
-		   mutable name : string;
-		   image        : BinaryArray.t }
-  type t = { rva:Int32.t; mutable sections:section list; }
+  type section = { offset   : int;
+		   len      : int;
+		   real_len : int;
+		   markers  : (int*string) list;
+		   mutable name     : string;
+		   image    : BinaryArray.t }
+  type t = { rva:Int32.t;mutable sections:section list; }
 
   let real_len s e image =
     let rec zeroes i =

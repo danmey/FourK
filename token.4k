@@ -1,0 +1,20 @@
+create token-table 512 allot
+variable ptr
+token-table ptr !
+variable #tokens
+0 #tokens !
+: t" ptr @ dup >r 1+ begin key dup c: " <> while over c! 1+ repeat drop dup r - 1- r> c! ptr ! 0 ptr @ c! #tokens 1+! ;
+: tok dup c@ swap 1+ swap ;
+: declare here @ >r ptr @ here ! token dup c, 1- 0
+    do dup i + c@ c, loop
+    here @ r> here !
+    ptr @ tok (:) #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+: print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
+: nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1 ;; then loop then ;
+: ctype dup c@ 1- 0 do 1+ dup c@ emit loop ;
+(* Will be -1 terminated !!! *)
+: nt" t" #tokens @ const #tokens 1+! ;
+: print nth ctype ;
+: lst #tokens @ 1-  ;
+create stream 1024 allot
+variable stream@

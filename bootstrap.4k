@@ -329,7 +329,8 @@ variable #ithere
 : inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
 
 | Not 100% correct (but works with overlapping blocks )
-| @spec, what does this thing do??? 
+| @spec, what does this thing do???
+| @phon, copy blocks of memory even if they overlap.
 : cmove> ( src dst c -- )
     >r 2dup <
     if

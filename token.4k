@@ -1,4 +1,7 @@
-create token-table 512 allot
+section token-table
+512 allot
+
+
 variable ptr
 token-table ptr !
 variable #tokens

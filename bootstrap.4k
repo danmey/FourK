@@ -155,9 +155,7 @@ comment
 
 
 : r ( -- r ) postpone r> postpone dup postpone >r ; immediate
-
-
-
+: rdrop ( -- r: v -- ) postpone r> postpone drop ; immediate
 
 | strings
 

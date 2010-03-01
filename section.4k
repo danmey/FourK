@@ -21,7 +21,8 @@ mark
 : 1+! ( ptr -- ) 1 swap +! ;
 : in ( ofs ptr -- ptr ) + ;
 : >imrel ( ptr -- ofs ) imbase @ - ;
-: section>  th table in ;
+: imrel> ( ofs -- ofs ) imbase @ + ;
+: section>  ( section# -- sec-ptr ) th table in ;
 : current-section #section @ section> ;
 : new ( str-name str-c -- )
 | include the trailing zero    
@@ -49,23 +50,23 @@ mark
    count str= if 2drop i leave ;; then loop 2drop -1 
 ;
 
-: section:
+: section: ( -- r: -- last-here section-ptr )
     token 2dup find-section dup -1 =
     if drop ." section: : Section " type ."  not defined" cr else
 	literal 2drop
 	postpone here postpone @ postpone >r
 	postpone dup postpone >r
-	postpone pointer postpone @
-	postpone r@ postpone th
+	postpone section> postpone pointer postpone @ postpone imrel>
 	postpone here postpone !
     then
 ; immediate
 
 (*
-: ;section
-    postpone here postpone @
-    postpone r>
-    postpone pointer postpone 
 
-    postpone r> postpone here postpone !
+: ;section
+    postpone r> postpone pointer 
+    postpone here postpone @
+    postpone r> postpone dup postpone here postpone !
+    postpone >imrel 
+;
 *)

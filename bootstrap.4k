@@ -352,31 +352,6 @@ variable #ithere
 : there: ( -- )  here there @ here @ there ! swap ! ; 
 : ;there ( -- )  there here @ there @ here ! swap ! ; 
 
-(*
-	Sections, lenght 32 bytes 
-	----------------------
-	| string  < 1-23 byte > + 1 Byte |
-	| offset  < 4 byte >             | 
-	| pointer < 4 byte>              | 
-        ----------------------------------
-*)
-
-| Sections support
-32 const section
-: table stab @ ;
-: th section * ;
-: :pointer ( section -- adr-ptr ) section + rcell - ;
-: :offset ( section -- adr-offset ) :pointer rcell - ; 
-: 1+! ( -- ) 1 swap +! ;
-: in ( -- ) + ;
-: new ( str c -- ) 
-  1+ #section @ th table in 
-    dup :pointer there @ imbase @ - swap ! #section 1+! copy
-    0 #section @ th table in !
-;
-: forall ( -- max min ) #section @ 1- 0 ; 
-
-: dump ( -- )  forall do i th table in dup dup count type :pointer space . cr loop  ;
 
 : mark ( -- )  here @ there @ 
   " *marker*" make rliteral rliteral postpone ; 
@@ -386,29 +361,6 @@ variable #ithere
   dup -1 <> if dup last ! execute there ! here ! 
   -1 here @ c! -1 -2 here @ 1+ c! ;; then drop 
 ;
-: section ( -- ) token new ;
-
-: find-section ( str c -- index )
-   forall do 2dup i th table in dup 
-   count str= if 2drop i leave ;; then loop -1 
-;
-: section-adr ( str c -- adr-of-section ) find-section th table in ;
-
-: there!' ( element -- oldthere ) th table in :pointer @ imbase @ + there @  swap there ! ;
-
-: section: ( -- ) 
-    token find-section literal
-    postpone dup
-    postpone >r 
-    postpone there!'
-    postpone >r
-; immediate
-: update-offset ( section -- ) th table in dup :pointer @ there @ imbase @ - swap - swap :offset ! ;
-: ;section ( -- ) 
-  postpone r> postpone r> postpone update-offset 
-  postpone there postpone ! 
-; immediate
-
 
 | dump
 

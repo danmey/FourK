@@ -12,25 +12,43 @@ mark
 | Sections support
 7 #section !
 
+| size of section data structure
 32 const section
-: table stab @ ;
-: th section * ;
-: pointer ( section# -- adr-ptr ) section + rcell - ;
-: offset ( section# -- adr-offset ) pointer rcell - ; 
-: 1+! ( -- ) 1 swap +! ;
-: in ( -- ) + ;
-: new ( str c -- ) 
-    1+ #section @ th table in 
-    dup pointer there @ imbase @ - swap ! #section 1+! copy
-    0 #section @ th table in !
+: table ( -- ptr ) stab @ ;
+: th ( section# -- ofs ) section * ;
+: pointer ( section* -- sec-pointer ) section + rcell - ;
+: offset ( section# -- sec-offset ) pointer rcell - ; 
+: 1+! ( ptr -- ) 1 swap +! ;
+: in ( ofs ptr -- ptr ) + ;
+: >imrel ( ptr -- ofs ) imbase @ - ;
+: section>  th table in ;
+: current-section #section @ section> ;
+: new ( str-name str-c -- )
+| include the trailing zero    
+    1+ 
+| get the address of next section
+    current-section
+| set the pointer relative to image start
+    dup pointer there @ >imrel swap !
+| increment section count
+    #section 1+!
+| copy the string name into section name field
+    copy
+| ensure that we set zero at the next section
+    0 current-section !
 ;
+
 : forall ( -- max min ) #section @ 1- 0 ; 
-: dump ( -- )  forall do i th table in dup dup count type pointer space . loop  ;
+: dump ( -- ) forall do i section> dup dup count type pointer space . cr loop ;
+
+
 : section ( -- ) token new ;
+(*
 : find-section ( str c -- index )
    forall do 2dup i th table in dup 
    count str= if 2drop i leave ;; then loop -1 
 ;
+
 : section:
     find-section literal
     postpone here postpone @ postpone >r
@@ -46,5 +64,4 @@ mark
     postpone pointer postpone 
 
     postpone r> postpone here postpone !
-    
-    
+*)

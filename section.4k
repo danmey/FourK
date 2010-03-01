@@ -43,21 +43,25 @@ mark
 
 
 : section ( -- ) token new ;
-(*
+
 : find-section ( str c -- index )
    forall do 2dup i th table in dup 
-   count str= if 2drop i leave ;; then loop -1 
+   count str= if 2drop i leave ;; then loop 2drop -1 
 ;
 
 : section:
-    find-section literal
-    postpone here postpone @ postpone >r
-    postpone dup postpone >r
-    postpone pointer postpone @
-    postpone r@ postpone th
-    postpone here postpone !
+    token 2dup find-section dup -1 =
+    if drop ." section: : Section " type ."  not defined" cr else
+	literal 2drop
+	postpone here postpone @ postpone >r
+	postpone dup postpone >r
+	postpone pointer postpone @
+	postpone r@ postpone th
+	postpone here postpone !
+    then
 ; immediate
 
+(*
 : ;section
     postpone here postpone @
     postpone r>

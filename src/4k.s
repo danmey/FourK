@@ -217,8 +217,10 @@ fmt_dec:		.ASCIZ 	"%d\n"
 
 
 include(import.m4)
-K4_IMPORT(stdout)
-K4_IMPORT(stdin)
+ifdef([CYGWIN],,[	
+	K4_IMPORT(stdout)
+	K4_IMPORT(stdin)
+])
 K4_IMPORT(printf)
 K4_IMPORT(fflush)
 K4_IMPORT(fopen)

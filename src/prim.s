@@ -1,9 +1,9 @@
 define([printf2],
 [
-	call	printf
+	K4_PURE_CALL(printf)
 	mov	stdout_ptr, %eax
 	pushl	(%eax)
-	call	fflush
+	K4_PURE_CALL(fflush)
 	add	$ 12,%esp
 ])
 
@@ -395,10 +395,10 @@ END_CODE
 DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
 	pushl 	$fmt_char
-	call	printf
+	K4_PURE_CALL(printf)
 	mov	stdout_ptr, %eax
 	pushl	(%eax)
-	call	fflush
+	K4_PURE_CALL(	fflush)
 	add	$ 12,%esp
 	xchg	%esp,%ebx
 END_CODE
@@ -506,10 +506,10 @@ DEF_CODE(dotf, ".f")
 	push 	%eax
 	fstpl 	(%esp)
 	pushl 	$fmt_float
-	call	printf
+	K4_PURE_CALL(	printf)
 	mov	stdout_ptr, %eax
 	pushl	(%eax)
-	call	fflush
+	K4_PURE_CALL(	fflush)
 	add	$ 16,%esp
 	xchg	%esp,%ebx
 END_CODE

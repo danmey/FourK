@@ -42,7 +42,7 @@ $(BIN)/4k-debug: $(SRC_FILES)
 	m4 -DDEBUG -DCYGWIN -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.s
-	gcc -ggdb3 $(BIN)/t.s -o $(BIN)/4k-debug -ldl -lsigsegv
+	gcc -ggdb3 $(BIN)/t.s -o $(BIN)/4k-debug -ldl -lsigsegv -lc
 	cp $@ $(PREFIX)
 
 

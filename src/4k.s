@@ -284,7 +284,7 @@ segf_handler:
 	mov	8(%ebp),%eax
 	K4_SAFE_CALL(printf,$msg_segf,%eax)
 	K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
-#	K4_SAFE_CALL(sigsegv_leave_handler)
+#	K4_SAFE_CALL(sigsegv_leave_handler) 
 	K4_SAFE_CALL(longjmp,$mainloop)
 	pop	%ebp
 	ret
@@ -295,9 +295,9 @@ int_handler:
 	ret
 	
 install_handlers:
-//	pushl	$segf_handler
-//	call _sigsegv_install_handler
-//	add	$4,%esp
+	pushl	$segf_handler
+	call _sigsegv_install_handler
+	add	$4,%esp
 	K4_SAFE_CALL(sigemptyset,$emptyset)
 	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
 	K4_SAFE_CALL(signal,$ 2, $int_handler)

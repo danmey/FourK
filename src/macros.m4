@@ -52,3 +52,15 @@ define([K4_RESTORE_CONTEXT],[
 	popal
 	mov	_vm_context_ESP,%esp])dnl
 dnl
+
+define([K4_FLUSH],[
+	push	%eax
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	K4_PURE_CALL(fflush)
+	pop	%eax
+])
+define([K4_PRINT_MSG],[
+	K4_SAFE_CALL(printf,$1)
+	K4_FLUSH()
+])

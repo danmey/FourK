@@ -283,6 +283,7 @@ segf_handler:
 	mov	%esp,%ebp
 	mov	8(%ebp),%eax
 	K4_SAFE_CALL(printf,$msg_segf,%eax)
+	K4_FLUSH()
 	K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
 #	K4_SAFE_CALL(sigsegv_leave_handler) 
 	K4_SAFE_CALL(longjmp,$mainloop)
@@ -291,6 +292,7 @@ segf_handler:
 
 int_handler:
 	K4_SAFE_CALL(printf,$msg_int)
+	K4_FLUSH()
 	movl	$ 1, interrtupted
 	ret
 	
@@ -627,9 +629,7 @@ interpret_loop:
 	call	_parse_literal
 	jnc 	3f		#if literal cannot be parsed give a proper message and loop
 	K4_SAFE_CALL(printf,$msg_not_defined)
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	K4_PURE_CALL(fflush)
+	K4_FLUSH()
 	jmp 	interpret_loop
 
 # Literal could be parsed here

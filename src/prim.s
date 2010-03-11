@@ -1,9 +1,7 @@
 define([printf2],
 [
 	K4_PURE_CALL(printf)
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	K4_PURE_CALL(fflush)
+	K4_FLUSH()	
 	add	$ 12,%esp
 ])
 
@@ -396,9 +394,7 @@ DEF_CODE(emit, "emit")
 	xchg	%esp,%ebx
 	pushl 	$fmt_char
 	K4_PURE_CALL(printf)
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	K4_PURE_CALL(	fflush)
+	K4_FLUSH()
 	add	$ 12,%esp
 	xchg	%esp,%ebx
 END_CODE
@@ -507,9 +503,7 @@ DEF_CODE(dotf, ".f")
 	fstpl 	(%esp)
 	pushl 	$fmt_float
 	K4_PURE_CALL(	printf)
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	K4_PURE_CALL(	fflush)
+	K4_FLUSH()
 	add	$ 16,%esp
 	xchg	%esp,%ebx
 END_CODE
@@ -546,9 +540,7 @@ DEF_CODE(include,"include")
 	K4_SAFE_CALL(file_nest)
 	jnc 	1f
 	K4_SAFE_CALL(printf,$msg_file_not_found,%edi)
-	mov	stdout_ptr, %eax
-	pushl	(%eax)
-	K4_PURE_CALL(fflush)
+	K4_FLUSH()
 1:
 END_CODE
 DEF_CODE(eval,"eval")

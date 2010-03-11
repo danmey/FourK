@@ -8,13 +8,14 @@ define([PREFIX_WORDS_INDEX], 7)
 
 ifdef([PARTY],,
 [	.TEXT
-	.align 4096
 ])
 
 ifdef([PARTY],
 [
 	ELF_HEADER()
 ])
+
+	.fill 128000
 
 _image_start:
 	ELF_SECTION_TAB_OFFSET()
@@ -341,10 +342,7 @@ _org_ESP:		.LONG	0
 fh_stack:		.FILL 32*4
 fh_stack_index:		.LONG	0
 bootstrap_s:		.asciz "bootstrap.4k"
-
-libc_handle:	 .LONG 0
-
-
+libc_handle:	 	.LONG 0
 
 	.macro ld_fh reg
 		mov	fh_stack_index,%edx
@@ -563,9 +561,17 @@ K4_MANGLE(_find_word):
 #there will be no code here in final image
 entry_point:
 ifdef([PARTY],,[
-	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+#	.set im_st, (_image_start /65536-1)*65536 
+	mov	$_image_start, %eax
+	and	$~65535,%eax
+	mov	$_image_end, %ecx
+	add	$65536,%ecx
+	and	$~65535,%ecx
+	xchg	%eax,%ecx
+	sub	%ecx,%eax
+	K4_SAFE_CALL(mprotect, %ecx,%eax,  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
-	call	init_imports
+	call	init_imports	
 	
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
@@ -680,6 +686,8 @@ include(prim.s)
 ELF_CODE_END()
 	.ALIGN 4096
 _image_end:
+	.fill 128000
+	
 ifdef([PARTY],[
 ELF_DATA_END()
 ])

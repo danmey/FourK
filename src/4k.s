@@ -627,6 +627,9 @@ interpret_loop:
 	call	_parse_literal
 	jnc 	3f		#if literal cannot be parsed give a proper message and loop
 	K4_SAFE_CALL(printf,$msg_not_defined)
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	K4_PURE_CALL(fflush)
 	jmp 	interpret_loop
 
 # Literal could be parsed here

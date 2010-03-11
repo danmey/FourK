@@ -546,6 +546,9 @@ DEF_CODE(include,"include")
 	K4_SAFE_CALL(file_nest)
 	jnc 	1f
 	K4_SAFE_CALL(printf,$msg_file_not_found,%edi)
+	mov	stdout_ptr, %eax
+	pushl	(%eax)
+	K4_PURE_CALL(fflush)
 1:
 END_CODE
 DEF_CODE(eval,"eval")

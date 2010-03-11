@@ -13,7 +13,7 @@ all: basic boot debug
 basic: $(BASIC_FILES)
 boot: $(BOOT_FILES)
 compiler: $(FOURKC)
-debug: $(BIN)/4k-debug
+debug: $(BIN)/4k-debug.exe
 party: $(BIN)/4k-party
 
 .PHONY: compress 
@@ -38,7 +38,7 @@ $(BIN)/4k: $(SRC_FILES)
 	gcc -ggdb3 -nostdlib -ldl $(BIN)/t.s -o $(BIN)/4k
 	cp $@ $(PREFIX)
 
-$(BIN)/4k-debug: $(SRC_FILES)
+$(BIN)/4k-debug.exe: $(SRC_FILES)
 	m4 -DDEBUG -DCYGWIN -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.s

@@ -5,6 +5,8 @@
 : hdl ( lib cells -- ) >r sym r> rcells add-handle ;
 
 : libc " libc.so" lib ;
+
+
 : import
     libc " _printf"    1 hdl
     libc " _fflush"    1 hdl

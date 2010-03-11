@@ -7,4 +7,4 @@ on_int()
 
 dir=~/worx/fourk
 cd $dir
-aoss bin/4k-debug
+bin/4k-debug.exe

@@ -362,4 +362,5 @@ variable #ithere
 ;
 
 | dump
+include demos/robots/test/sdl.4k
 

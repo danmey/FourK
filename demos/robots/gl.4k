@@ -10,10 +10,6 @@ include" demos/robots/imph.4k"
 : i>>f i>f >f ;
 
 
-2 const SDL_OPENGL
- $40000000	const SDL_DOUBLEBUF	
- $80000000	const SDL_FULLSCREEN	
-
 
 : libm " libm.so" lib ;
 : libc " libc.so" lib ;

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+on_int()
+{
+    echo >/dev/null
+}
+
+dir=~/worx/fourk
+cd $dir
+aoss bin/4k-debug

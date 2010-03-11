@@ -1,0 +1,21 @@
+2 ccall: printf
+3 ccall: fflush
+4 ccall: reent
+
+: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+
+: libc " libc.so" lib ;
+: import
+    libc " _printf"    1 hdl
+    libc " _fflush"    1 hdl
+    libc " __getreent" 0 hdl
+;
+
+: main
+    import
+    " Hello world!
+" drop printf drop 
+    reent 2 rcells + @ fflush drop
+    ;
+
+main

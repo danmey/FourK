@@ -27,9 +27,12 @@ define([K4_PUSH_ALL_ARGS],
 	[K4_RESET_ARGS[]K4_FOREACH(arg,(K4_REVERSE_L($@)),
 		[K4_PUSH_ARG(arg)])])dnl
 dnl
+define([K4_MANGLE],[ifdef([CYGWIN],[_$1],[$1])])
+define([K4_PURE_CALL], [call K4_MANGLE($1)])
+
 define([K4_CALL],
 	[K4_PUSH_ALL_ARGS(shift($@))
-	call	$1[]ifelse(K4_NARG,0,,[
+	K4_PURE_CALL([$1])[]ifelse(K4_NARG,0,,[
 	addl 	$[]eval(K4_NARG*4),%esp[]])])dnl
 dnl
 define([K4_SAFE_CALL],[pushal dnl

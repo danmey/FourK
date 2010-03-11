@@ -3,7 +3,7 @@ define([K4_IMPORT],
 	divert(1)
 	pushl	$ $1_name
 	pushl	libc_handle
-	call	dlsym
+	K4_PURE_CALL(dlsym)
 	add	$ 8,%esp
 	mov	%eax,$1_ptr
 

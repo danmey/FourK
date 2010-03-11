@@ -22,7 +22,7 @@ _image_start:
 				# for relocations
 ifdef([DEBUG],
 [
-main:
+K4_MANGLE(main):
 ],
 [
 _start:
@@ -47,7 +47,7 @@ define([PROT_EXEC],	0x4)		/* Page can be executed.  */
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
-	call	dlsym
+	K4_PURE_CALL(dlsym)
 	add	$8,%esp
 	mov	%eax,dlopen_
 	
@@ -88,8 +88,8 @@ dlopen_s:	.asciz "dlopen"
 msg3:			.ASCIZ "%s\n"
 
 ccall_tab:
-	.LONG dlopen,8
-	.LONG dlsym,8
+	.LONG K4_MANGLE(dlopen),8
+	.LONG K4_MANGLE(dlsym),8
 	.FILL 512-16
 
 ################################################################################
@@ -253,7 +253,7 @@ _gettoken:
 1:
 	dec %ecx			# keep the counter becasue we need to clear out token
 	stosb				# in al we had out character
-	call _get_key			# get next key
+	K4_PURE_CALL(_get_key)			# get next key
 	call _is_white			# is white?
 	jnz 1b				# NO?
 #	K4_SAFE_CALL(ungetc,%eax, stdin) # unget char
@@ -292,7 +292,9 @@ int_handler:
 	ret
 	
 install_handlers:
-	K4_SAFE_CALL(sigsegv_install_handler,$segf_handler)
+//	pushl	$segf_handler
+//	call _sigsegv_install_handler
+//	add	$4,%esp
 	K4_SAFE_CALL(sigemptyset,$emptyset)
 	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
 	K4_SAFE_CALL(signal,$ 2, $int_handler)
@@ -361,7 +363,7 @@ f_rt:	.ASCIZ "rt"
 memo_nest:
 	K4_SAFE_CALL(fmemopen, %edi, %ecx, $f_rt)
 	jmp 	file_nest_ch
-file_nest:
+K4_MANGLE(file_nest):
 	K4_SAFE_CALL(fopen, %edi, $f_rt)
 file_nest_ch:
 	or	%eax,%eax
@@ -457,7 +459,7 @@ _parse_literal:
 # al - an ASCII code of character
 # token - a token
 _get_key_white_skip:
-	call _get_key
+	K4_PURE_CALL(_get_key)
 	call _is_white
 	jz _get_key_white_skip	# loop until we will find something
 	ret
@@ -486,7 +488,7 @@ _is_white:
 # Out:
 # al - an ASCII code of character
 # token - a token
-_get_key:
+K4_MANGLE(_get_key):
 	ld_fh	%edx
 	K4_SAFE_CALL(fgetc,%edx)
 	cmp 	$-1,%eax        # if EOF?
@@ -509,7 +511,7 @@ _get_key:
 # edi - word to find
 # Out:
 # eax - rets word index, C - set if no word found
-_find_word:
+K4_MANGLE(_find_word):
 	push	%esi
 	mov 	$ntab,%edx		# set up a pointer past the end
 	mov	var_last,%eax
@@ -568,7 +570,7 @@ ifdef([PARTY],,[
 # I don't why following paragraph is needed but certainly is needed
 	push	$dlopen_s
 	push	$ -1
-	call	dlsym
+	K4_PURE_CALL(dlsym)
 	add	$8,%esp
 	mov	%eax,dlopen_
 ################################################################################
@@ -596,7 +598,7 @@ interpret_loop:
 
 	mov	$next_word,%ebp
 	movl	$token,	%edi
-	call	_find_word	#find word
+	K4_PURE_CALL(_find_word)	#find word
 	jc	2f		#if the word is not found, jump to get literal
 
 # Here we will compile/interpret found word
@@ -661,8 +663,8 @@ _exit2:
 	ret
 
 
-	.GLOBL main
-	.GLOBL _start
+	.GLOBL K4_MANGLE(main)
+	.GLOBL _start		
 
 
 ################################################################################

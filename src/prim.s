@@ -536,8 +536,7 @@ DEF_CODE(include,"include")
 #	K4_SAFE_CALL(_gettoken)		#fetch next word from the stream
 	mov	4(%ebx), %edi
 	add	$8,%ebx
-#	mov	$token,%edi
-	K4_SAFE_CALL(file_nest)
+	K4_SAFE_CALL(file_nest)	
 	jnc 	1f
 	K4_SAFE_CALL(printf,$msg_file_not_found,%edi)
 	K4_FLUSH()

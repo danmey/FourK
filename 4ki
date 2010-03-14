@@ -1,10 +1,5 @@
 #!/bin/bash
 
-on_int()
-{
-    echo >/dev/null
-}
-
 dir=~/worx/fourk
 cd $dir
 bin/4k-debug.exe

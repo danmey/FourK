@@ -299,7 +299,7 @@ variable #ithere
     postpone >r
 ; immediate
 
-: include \" include ; 
+: include" \" include ; 
 | Hmmmm this does inteerupt compiling
 | "    
 | : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;

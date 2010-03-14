@@ -333,6 +333,7 @@ msg2:			.ASCIZ "------\n"
 
 msg_not_defined:	.ASCIZ "Word '%s' not defined.\n"
 msg_file_not_found:	.ASCIZ "File '%s' not found.\n"
+msg_bootstrap_not_found:	.ASCIZ "File 'bootstrap.4k' not found in current directory!\n"
 msg_test1:		.ASCIZ "Test1\n"
 msg_test2:		.ASCIZ "Test2\n"
 msg_test3:		.ASCIZ "Test3\n"
@@ -596,6 +597,9 @@ ifdef([PARTY],,[
 	sub	$ 4096,%ebx
 	mov	$bootstrap_s,%edi
 	K4_SAFE_CALL(file_nest)
+	jnc 	.ok
+	K4_PRINT_MSG($msg_bootstrap_not_found)
+.ok:
 ifdef([DEBUG],[
 	K4_SAFE_CALL(_setjmp, $mainloop)
  	movl	_org_ESP,%esp

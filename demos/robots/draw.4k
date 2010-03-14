@@ -29,19 +29,19 @@ variable WhitesColor
 variable #checkers-visible
 variable #checker
 : place 8 * + board + ;
-: place! #checker @ #checkers-visible @ < if place c! then #checker 1+! ;
+: place! #checker @ #checkers-visible @ < if place c! then  #checker @ 1+ #checker !  ;
 : place@ place c@ ;
 : black $8 or ;
 : reset-board
     0 #checker !
     7 0 do 7 0 do 0 i j place c! loop loop
-    7 0 do 1 i 1 place! 1 black i 6 place! loop
+    7 0 do  1 i 1 place! 1 black i 6 place! loop
     3 0 do
 	i 2 + i 0 place!
 	i 2 black + i 7 place!
 	i 2 black + 7 i - 7 place!
-	i 2 + dup 5 = if drop 6 then 7 i - 0 place!
-	i 2 + dup 5 = if drop 6 then black  7 i - 7 place!
+     	i 2 + dup 5 = if drop 6 then 7 i - 0 place!
+     	i 2 + dup 5 = if drop 6 then black  7 i - 7 place!
     loop
 ;
 
@@ -511,11 +511,12 @@ Script: camera
 
 : render-loop
     begin
-	event SDL_PollEvent 0= invert
-	if
+	event SDL_PollEvent 0= invert drop
+	(* if
 	    event e>type Keydown = if event e>key Esc = if ;; then then
-	then
+	then *)
 	render
+	
     again
 ;
 
@@ -542,7 +543,7 @@ Script: camera
 
 |    -1 game-play !
     reset-board
-| |    setup-shaders
+|    setup-shaders
 ;
 
 : deinit
@@ -552,14 +553,14 @@ Script: camera
 : main
     init
     render-loop
-    deinit
-|    bye
+    |    deinit
+    |    bye
 ;
 
-: m main main ;
+main
 
-save-image im4.4ki
 
-m
+
+
 
 

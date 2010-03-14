@@ -137,7 +137,7 @@ comment
 : <= > invert ;
 : >= < invert ;
 : +! swap >r dup @ r> + swap ! ;
-: 1+! 1 +! ;
+: 1+! 1 swap +! ;
 : data: here there @ here@ there ! swap ! ;
 : data; data: ;
 

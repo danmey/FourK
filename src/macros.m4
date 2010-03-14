@@ -54,11 +54,12 @@ define([K4_RESTORE_CONTEXT],[
 dnl
 
 define([K4_FLUSH],[
-	push	%eax
+	pushal	
 	mov	stdout_ptr, %eax
 	pushl	(%eax)
 	K4_PURE_CALL(fflush)
-	pop	%eax
+	addl	$ 4, %esp
+	popal
 ])
 define([K4_PRINT_MSG],[
 	K4_SAFE_CALL(printf,$1)

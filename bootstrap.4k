@@ -180,7 +180,7 @@ create parse-buffer
 : parse2 ( delimiter -- str c )
     parse-buffer >with-here
     >r 0 begin key dup r = 0= while c, 1+ repeat rdrop drop
-    with-here> parse-buffer swap type
+    with-here> parse-buffer swap
 ;
 
 | : parse ( delimiter -- str c )
@@ -237,7 +237,7 @@ create parse-buffer
 ; immediate
 
 
-: type ( str c -- ) 0 do dup c@ emit  loop drop ;
+: type ( str c -- ) 1- dup 0 >= if 0 do dup i + c@ emit loop then drop ;
 
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;

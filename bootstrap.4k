@@ -44,16 +44,10 @@ token (:) make
 
 token : (:) token (:) ;
 
-
-
 : [ 1 state ! ; immediate
 : ] 0 state ! ;
 
-
-
-
 : here@ here @ ;
-
 
 : literal 3 c, c, ;
 : rliteral 4 c, , ;
@@ -180,83 +174,6 @@ create #str
   dup c@ c, 1+ again
 ;
 
-: t 0 >r r> drop ;
-
-: type ( str c -- ) >r begin
-  r 0 = if r> drop drop ;; then
-  r> 1 - >r dup c@ emit 1+ again
-;
-
-
-: inc ( adr -- ) dup @ 1+ swap ! ;
-: dec ( adr -- ) dup @ 1- swap ! ;
-
-| exit current word if TOS is zero
-: 0; ( n -- ) postpone = postpone if 
-              postpone ;; postpone then 
-; immediate 
-
-
-: next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
-: ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
-
-variable flag
-| compare two zero terminated strings, the strings are assumed to be 
-| of the same size (no size checking ) 
-: compare ( str str -- t/f ) -1 flag ! 
-  begin 
-   2dup ch@ 2dup = invert if 0 flag ! then 
-   and 0 = if 2drop flag @ ;; then next-set 
-  again 
-;
-
-| compare two counted strings ( so with size checking ) 
-: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
-
-
-| pimped ", it now compiles the string to there @compile time
-: " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
-   sliteral then
-; immediate
-
-: " \" inline there @ dup 0 swap c! 1+ there !
-    state @ 0 = if sliteral then ; immediate
-
- : ." ( -- ) postpone " 
-  state @ 0 = if postpone type ;; then type 
- ; immediate
-
-
-: ccall: : postpone ccall c, postpone ; ;
-
-0 ccall: dlopen
-1 ccall: dlsym
-
-: >cstr drop ;
-
-: lib >cstr $2 swap dlopen ;
-
-: sym >cstr swap dlsym ;
-
-variable #ithere
-
-4 #ithere !
-
-: add-handle ( handle stackfix -- )
-|    ." index: " #ithere @ 2 / . cr 
-|    over 0 = if ." ERROR: handle is 0" cr 2drop ;; then 
-| over ." handle: " . ." stackfix: " dup . cr 
-
-|  ." index: " #ithere @ 2 / . cr 
- | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
-  ithere @ 1 #ithere @ + rcells+ !
-  ithere @ #ithere @ rcells+ !
-  #ithere @ 2 + #ithere !
-;
-
-
-
-
 
 | do loops
 
@@ -298,6 +215,80 @@ variable #ithere
     postpone swap
     postpone >r
 ; immediate
+
+: t 0 >r r> drop ;
+
+: type ( str c -- )  0 do dup i + c@ emit loop drop ;
+
+: inc ( adr -- ) dup @ 1+ swap ! ;
+: dec ( adr -- ) dup @ 1- swap ! ;
+
+| exit current word if TOS is zero
+: 0; ( n -- ) postpone = postpone if 
+              postpone ;; postpone then 
+; immediate 
+
+
+: next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
+: ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
+
+variable flag
+| compare two zero terminated strings, the strings are assumed to be 
+| of the same size (no size checking ) 
+: compare ( str str -- t/f ) -1 flag ! 
+  begin 
+   2dup ch@ 2dup = invert if 0 flag ! then 
+   and 0 = if 2drop flag @ ;; then next-set 
+  again 
+;
+
+| compare two counted strings ( so with size checking ) 
+: str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
+
+
+| pimped ", it now compiles the string to there @compile time
+: " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
+   sliteral then
+; immediate
+(*
+: " \" inline there @ dup 0 swap c! 1+ there !
+    state @ 0 = if sliteral then ; immediate
+*)
+ : ." ( -- ) postpone " 
+  state @ 0 = if postpone type ;; then type 
+ ; immediate
+
+
+: ccall: : postpone ccall c, postpone ; ;
+
+0 ccall: dlopen
+1 ccall: dlsym
+
+: >cstr drop ;
+
+: lib >cstr $2 swap dlopen ;
+
+: sym >cstr swap dlsym ;
+
+variable #ithere
+
+4 #ithere !
+
+: add-handle ( handle stackfix -- )
+|    ." index: " #ithere @ 2 / . cr 
+|    over 0 = if ." ERROR: handle is 0" cr 2drop ;; then 
+| over ." handle: " . ." stackfix: " dup . cr 
+
+|  ." index: " #ithere @ 2 / . cr 
+ | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
+  ithere @ 1 #ithere @ + rcells+ !
+  ithere @ #ithere @ rcells+ !
+  #ithere @ 2 + #ithere !
+;
+
+
+
+
 
 : include" \" include ; 
 | Hmmmm this does inteerupt compiling

@@ -512,9 +512,9 @@ Script: camera
 : render-loop
     begin
 	event SDL_PollEvent 0= invert drop
-	(* if
+	if
 	    event e>type Keydown = if event e>key Esc = if ;; then then
-	then *)
+	then 
 	render
 	
     again

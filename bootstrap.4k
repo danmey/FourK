@@ -86,8 +86,17 @@ variable #section
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
 : else >r postpone branch here@ 0 c, r> postpone then ; immediate
-
 : | begin key 10 = until ; immediate
+
+: while postpone branch0 here@ 0 c, ; immediate
+: repeat postpone branch swap here@ - c, dup here@ swap - swap c! ; immediate
+: ?dup dup if dup then ;
+: case 0 ; immediate
+: of postpone over postpone = postpone if postpone drop ; immediate
+: endof postpone else ; immediate
+| : endcase' begin ?dup while postpone then repeat ; immediate
+: endcase postpone drop postpone endcase' ; immediate
+
 
 
 | Taking into account prefix word
@@ -162,7 +171,20 @@ create #str
   c@ = if drop #str here @ #str - 0 c, r> here ! ;; then
   c, again
 ;
-1 allot
+
+create parse-buffer
+1000 allot
+: >with-here postpone here@ postpone >r postpone here postpone ! ; immediate
+: with-here> postpone r> postpone here postpone ! ; immediate
+
+: parse2 ( delimiter -- str c )
+    parse-buffer >with-here
+    >r 0 begin key dup r = 0= while c, 1+ repeat rdrop drop
+    with-here> parse-buffer swap type
+;
+
+| : parse ( delimiter -- str c )
+|    >r begin key r = if rdrop ;; then
 
 : \" c: " parse ;
 | "
@@ -201,8 +223,6 @@ create #str
     postpone drop
 ; immediate
 
-: type' 1- 0 do dup r + c@ emit loop ;
-
 : i postpone r ; immediate
 
 : j postpone r>
@@ -216,9 +236,8 @@ create #str
     postpone >r
 ; immediate
 
-: t 0 >r r> drop ;
 
-: type ( str c -- )  0 do dup i + c@ emit loop drop ;
+: type ( str c -- ) 0 do dup c@ emit  loop drop ;
 
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;

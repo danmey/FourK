@@ -1,11 +1,3 @@
-: while postpone branch0 here@ 0 c, ; immediate
-: repeat postpone branch swap here@ - c, dup here@ swap - swap c! ; immediate
-: ?dup dup if dup then ;
-: case 0 ; immediate
-: of postpone over postpone = postpone if postpone drop ; immediate
-: endof postpone else ; immediate
-: endcase' begin ?dup while postpone then repeat ; immediate
-: endcase postpone drop postpone endcase' ; immediate
 
 variable $a-var
 variable $b-var

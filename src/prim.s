@@ -2,7 +2,7 @@ define([printf2],
 [
 	K4_PURE_CALL(printf)
 	K4_FLUSH()	
-	add	$ 12,%esp
+	add	$ 8,%esp
 ])
 
 define([log_op],[
@@ -395,7 +395,7 @@ DEF_CODE(emit, "emit")
 	pushl 	$fmt_char
 	K4_PURE_CALL(printf)
 	K4_FLUSH()
-	add	$ 12,%esp
+	add	$ 8, %esp
 	xchg	%esp,%ebx
 END_CODE
 DEF_CODE(tick, "'")

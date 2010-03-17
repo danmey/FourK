@@ -273,9 +273,9 @@ variable flag
 : " \" inline there @ dup 0 swap c! 1+ there !
     state @ 0 = if sliteral then ; immediate
 *)
- : ." ( -- ) postpone " 
-  state @ 0 = if postpone type ;; then type 
- ; immediate
+: ." ( -- ) postpone " 
+    state @ 0 = if postpone type ;; then type 
+; immediate
 
 
 : ccall: : postpone ccall c, postpone ; ;

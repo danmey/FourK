@@ -10,7 +10,7 @@ variable matched
 | r if 10 over = if >r 11 over if >r action rdrop rdrop else r> then else r> then rdrop 0 >r then
 | r if 10 over = if >r action rdrop rdrop 0 else r> then else r> then rdrop 0 >r then
 
-: rdrop postpone r> postpone drop ; immediate
+| : rdrop postpone r> postpone drop ; immediate
 : match: -1 literal postpone >r ; immediate
 : |: postpone r postpone if 0 ; immediate
 : |= postpone over postpone = postpone if postpone >r ; immediate

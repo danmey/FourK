@@ -1,7 +1,10 @@
-section token-table
-512 allot
+forget mark
+
+| section token-table
+| 512 allot
 
 
+create token-table 512 allot
 variable ptr
 token-table ptr !
 variable #tokens
@@ -14,10 +17,74 @@ variable #tokens
     ptr @ tok (:) #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 : print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
 : nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1 ;; then loop then ;
-: ctype dup c@ 1- 0 do 1+ dup c@ emit loop ;
+: ctype dup c@ 1- 0 do 1+ dup c@ emit loop drop ;
 (* Will be -1 terminated !!! *)
 : nt" t" #tokens @ const #tokens 1+! ;
 : print nth ctype ;
 : lst #tokens @ 1-  ;
 create stream 1024 allot
 variable stream@
+
+: >>> here @ >r stream@ @ here ! 1- 0 do dup i + c@ c, loop drop here @ stream@ ! r> here ! ;
+: ch>>> stream@ @ c! stream@ 1+! ;
+: ch:>>> postpone c: postpone ch>>> ; immediate
+: sp>>> 32 ch>>> ;
+: tok>>> nth dup c@ 1- 0 do 1+ dup c@ ch>>> loop drop ;
+: flushs stream@ @ 1- stream do i c@ emit loop ;
+
+: wipe 500 0 do 0 stream i + c! loop ;
+
+stream stream@ !
+wipe
+
+declare void
+declare gl_LightSource
+declare ()
+declare x
+declare y
+declare z
+declare gl_LightSource
+declare return
+declare vec3
+declare gl_TexCoord
+declare gl_MultiTexCoord0
+declare gl_TextureMatrix
+declare vec2
+: last-ex last @ 1- execute ; 
+: compile-token declare postpone last-ex literal ;
+: beg c: { ch>>> ;
+: end c: } ch>>> ;
+: ->  tok>>> c: . ch>>> -1 ;
+: .. begin dup -1 <> while tok>>> repeat drop ;
+: **  .. c: * ch>>> -1 ;
+: ;;; .. c: ; ch>>> ;
+: func swap tok>>> sp>>> tok>>> () tok>>> ;
+: ret return tok>>> sp>>> -1 ;
+: := swap tok>>> sp>>> tok>>>  c: = ch>>> ;
+: <- c: = ch>>> ;
+: [] swap tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 ;
+
+declare v1
+declare v2
+declare main
+: shader00
+    void main func
+    beg
+      vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ;;;
+      gl_TexCoord 0 [] <- v1 ;;;
+    end
+;
+
+shader00 flushs
+
+void main(){vec2 v1=gl_TextureMatrix[0]*gl_MultiTexCoord0;gl_TexCoord[0]=v1;}
+
+(*
+shader: one
+void func: main
+  l: gl_LightSource x y z 0 .[] normalize half_vector vec3 let;
+  l: gl_LightSource 0 .[] normalize half_vector +=;
+o l: gl_Position ftransform =;
+end
+shader;
+*)

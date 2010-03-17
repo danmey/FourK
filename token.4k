@@ -63,9 +63,9 @@ declarex vec2
 : .. begin dupx x> -1 <> while tok>>> repeat dropx ;
 : **  .. c: * ch>>> -1 >x ;
 : ;;; .. c: ; ch>>> ;
-: func swap tok>>> sp>>> tok>>> () tok>>> ;
+: func tok>>> sp>>> tok>>> () tok>>> ;
 : ret return tok>>> sp>>> -1 >x ;
-: := tok>>> sp>>> tok>>>  c: = ch>>> ;
+: := swapx tok>>> sp>>> tok>>>  c: = ch>>> ;
 : <- c: = ch>>> ;
 : [] tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 >x ;
 
@@ -76,7 +76,7 @@ declarex main
     void main func
     beg
       vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ;;;
-      gl_TexCoord 0 [] <- v1 ;;;
+      return gl_TexCoord 0 [] <- v1 ;;;
     end
 ;
 

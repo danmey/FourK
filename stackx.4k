@@ -9,3 +9,4 @@ variable stack
 : x> topx @ #stackx 1-! ;
 : dupx x> dup >x >x ;
 : dropx x> drop ;
+: swapx x> x> swap >x >x ;

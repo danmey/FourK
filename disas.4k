@@ -1,4 +1,3 @@
-forget mark
 0 const EOW_TOKEN
 1 const EOD_TOKEN
 2 const PREFIX_TOKEN
@@ -15,7 +14,7 @@ forget mark
 : wname ( token -- adr c ) 32 * ntab @ + dup count ;
 : lit4. ." lit4: "  1+ dup @  . space rcell + ;
 : lit. ." lit: "   1+ dup c@ . space 1+ ;
-: prefix. ." prefix: "    1+ dup MAX_VALID_TOKEN + wname type space 1+ ;
+: prefix. ." prefix: "    1+ dup c@ MAX_VALID_TOKEN + wname type space 1+ ;
 : branch. ." branch: "  1+ dup c@ . space 1+ ;
 : branch0. ."  branch0: "   1+ dup c@ . space 1+  ;
 : lbranch.  of ." lbranch: "  1+ dup c@ . space rcell + ;

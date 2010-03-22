@@ -1,31 +1,46 @@
-2 const SDL_OPENGL
-$40000000	const SDL_DOUBLEBUF	
-$80000000	const SDL_FULLSCREEN	
-: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+forget mark
+include" demos/robots/gl.4k"
 
-| 2 ccall: SDL_GL_SwapBuffers
-| 3 ccall: SDL_PollEvent
-| 4 ccall: SDL_Quit
-| 5 ccall: SDL_SetVideoMode
-| 6 ccall: SDL_GetTicks
-| 7 ccall: SDL_GetVideoSurface
-2 ccall: SDL_SetVideoMode
+: f>d >f d> ;
 
-: libSDL " SDL.dll" lib ;
-: import
-|    libSDL " _SDL_GL_SwapBuffers"     0 hdl
-|    libSDL " _SDL_PollEvent"          1 hdl
-|    libSDL " _SDL_Quit"               0 hdl
-    libSDL " SDL_SetVideoMode"      4 hdl
-|    libSDL " _SDL_GetTicks" 0 hdl
-|    libSDL " _SDL_GetVideoSurface"       0 hdl
-;
 
  720 const width
  576 const height
  32  const bpp
 | bpp 8 / const point
-: video import SDL_OPENGL (* SDL_FULLSCREEN or *) bpp height width SDL_SetVideoMode  ;
 
-video
+: clear
+    0 0.0 0 0 glClearColor drop
+    GL_DEPTH_BUFFER_BIT GL_COLOR_BUFFER_BIT or glClear drop
+;
+
+: update
+    SDL_GL_SwapBuffers drop
+;
+
+: proj
+    GL_PROJECTION glMatrixMode drop
+|    glLoadIdentity drop
+|    1000.0 f>d 1.1 f>d 0.8 f>d -0.8 f>d 1.00 f>d -1.00 f>d glFrustum drop
+|    GL_MODELVIEW glMatrixMode drop
+;   
+
+: render
+    proj
+;
+
+: render-loop
+    begin
+	event SDL_PollEvent 0= invert drop
+	if
+	    event e>type Keydown = if event e>key Esc = if ;; then then
+	then 
+	render
+    again
+;
+
+: video imports SDL_OPENGL (* SDL_FULLSCREEN or *) bpp height width SDL_SetVideoMode
+    render-loop ;
+
+| video
 

@@ -1,0 +1,48 @@
+forget mark
+0 const EOW_TOKEN
+1 const EOD_TOKEN
+2 const PREFIX_TOKEN
+3 const LIT_TOKEN
+4 const LIT4_TOKEN
+5 const BRANCH_TOKEN  
+6 const BRANCH0_TOKEN 
+7 const CCALL_TOKEN
+8 const LBRANCH_TOKEN
+9 const LBRANCH0_TOKEN
+256 const MAX_VALID_TOKEN
+ 
+
+: wname ( token -- adr c ) 32 * ntab @ + dup count ;
+: lit4. ." lit4: "  1+ dup @  . space rcell + ;
+: lit. ." lit: "   1+ dup c@ . space 1+ ;
+: prefix. ." prefix: "    1+ dup MAX_VALID_TOKEN + wname type space 1+ ;
+: branch. ." branch: "  1+ dup c@ . space 1+ ;
+: branch0. ."  branch0: "   1+ dup c@ . space 1+  ;
+: lbranch.  of ." lbranch: "  1+ dup c@ . space rcell + ;
+: lbranch0. of ." lbranch0: " 1+ dup c@ . space rcell +  ;
+
+
+: show ( token -- )
+    c: : emit space dup wname type space
+    rcells vtab @ + @
+    1+
+    begin
+	dup c@ EOW_TOKEN <>
+    while
+	    dup c@
+	    case
+		LIT4_TOKEN     of lit4.     endof
+		LIT_TOKEN      of lit.      endof
+		PREFIX_TOKEN   of prefix.   endof
+		BRANCH_TOKEN   of branch.   endof
+		BRANCH0_TOKEN  of branch0.  endof
+		LBRANCH_TOKEN  of lbranch.  endof
+		LBRANCH0_TOKEN of lbranch0. endof
+		wname type space 1+ dup
+	    endcase
+    repeat
+    drop
+    c: ; emit
+;
+
+: show: token find show ;

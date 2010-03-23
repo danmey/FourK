@@ -21,6 +21,10 @@ include" demos/robots/imph.4k"
 : libglut libGL ;
 : libglut " glu32.dll" lib ;
 : libSDL " SDL.dll" lib ;
+: libGL " /usr/lib/libGL.so" lib ;
+: libglut " /usr/lib/libglut.so" lib ;
+: libSDL " /usr/lib/libSDL.so" lib ;
+
 | this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
 

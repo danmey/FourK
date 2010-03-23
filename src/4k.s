@@ -26,7 +26,7 @@ ifdef([DEBUG],
 K4_MANGLE(main):
 ],
 [
-_start:
+ _start:
 ]
 )
 
@@ -298,7 +298,7 @@ int_handler:
 	
 install_handlers:
 	pushl	$segf_handler
-	call _sigsegv_install_handler
+	K4_PURE_CALL(sigsegv_install_handler)
 	add	$4,%esp
 	K4_SAFE_CALL(sigemptyset,$emptyset)
 	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
@@ -675,7 +675,7 @@ _exit2:
 
 
 	.GLOBL K4_MANGLE(main)
-	.GLOBL _start		
+#	.GLOBL _start		
 
 
 ################################################################################

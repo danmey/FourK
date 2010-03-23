@@ -213,7 +213,7 @@ ifdef([DEBUG],[
 next_word:
 	jmp 	.fetchbyte	# this is called by every asm word at the end
 
-fmt_dec:		.ASCIZ 	"%d\n"
+fmt_dec:		.ASCIZ 	"%d"
 
 
 include(import.m4)

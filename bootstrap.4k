@@ -76,7 +76,7 @@ variable #section
 : 0= 0 = ;
 : cr 10 emit ;
 : space 32 emit ;
-: . . space ;
+
 
 : begin here@ ; immediate
 
@@ -375,3 +375,19 @@ variable #ithere
 | dump
 
 
+
+variable savebase
+base @ savebase !
+16 const b16
+10 const b10
+
+: base! base @ savebase ! base ! ;
+: hex b16 base! ;
+: dec b10 base! ;
+: [hex] hex ; immediate
+: [dec] dec ; immediate
+: switch-base savebase @ base ! ;
+
+: [switch-base] res-base ; immediate
+
+| : . . space ;

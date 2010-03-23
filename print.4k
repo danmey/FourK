@@ -1,0 +1,13 @@
+forget mark
+
+variable pad
+0 pad !
+variable pad-frac
+0 pad-frac
+
+: r1+ postpone r> postpone 1+ postpone >r ; immediate
+: n[ -1 -1 ;
+: %n dup -1 <> if pad ! dup -1 <> if pad-frac ! else drop then else drop then ;
+: .n dup dup 0= if 1 ;; then 0 >r begin dup 0 <> while 10 / r> 1 + >r repeat drop r>
+    pad @ swap - dup 0 > if 1 do 0 . loop else drop then .  ;
+: ]n begin dup -1 = while drop repeat ;

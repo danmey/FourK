@@ -63,7 +63,7 @@ declarex vec2
 : .. begin dupx x> -1 <> while tok>>> repeat dropx ;
 : **  .. c: * ch>>> -1 >x ;
 : ;;; .. c: ; ch>>> ;
-: func tok>>> sp>>> tok>>> () tok>>> ;
+: func swapx tok>>> sp>>> tok>>> () tok>>> ;
 : ret return tok>>> sp>>> -1 >x ;
 : := swapx tok>>> sp>>> tok>>>  c: = ch>>> ;
 : <- c: = ch>>> ;

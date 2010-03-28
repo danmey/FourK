@@ -17,7 +17,7 @@ mark
 : table ( -- ptr ) stab @ ;
 : th ( section# -- ofs ) section * ;
 : pointer ( section* -- sec-pointer ) section + rcell - ;
-: offset ( section# -- sec-offset ) pointer rcell - ; 
+: offset ( section* -- sec-offset ) pointer rcell - ; 
 : 1+! ( ptr -- ) 1 swap +! ;
 : in ( ofs ptr -- ptr ) + ;
 : >imrel ( ptr -- ofs ) imbase @ - ;
@@ -31,6 +31,7 @@ mark
     current-section
 | set the pointer relative to image start
     dup pointer there @ >imrel swap !
+    dup offset 0 swap !
 | increment section count
     #section 1+!
 | copy the string name into section name field
@@ -39,8 +40,9 @@ mark
     0 current-section !
 ;
 
+: tab 9 emit ;
 : forall ( -- max min ) #section @ 1- 0 ; 
-: dump ( -- ) forall do i section> dup dup count type pointer space . cr loop ;
+: dump ( -- ) forall do i section> dup dup dup count type pointer tab . offset @ tab . cr loop ;
 
 
 : section ( -- ) token new ;

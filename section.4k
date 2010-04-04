@@ -54,7 +54,8 @@ mark
 
 : section: ( -- r: -- last-here section-ptr )
     token 2dup find-section dup -1 =
-    if drop ." section: : Section " type ."  not defined" cr else
+    if drop ." section: : Section " type ."  not defined" cr
+    else
 	literal 2drop
 	postpone here postpone @ postpone >r
 	postpone dup postpone >r
@@ -63,12 +64,10 @@ mark
     then
 ; immediate
 
-(*
-
 : ;section
     postpone r> postpone pointer 
     postpone here postpone @
+    postpone swap postpone !
     postpone r> postpone dup postpone here postpone !
-    postpone >imrel 
 ;
-*)
+

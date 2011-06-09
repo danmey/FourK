@@ -1,20 +1,25 @@
-## FourK - Concatenative, stack based, Forth like language optimised for 
+########################################################################
+## FourK - Concatenative, stack based, Forth like language optimised for
 ##        non-interactive 4KB size demoscene presentations.
-
-## Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
-
+##
+## Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
-
+##
 ## This program is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
-
+##
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+########################################################################
+
+
+
 include(macros.m4)
 include(dict.m4)
 include(elf.m4)
@@ -24,20 +29,20 @@ define([PREFIX_WORDS_INDEX], 7)
 # only there
 
 ifdef([PARTY],,
-[	.TEXT
+[       .TEXT
 ])
 
 ifdef([PARTY],
 [
-	ELF_HEADER()
+        ELF_HEADER()
 ])
 
-	.fill 128000
+        .fill 128000
 
 _image_start:
-	ELF_SECTION_TAB_OFFSET()
-	SECTION(dict)
-				# for relocations
+        ELF_SECTION_TAB_OFFSET()
+        SECTION(dict)
+                                # for relocations
 ifdef([DEBUG],
 [
 K4_MANGLE(main):
@@ -47,68 +52,68 @@ K4_MANGLE(main):
 ]
 )
 
-define([PROT_READ],	0x1)		/* Page can be read.  */
-define([PROT_WRITE],	0x2)		/* Page can be written.  */
-define([PROT_EXEC],	0x4)		/* Page can be executed.  */
-	
+define([PROT_READ],     0x1)            /* Page can be read.  */
+define([PROT_WRITE],    0x2)            /* Page can be written.  */
+define([PROT_EXEC],     0x4)            /* Page can be executed.  */
+
 # The call is nopped in the final image
-	jmp 	entry_point
-	mov	$0,	%ebx
-	push	%ebx
-	ifdef([PARTY],,[
-		K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-	])
-	call	init_imports
-	ifdef([PARTY],[
-	K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
-	])
+        jmp     entry_point
+        mov     $0,     %ebx
+        push    %ebx
+        ifdef([PARTY],,[
+                K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+        ])
+        call    init_imports
+        ifdef([PARTY],[
+        K4_SAFE_CALL(mprotect, $_image_start, $(_image_end-_image_start),  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+        ])
 # I don't why following paragraph is needed but certainly is needed
-	push	$dlopen_s
-	push	$ -1
-	K4_PURE_CALL(dlsym)
-	add	$8,%esp
-	mov	%eax,dlopen_
-	
-#		movl $1,%eax
-#	xor %ebx,%ebx 
-#	int $128 
+        push    $dlopen_s
+        push    $ -1
+        K4_PURE_CALL(dlsym)
+        add     $8,%esp
+        mov     %eax,dlopen_
+
+#               movl $1,%eax
+#       xor %ebx,%ebx
+#       int $128
 
 ################################################################################
 # This will be supplied with the last word by linker
-	call 	build_dispatch
-	pop	%eax
-	dec	%eax
+        call    build_dispatch
+        pop     %eax
+        dec     %eax
 
-	 ## mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
-	 ## xor	%ecx,%ecx
-	 ## movb	13(%eax),%cl
-	 ## K4_SAFE_CALL(printf, $fmt_dec,	%ecx)
-	 ## movl $1,%eax
-	 ## xor %ebx,%ebx
-	 ## int $128
+         ## mov dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+         ## xor %ecx,%ecx
+         ## movb        13(%eax),%cl
+         ## K4_SAFE_CALL(printf, $fmt_dec,      %ecx)
+         ## movl $1,%eax
+         ## xor %ebx,%ebx
+         ## int $128
 
-	mov	%esp,%ebx
-	sub	$4096,%ebx
-	mov	$next_word,%ebp
-	movl	$ ex_bytecode,%ecx
-	cmp	$ MAX_VALID_TOKEN, %eax
-	jbe	1f
-	movb	$ PREFIX_TOKEN, (%ecx)
-	inc	%ecx
-	sub	$ MAX_VALID_TOKEN,%eax
-1:	
-	movb	%al,(%ecx)
-	inc	%ecx
-	movb	$ EOW_TOKEN,(%ecx)
-	mov     $(ex_bytecode-1),%eax
-	jmp	runbyte
-dlopen_s:	.asciz "dlopen"
-msg3:			.ASCIZ "%s\n"
+        mov     %esp,%ebx
+        sub     $4096,%ebx
+        mov     $next_word,%ebp
+        movl    $ ex_bytecode,%ecx
+        cmp     $ MAX_VALID_TOKEN, %eax
+        jbe     1f
+        movb    $ PREFIX_TOKEN, (%ecx)
+        inc     %ecx
+        sub     $ MAX_VALID_TOKEN,%eax
+1:
+        movb    %al,(%ecx)
+        inc     %ecx
+        movb    $ EOW_TOKEN,(%ecx)
+        mov     $(ex_bytecode-1),%eax
+        jmp     runbyte
+dlopen_s:       .asciz "dlopen"
+msg3:                   .ASCIZ "%s\n"
 
 ccall_tab:
-	.LONG K4_MANGLE(dlopen),8
-	.LONG K4_MANGLE(dlsym),8
-	.FILL 512-16
+        .LONG K4_MANGLE(dlopen),8
+        .LONG K4_MANGLE(dlsym),8
+        .FILL 512-16
 
 ################################################################################
 # Build the dispatch table
@@ -117,63 +122,63 @@ ccall_tab:
 
 build_dispatch:
 
-	mov	$dsptch, %edi	#load destination table of dwords
-	mov	$_words_start, %esi	#begining of the dictionary
+        mov     $dsptch, %edi   #load destination table of dwords
+        mov     $_words_start, %esi     #begining of the dictionary
 .loop:
-	xor	%eax,%eax	#clear out eax
-	lodsb
-	mov	%eax,%ecx
-	cmp	$EOW_TOKEN,%al		#end of core dictionary?
-	je	.user_dictionary
-	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
-	je	.done
-	mov	%esi,%eax	#load pointer to word
-	dec	%eax
-	stosl			#store the pointer to word in %edi
+        xor     %eax,%eax       #clear out eax
+        lodsb
+        mov     %eax,%ecx
+        cmp     $EOW_TOKEN,%al          #end of core dictionary?
+        je      .user_dictionary
+        cmp     $ EOD_TOKEN,%al         #end of core dictionary?
+        je      .done
+        mov     %esi,%eax       #load pointer to word
+        dec     %eax
+        stosl                   #store the pointer to word in %edi
 
-	add	%ecx,%esi	#advance to next word
-	jmp	.loop
+        add     %ecx,%esi       #advance to next word
+        jmp     .loop
 .loop2:
-	xor	%eax,%eax
-	lodsb
+        xor     %eax,%eax
+        lodsb
 .user_dictionary:
-	cmp	$EOW_TOKEN,%al
-	je	.found_word
-	cmp	$ EOD_TOKEN,%al		#end of core dictionary?
-	je	.done
-	cmp	$9,%al
-	jbe	.cont
-	cmp	$ PREFIX_TOKEN,%al
-	je	.cont
-	jmp	.loop2
+        cmp     $EOW_TOKEN,%al
+        je      .found_word
+        cmp     $ EOD_TOKEN,%al         #end of core dictionary?
+        je      .done
+        cmp     $9,%al
+        jbe     .cont
+        cmp     $ PREFIX_TOKEN,%al
+        je      .cont
+        jmp     .loop2
 .found_word:
-	cmpb	$EOW_TOKEN,(%esi)
-	jz	.done
-	mov	%esi,%eax
-	dec	%eax
-	stosl
-	jmp	.loop2
+        cmpb    $EOW_TOKEN,(%esi)
+        jz      .done
+        mov     %esi,%eax
+        dec     %eax
+        stosl
+        jmp     .loop2
 .cont:
-	cmp	$LIT4_TOKEN,%al
-	jz	.lit4
-	cmp	$8,%al
-	jz	.lit2
-	cmp	$9,%al
-	jz	.lit2
-	lodsb
-	jmp	.loop2
+        cmp     $LIT4_TOKEN,%al
+        jz      .lit4
+        cmp     $8,%al
+        jz      .lit2
+        cmp     $9,%al
+        jz      .lit2
+        lodsb
+        jmp     .loop2
 .lit4:
-	lodsl
-	jmp	.loop2
+        lodsl
+        jmp     .loop2
 .lit2:
-	lodsw
-	jmp	.loop2
+        lodsw
+        jmp     .loop2
 .done:
-#	K4_SAFE_CALL(printf, $fmt_hex, var_here)
-#	K4_SAFE_CALL(printf, $fmt_hex, %esi)
-	ret
+#       K4_SAFE_CALL(printf, $fmt_hex, var_here)
+#       K4_SAFE_CALL(printf, $fmt_hex, %esi)
+        ret
 
-ex_bytecode:		.BYTE  0,0,0 # to fit the prefix word
+ex_bytecode:            .BYTE  0,0,0 # to fit the prefix word
 
 ifdef([PARTY],[
 dlsym:
@@ -198,45 +203,45 @@ dlopen_:
 # In: %eax - contains a word pointer
 runbyte:
 ifdef([DEBUG],[
-	push	%eax
-	cmpl	$ 0, interrtupted
-	je	1f
-	movl	$ 0, interrtupted
-	K4_SAFE_CALL(longjmp,$mainloop)
-1:	
-	pop	%eax
+        push    %eax
+        cmpl    $ 0, interrtupted
+        je      1f
+        movl    $ 0, interrtupted
+        K4_SAFE_CALL(longjmp,$mainloop)
+1:
+        pop     %eax
 ])
-	push	%esi		# push the current word address on the return stack
-	lea	1(%eax),%esi	# load the byte code pointer
+        push    %esi            # push the current word address on the return stack
+        lea     1(%eax),%esi    # load the byte code pointer
 .fetchbyte:
-	xor	%eax,%eax	# fetch the byte, first clear up the %eax
-	lodsb			# byte code in %eax
-	cmpb	$ EOW_TOKEN,%al		# if it is end of word, escape by returning
-	je	.fold		# the previous byte code pointer
-	cmpb	$ PREFIX_TOKEN,%al		# prefix word
-	jne	.regular	# not, then regular
-	lodsb
-#	add	$256,%eax	
-	add	$MAX_VALID_TOKEN,	%eax 
+        xor     %eax,%eax       # fetch the byte, first clear up the %eax
+        lodsb                   # byte code in %eax
+        cmpb    $ EOW_TOKEN,%al         # if it is end of word, escape by returning
+        je      .fold           # the previous byte code pointer
+        cmpb    $ PREFIX_TOKEN,%al              # prefix word
+        jne     .regular        # not, then regular
+        lodsb
+#       add     $256,%eax
+        add     $MAX_VALID_TOKEN,       %eax
 .regular:
-	mov	dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
-	cmpb	$EOW_TOKEN, (%eax)	     # table. Check if it is bytecode or asm code?
-	je	runbyte		     # if it is byte code then thread again
-	mov	%eax,%ecx	     # if it is asm code skip the size byte and jump there
-	inc	%ecx		     # asm defined words escape to next_word at the end
-	jmp	*%ecx		     # jump there
+        mov     dsptch(,%eax,4),%eax # load the pointer to word from the dispatch
+        cmpb    $EOW_TOKEN, (%eax)           # table. Check if it is bytecode or asm code?
+        je      runbyte              # if it is byte code then thread again
+        mov     %eax,%ecx            # if it is asm code skip the size byte and jump there
+        inc     %ecx                 # asm defined words escape to next_word at the end
+        jmp     *%ecx                # jump there
 .fold:
-	pop	%esi		# we are threading out
+        pop     %esi            # we are threading out
 next_word:
-	jmp 	.fetchbyte	# this is called by every asm word at the end
+        jmp     .fetchbyte      # this is called by every asm word at the end
 
-fmt_dec:		.ASCIZ 	"%d"
+fmt_dec:                .ASCIZ  "%d"
 
 
 include(import.m4)
-ifdef([CYGWIN],,[	
-	K4_IMPORT(stdout)
-	K4_IMPORT(stdin)
+ifdef([CYGWIN],,[
+        K4_IMPORT(stdout)
+        K4_IMPORT(stdin)
 ])
 K4_IMPORT(printf)
 K4_IMPORT(fflush)
@@ -262,69 +267,69 @@ SECTION(interpret)
 # Out:
 # eax - integer value
 # token - a token
-#libc:	.ASCIZ "/lib/libc-2.8.90.so"
-#stdins:	.ASCIZ "stdin"
+#libc:  .ASCIZ "/lib/libc-2.8.90.so"
+#stdins:        .ASCIZ "stdin"
 
 _gettoken:
 # Skip whites
-	call	_get_key_white_skip
-	mov 	$token,%edi
-	mov 	$NTAB_ENTRY_SIZE,%ecx
+        call    _get_key_white_skip
+        mov     $token,%edi
+        mov     $NTAB_ENTRY_SIZE,%ecx
 1:
-	dec %ecx			# keep the counter becasue we need to clear out token
-	stosb				# in al we had out character
-	K4_PURE_CALL(_get_key)			# get next key
-	call _is_white			# is white?
-	jnz 1b				# NO?
-#	K4_SAFE_CALL(ungetc,%eax, stdin) # unget char
-	xor 	%eax,%eax		# clear status (not needed?)
-	push	%ecx
-	rep 	stosb			# Fill rest of token
-	pop	%ecx
-	neg	%ecx
-	add 	$NTAB_ENTRY_SIZE,%ecx
-	ret
+        dec %ecx                        # keep the counter becasue we need to clear out token
+        stosb                           # in al we had out character
+        K4_PURE_CALL(_get_key)                  # get next key
+        call _is_white                  # is white?
+        jnz 1b                          # NO?
+#       K4_SAFE_CALL(ungetc,%eax, stdin) # unget char
+        xor     %eax,%eax               # clear status (not needed?)
+        push    %ecx
+        rep     stosb                   # Fill rest of token
+        pop     %ecx
+        neg     %ecx
+        add     $NTAB_ENTRY_SIZE,%ecx
+        ret
 
 ifdef([DEBUG],
 [
-msg_segf:	
-	.string	"***Exception: Memory referenced at %p\n"
+msg_segf:
+        .string "***Exception: Memory referenced at %p\n"
 
-msg_int:	
-	.string	"***Interrupt: The interpreter is interrupted\n"
+msg_int:
+        .string "***Interrupt: The interpreter is interrupted\n"
 interrtupted:
-	.long	0
-	
+        .long   0
+
 segf_handler:
-	push	%ebp
-	mov	%esp,%ebp
-	mov	8(%ebp),%eax
-	K4_SAFE_CALL(printf,$msg_segf,%eax)
-	K4_FLUSH()
-	K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
-#	K4_SAFE_CALL(sigsegv_leave_handler) 
-	K4_SAFE_CALL(longjmp,$mainloop)
-	pop	%ebp
-	ret
+        push    %ebp
+        mov     %esp,%ebp
+        mov     8(%ebp),%eax
+        K4_SAFE_CALL(printf,$msg_segf,%eax)
+        K4_FLUSH()
+        K4_SAFE_CALL(sigprocmask,$ 2,$mainsigset, $ 0)
+#       K4_SAFE_CALL(sigsegv_leave_handler)
+        K4_SAFE_CALL(longjmp,$mainloop)
+        pop     %ebp
+        ret
 
 int_handler:
-	K4_SAFE_CALL(printf,$msg_int)
-	K4_FLUSH()
-	movl	$ 1, interrtupted
-	ret
-	
+        K4_SAFE_CALL(printf,$msg_int)
+        K4_FLUSH()
+        movl    $ 1, interrtupted
+        ret
+
 install_handlers:
-	pushl	$segf_handler
-	K4_PURE_CALL(sigsegv_install_handler)
-	add	$4,%esp
-	K4_SAFE_CALL(sigemptyset,$emptyset)
-	K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
-	K4_SAFE_CALL(signal,$ 2, $int_handler)
-	ret
-	.comm	mainsigset,128,32
-	.comm	ss_dispatcher,4,4
-	.comm	mainloop,156,32
-	.comm	emptyset,128,32
+        pushl   $segf_handler
+        K4_PURE_CALL(sigsegv_install_handler)
+        add     $4,%esp
+        K4_SAFE_CALL(sigemptyset,$emptyset)
+        K4_SAFE_CALL(sigprocmask,$ 0,$emptyset,$mainsigset)
+        K4_SAFE_CALL(signal,$ 2, $int_handler)
+        ret
+        .comm   mainsigset,128,32
+        .comm   ss_dispatcher,4,4
+        .comm   mainloop,156,32
+        .comm   emptyset,128,32
 
 ])
 
@@ -337,35 +342,35 @@ install_handlers:
 
 
 # Our data, it will be stripped off so store it in intepret section
-long_tmp: 		.LONG 0
-token:			.FILL	64
-token2:			.FILL 	64
-fmt_float: 		.ASCIZ  "%f"
-fmt_hex:		.ASCIZ 	"%x\n"
-fmt_char:		.ASCIZ 	"%c"
-str_wb:			.ASCIZ 	"wb"
-str_rb:			.ASCIZ 	"rb"
-msg:			.ASCIZ "%s\n"
+long_tmp:               .LONG 0
+token:                  .FILL   64
+token2:                 .FILL   64
+fmt_float:              .ASCIZ  "%f"
+fmt_hex:                .ASCIZ  "%x\n"
+fmt_char:               .ASCIZ  "%c"
+str_wb:                 .ASCIZ  "wb"
+str_rb:                 .ASCIZ  "rb"
+msg:                    .ASCIZ "%s\n"
 
-msg_not_defined:		.ASCIZ "Word '%s' not defined.\n"
-msg_file_not_found:		.ASCIZ "File '%s' not found.\n"
-msg_bootstrap_not_found:	.ASCIZ "File 'bootstrap.4k' not found in current directory!\n"
-whites:                 .BYTE  	4,9,10,12,13,0
-bytecode:		.BYTE  	0,INTERPRET_TOKEN
-			.LONG 	0
-_vm_context_reg:	.FILL 	42
-_vm_context_ESP:	.FILL  	4
-_vm_context_EBP:	.FILL  	4
-_org_ESP:		.LONG	0
-fh_stack:		.FILL 32*4
-fh_stack_index:		.LONG	0
-bootstrap_s:		.asciz "bootstrap.4k"
-libc_handle:	 	.LONG 0
+msg_not_defined:                .ASCIZ "Word '%s' not defined.\n"
+msg_file_not_found:             .ASCIZ "File '%s' not found.\n"
+msg_bootstrap_not_found:        .ASCIZ "File 'bootstrap.4k' not found in current directory!\n"
+whites:                 .BYTE   4,9,10,12,13,0
+bytecode:               .BYTE   0,INTERPRET_TOKEN
+                        .LONG   0
+_vm_context_reg:        .FILL   42
+_vm_context_ESP:        .FILL   4
+_vm_context_EBP:        .FILL   4
+_org_ESP:               .LONG   0
+fh_stack:               .FILL 32*4
+fh_stack_index:         .LONG   0
+bootstrap_s:            .asciz "bootstrap.4k"
+libc_handle:            .LONG 0
 
-	.macro ld_fh reg
-		mov	fh_stack_index,%edx
-		mov	fh_stack(,%edx,4),\reg
-	.endm
+        .macro ld_fh reg
+                mov     fh_stack_index,%edx
+                mov     fh_stack(,%edx,4),\reg
+        .endm
 
 
 ################################################################################
@@ -374,32 +379,32 @@ libc_handle:	 	.LONG 0
 # edi - file name
 # Out:
 
-f_rt:	.ASCIZ "rt"
+f_rt:   .ASCIZ "rt"
 
 memo_nest:
-	K4_SAFE_CALL(fmemopen, %edi, %ecx, $f_rt)
-	jmp 	file_nest_ch
+        K4_SAFE_CALL(fmemopen, %edi, %ecx, $f_rt)
+        jmp     file_nest_ch
 K4_MANGLE(file_nest):
-	K4_SAFE_CALL(fopen, %edi, $f_rt)
+        K4_SAFE_CALL(fopen, %edi, $f_rt)
 file_nest_ch:
-	or	%eax,%eax
-	jnz	1f
-	stc
-	ret
+        or      %eax,%eax
+        jnz     1f
+        stc
+        ret
 1:
-	incl	fh_stack_index
-	mov	fh_stack_index,%ecx
-	mov	%eax,fh_stack(,%ecx,4)
-	clc
-	ret
+        incl    fh_stack_index
+        mov     fh_stack_index,%ecx
+        mov     %eax,fh_stack(,%ecx,4)
+        clc
+        ret
 
 file_unnest:
-	mov	fh_stack_index,%ecx
-	cmp	$0,%ecx
-	jz	_exit2
-	decl	fh_stack_index
-	mov	fh_stack(,%ecx,4),%eax
-	ret
+        mov     fh_stack_index,%ecx
+        cmp     $0,%ecx
+        jz      _exit2
+        decl    fh_stack_index
+        mov     fh_stack(,%ecx,4),%eax
+        ret
 
 ################################################################################
 # Parse literal, string is in token
@@ -408,65 +413,65 @@ file_unnest:
 # eax - integer value
 _parse_literal:
 # Check for dot if dot is present then we have floating point number
-	push 	%edi
-	mov	$token,%edi
+        push    %edi
+        mov     $token,%edi
 # string length
-#	xor 	%ecx,%ecx
-#	not	%ecx
-#	xor 	%eax,%eax
-#	cld
-#	repnz 	scasb
-#	not 	%ecx
-#	dec 	%ecx
-#	K4_SAFE_CALL(printf,$msg, $token)
-#	K4_SAFE_CALL(printf,$fmt_dec, %ecx)
-#	K4_SAFE_CALL(printf,$msg2)
+#       xor     %ecx,%ecx
+#       not     %ecx
+#       xor     %eax,%eax
+#       cld
+#       repnz   scasb
+#       not     %ecx
+#       dec     %ecx
+#       K4_SAFE_CALL(printf,$msg, $token)
+#       K4_SAFE_CALL(printf,$fmt_dec, %ecx)
+#       K4_SAFE_CALL(printf,$msg2)
 
-	mov	$'.',%al
-	mov	$token,%edi
-	repnz 	scasb
-	jnz	1f	# real
+        mov     $'.',%al
+        mov     $token,%edi
+        repnz   scasb
+        jnz     1f      # real
 
-	K4_SAFE_CALL(sscanf,$token,$fmt_float,$long_tmp)
-	cmp	$0,%eax
-	jz	1f
-	mov 	long_tmp,%eax
-	pop	%edi
-	clc
-	ret
+        K4_SAFE_CALL(sscanf,$token,$fmt_float,$long_tmp)
+        cmp     $0,%eax
+        jz      1f
+        mov     long_tmp,%eax
+        pop     %edi
+        clc
+        ret
 1:
-	mov	$token,%edi
-	cmpb	$'$',(%edi)
-	jz	.base16
+        mov     $token,%edi
+        cmpb    $'$',(%edi)
+        jz      .base16
 
-	cmpb	$10,var_base
-	jz	2f
-	mov	$token,%edi
-	dec	%edi
+        cmpb    $10,var_base
+        jz      2f
+        mov     $token,%edi
+        dec     %edi
 .base16:
-	inc	%edi
-	K4_SAFE_CALL(sscanf,%edi,$fmt_hex,$long_tmp)
-	cmp	$0,%eax
-	jz	2f
-	mov 	long_tmp,%eax
-	pop	%edi
-	clc
-	ret
+        inc     %edi
+        K4_SAFE_CALL(sscanf,%edi,$fmt_hex,$long_tmp)
+        cmp     $0,%eax
+        jz      2f
+        mov     long_tmp,%eax
+        pop     %edi
+        clc
+        ret
 2:
 # Use cheap sscanf
-	K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
+        K4_SAFE_CALL(sscanf,$token,$fmt_dec,$long_tmp)
 3:
-	cmp	$0,%eax
-	jz 	4f
-	mov 	long_tmp,%eax
-	pop	%edi
-	clc
-	ret
+        cmp     $0,%eax
+        jz      4f
+        mov     long_tmp,%eax
+        pop     %edi
+        clc
+        ret
 
 4:
-	pop	%edi
-	stc
-	ret
+        pop     %edi
+        stc
+        ret
 
 ################################################################################
 # Get key, skipping whites
@@ -475,10 +480,10 @@ _parse_literal:
 # al - an ASCII code of character
 # token - a token
 _get_key_white_skip:
-	K4_PURE_CALL(_get_key)
-	call _is_white
-	jz _get_key_white_skip	# loop until we will find something
-	ret
+        K4_PURE_CALL(_get_key)
+        call _is_white
+        jz _get_key_white_skip  # loop until we will find something
+        ret
 
 ################################################################################
 # Is white?
@@ -488,15 +493,15 @@ _get_key_white_skip:
 # Z - if its white
 # token - a token
 _is_white:
-	cmpb	$10,%al		# CR ?
-	je	1f
-	cmpb	$13,%al       	# LF ?
-	je	1f
-	cmpb	$9,%al		# TAB ?
-	je	1f
-	cmpb	$' ',%al	# SPACE ?
-	je	1f
-1:	ret
+        cmpb    $10,%al         # CR ?
+        je      1f
+        cmpb    $13,%al         # LF ?
+        je      1f
+        cmpb    $9,%al          # TAB ?
+        je      1f
+        cmpb    $' ',%al        # SPACE ?
+        je      1f
+1:      ret
 
 ################################################################################
 # Get char from STDIN, jumps out in case of EOF
@@ -505,16 +510,16 @@ _is_white:
 # al - an ASCII code of character
 # token - a token
 K4_MANGLE(_get_key):
-	ld_fh	%edx
-	K4_SAFE_CALL(fgetc,%edx)
-	cmp 	$-1,%eax        # if EOF?
-	jne 	2f     # exit the forth
-	call	file_unnest
-	ld_fh	%edx
-	K4_SAFE_CALL(fgetc,%edx)
-	ret
+        ld_fh   %edx
+        K4_SAFE_CALL(fgetc,%edx)
+        cmp     $-1,%eax        # if EOF?
+        jne     2f     # exit the forth
+        call    file_unnest
+        ld_fh   %edx
+        K4_SAFE_CALL(fgetc,%edx)
+        ret
 2:
-1:	ret
+1:      ret
 
 ################################################################################
 # Find the word in dictionary by comparing strings.
@@ -528,171 +533,171 @@ K4_MANGLE(_get_key):
 # Out:
 # eax - rets word index, C - set if no word found
 K4_MANGLE(_find_word):
-	push	%esi
-	mov 	$ntab,%edx		# set up a pointer past the end
-	mov	var_last,%eax
-	shl	$5,%eax
-	add	%eax,%edx
-	sub	$NTAB_ENTRY_SIZE,%edx	# pointing last one
-#	K4_SAFE_CALL(printf,$fmt_dec,%ecx) 
+        push    %esi
+        mov     $ntab,%edx              # set up a pointer past the end
+        mov     var_last,%eax
+        shl     $5,%eax
+        add     %eax,%edx
+        sub     $NTAB_ENTRY_SIZE,%edx   # pointing last one
+#       K4_SAFE_CALL(printf,$fmt_dec,%ecx)
 1:
 
 # If it's end of list then go and report fail
-	cmp	$(ntab-NTAB_ENTRY_SIZE) ,%edx
-	jz 	3f			# yes? Not found then.
+        cmp     $(ntab-NTAB_ENTRY_SIZE) ,%edx
+        jz      3f                      # yes? Not found then.
 
 # Prepare for string comparition
-	mov 	%edx,%esi
+        mov     %edx,%esi
 
 2:
-	cmpb	$ 0, (%esi,%ecx)
-	jnz	4f
+        cmpb    $ 0, (%esi,%ecx)
+        jnz     4f
 
 # Compare it
-	push	%ecx
-	push	%edi			# save edi, because it contains
-	repe 	cmpsb			# the pointer to our value
-	mov	%edi,%eax
-	pop	%edi			# restore
-	pop	%ecx
-	jz 	2f			# Found word!
+        push    %ecx
+        push    %edi                    # save edi, because it contains
+        repe    cmpsb                   # the pointer to our value
+        mov     %edi,%eax
+        pop     %edi                    # restore
+        pop     %ecx
+        jz      2f                      # Found word!
 4:
-	sub 	$NTAB_ENTRY_SIZE,%edx 	# Nope.. go back one entry
-	jmp 	1b
-2:	
+        sub     $NTAB_ENTRY_SIZE,%edx   # Nope.. go back one entry
+        jmp     1b
+2:
 # We have found a word go and calculate index
-	sub 	$ntab,%edx
-	shr 	$5,%edx			# divide it by 32
-	mov	%edx,%eax
-	pop	%esi
-	clc				# clear fail flag
-	ret
+        sub     $ntab,%edx
+        shr     $5,%edx                 # divide it by 32
+        mov     %edx,%eax
+        pop     %esi
+        clc                             # clear fail flag
+        ret
 # Not found
 3:
 
-	xor 	%eax,%eax
-	pop	%esi
-	stc
-	ret
+        xor     %eax,%eax
+        pop     %esi
+        stc
+        ret
 
 #Out entry point here the fun begins, this is only valid during compiling/interpreting
 #there will be no code here in final image
 entry_point:
 ifdef([PARTY],,[
-#	.set im_st, (_image_start /65536-1)*65536 
-	mov	$_image_start, %eax
-	and	$~65535,%eax
-	mov	$_image_end, %ecx
-	add	$65536,%ecx
-	and	$~65535,%ecx
-	xchg	%eax,%ecx
-	sub	%ecx,%eax
-	K4_SAFE_CALL(mprotect, %ecx,%eax,  $(PROT_READ | PROT_WRITE | PROT_EXEC))
+#       .set im_st, (_image_start /65536-1)*65536
+        mov     $_image_start, %eax
+        and     $~65535,%eax
+        mov     $_image_end, %ecx
+        add     $65536,%ecx
+        and     $~65535,%ecx
+        xchg    %eax,%ecx
+        sub     %ecx,%eax
+        K4_SAFE_CALL(mprotect, %ecx,%eax,  $(PROT_READ | PROT_WRITE | PROT_EXEC))
 ])
-	call	init_imports	
-	
+        call    init_imports
+
 # I don't why following paragraph is needed but certainly is needed
-	push	$dlopen_s
-	push	$ -1
-	K4_PURE_CALL(dlsym)
-	add	$8,%esp
-	mov	%eax,dlopen_
+        push    $dlopen_s
+        push    $ -1
+        K4_PURE_CALL(dlsym)
+        add     $8,%esp
+        mov     %eax,dlopen_
 ################################################################################
-	movl	stdin_ptr,%eax
-	pushl	(%eax)
+        movl    stdin_ptr,%eax
+        pushl   (%eax)
 
-	popl	fh_stack
+        popl    fh_stack
 
-	mov	var_last,	%ebx
-	call 	build_dispatch
-	mov	%esp,_org_ESP
- 	mov	%esp,%ebx
-	sub	$ 4096,%ebx
-	mov	$bootstrap_s,%edi
-	K4_SAFE_CALL(file_nest)
-	jnc 	.ok
-	K4_PRINT_MSG($msg_bootstrap_not_found)
+        mov     var_last,       %ebx
+        call    build_dispatch
+        mov     %esp,_org_ESP
+        mov     %esp,%ebx
+        sub     $ 4096,%ebx
+        mov     $bootstrap_s,%edi
+        K4_SAFE_CALL(file_nest)
+        jnc     .ok
+        K4_PRINT_MSG($msg_bootstrap_not_found)
 .ok:
 ifdef([DEBUG],[
-	K4_SAFE_CALL(_setjmp, $mainloop)
- 	movl	_org_ESP,%esp
- 	mov	%esp,%ebx
-	sub	$ 4096,%ebx
-	call 	install_handlers
-	])
+        K4_SAFE_CALL(_setjmp, $mainloop)
+        movl    _org_ESP,%esp
+        mov     %esp,%ebx
+        sub     $ 4096,%ebx
+        call    install_handlers
+        ])
 interpret_loop:
-	call	_gettoken	#get next token
+        call    _gettoken       #get next token
 
-	mov	$next_word,%ebp
-	movl	$token,	%edi
-	K4_PURE_CALL(_find_word)	#find word
-	jc	2f		#if the word is not found, jump to get literal
+        mov     $next_word,%ebp
+        movl    $token, %edi
+        K4_PURE_CALL(_find_word)        #find word
+        jc      2f              #if the word is not found, jump to get literal
 
 # Here we will compile/interpret found word
-	xchg	%esp,%ebx	#need to the token on the parameter stack (%ebp)
-	pushl	%eax
-	xchg	%esp,%ebx
-	mov 	var_state, %ecx			#if state = 1 then we compile so get the compile semantics
-	## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
-	## the tokens here are hardcoded! 1  for compiling 2 for executing
-	movzbl	semantic(%ecx,%eax,2),%eax
-	mov	%al,bytecode
-	mov	$(bytecode-1),%eax
-	movb	$INTERPRET_TOKEN,(bytecode+1)
-	jmp	runbyte
+        xchg    %esp,%ebx       #need to the token on the parameter stack (%ebp)
+        pushl   %eax
+        xchg    %esp,%ebx
+        mov     var_state, %ecx                 #if state = 1 then we compile so get the compile semantics
+        ## Important: now the word will be interptretr or exeucet throuh word_compile or word_execute
+        ## the tokens here are hardcoded! 1  for compiling 2 for executing
+        movzbl  semantic(%ecx,%eax,2),%eax
+        mov     %al,bytecode
+        mov     $(bytecode-1),%eax
+        movb    $INTERPRET_TOKEN,(bytecode+1)
+        jmp     runbyte
 
 # Here we will parse the literal if word is not found
 2:
-	call	_parse_literal
-	jnc 	3f		#if literal cannot be parsed give a proper message and loop
-	K4_SAFE_CALL(printf,$msg_not_defined)
-	K4_FLUSH()
-	jmp 	interpret_loop
+        call    _parse_literal
+        jnc     3f              #if literal cannot be parsed give a proper message and loop
+        K4_SAFE_CALL(printf,$msg_not_defined)
+        K4_FLUSH()
+        jmp     interpret_loop
 
 # Literal could be parsed here
 3:
-	cmp	$0, var_state	#code dependent on the state
-	jnz	4f		#if we are compiling (0) then compile the literal
+        cmp     $0, var_state   #code dependent on the state
+        jnz     4f              #if we are compiling (0) then compile the literal
 # Here we compile literal TODO: the state variable has inverted meaning; do something with that
-	cmp	$127,%eax	# if the literal fits in one byte
-	jg	.dword_lit
-	cmp	$-128,%eax	# if the literal fits in one byte
-	jl	.dword_lit
+        cmp     $127,%eax       # if the literal fits in one byte
+        jg      .dword_lit
+        cmp     $-128,%eax      # if the literal fits in one byte
+        jl      .dword_lit
 
-	mov	var_here,%ecx
-	movb	$ LIT_TOKEN,(%ecx)	# token for literal
-	incl	%ecx		# increment here
-	movb	%al,(%ecx)	# store the actual literal (only byte literals allowed)
-				# TODO: allow different sizes of literals
-	incl	%ecx
-	mov	%ecx,var_here	#store the pointer and loop
-	jmp 	interpret_loop
+        mov     var_here,%ecx
+        movb    $ LIT_TOKEN,(%ecx)      # token for literal
+        incl    %ecx            # increment here
+        movb    %al,(%ecx)      # store the actual literal (only byte literals allowed)
+                                # TODO: allow different sizes of literals
+        incl    %ecx
+        mov     %ecx,var_here   #store the pointer and loop
+        jmp     interpret_loop
 
 .dword_lit:
-	mov	var_here,%ecx
-	movb	$LIT4_TOKEN,(%ecx)	# token for literal
-	incl	%ecx		# increment here
-	movl	%eax,(%ecx)	# store the actual literal (only byte literals allowed)
-				# TODO: allow different sizes of literals
-	add	$4,%ecx
-	mov	%ecx,var_here	#store the pointer and loop
-	jmp 	interpret_loop
+        mov     var_here,%ecx
+        movb    $LIT4_TOKEN,(%ecx)      # token for literal
+        incl    %ecx            # increment here
+        movl    %eax,(%ecx)     # store the actual literal (only byte literals allowed)
+                                # TODO: allow different sizes of literals
+        add     $4,%ecx
+        mov     %ecx,var_here   #store the pointer and loop
+        jmp     interpret_loop
 
 
 # Here we are pushing the literal on the stack as we are in interpreting mode
 4:
-	xchg 	%esp,%ebx
-	push	%eax
-	xchg 	%esp,%ebx
-	jmp	interpret_loop
+        xchg    %esp,%ebx
+        push    %eax
+        xchg    %esp,%ebx
+        jmp     interpret_loop
 
 _exit2:
-	K4_SAFE_CALL(_exit,$ 0)
-	ret
+        K4_SAFE_CALL(_exit,$ 0)
+        ret
 
 
-	.GLOBL K4_MANGLE(main)
-#	.GLOBL _start		
+        .GLOBL K4_MANGLE(main)
+#       .GLOBL _start
 
 
 ################################################################################
@@ -706,10 +711,10 @@ include(prim.s)
 
 # TODO: For real usage maybe we need malloced heap
 ELF_CODE_END()
-	.ALIGN 4096
+        .ALIGN 4096
 _image_end:
-	.fill 128000
-	
+        .fill 128000
+
 ifdef([PARTY],[
 ELF_DATA_END()
 ])

@@ -1,189 +1,109 @@
-\ FourK - Concatenative, stack based, Forth like language optimised for 
-\        non-interactive 4KB size demoscene presentations.
+| FourK - Concatenative, stack based, Forth like language optimised for 
+|        non-interactive 4KB size demoscene presentations.
+|
+| Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
+|
+| This program is free software: you can redistribute it and/or modify
+| it under the terms of the GNU General Public License as published by
+| the Free Software Foundation, either version 3 of the License, or
+| (at your option) any later version.
+|
+| This program is distributed in the hope that it will be useful,
+| but WITHOUT ANY WARRANTY; without even the implied warranty of
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+| GNU General Public License for more details.
+|
+| You should have received a copy of the GNU General Public License
+| along with this program.  If not, see <http://www.gnu.org/licenses/>.
+| ______________________________________________________________________
 
-\ Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
 
-\ This program is free software: you can redistribute it and/or modify
-\ it under the terms of the GNU General Public License as published by
-\ the Free Software Foundation, either version 3 of the License, or
-\ (at your option) any later version.
-
-\ This program is distributed in the hope that it will be useful,
-\ but WITHOUT ANY WARRANTY; without even the implied warranty of
-\ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-\ GNU General Public License for more details.
-
-\ You should have received a copy of the GNU General Public License
-\ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+| This is only for interactive sessions, forget all the defined words
+| so far marked
 forget
+| Mark that from this point to forget words
 mark
+| Define floating point constant
+| leaves the constant on the floating point stack
 : fconst : rliteral postpone >f postpone ; ;
+| Put integer value on floating point stack
 : i>>f i>f >f ;
-
-| Let's bind some C library symbols
-
-
-| OSS Stuff
-$c0045005 const SNDCTL_DSP_SETFMT
-$c0045006 const SNDCTL_DSP_CHANNELS
-$c0045005 const SNDCTL_DSP_SETFMT
-$c0045002 const SNDCTL_DSP_SPEED
-$5001     const SNDCTL_DSP_SYNC
-$1        const O_WRONLY
-$00000010 const AFMT_S16_LE
-
-
-4096 const sample/second
-
-1 sample/second * const #samples
-
-2 const sample
-
-: samples sample * ;
-
-variable buffer
-variable audio
-variable temp
-
-: w! 2dup c! swap 8 >> swap 1+ c! ;
-
-: #sample! samples buffer @ + w! ;
-
-
-: i>>f i>f >f ;
-
-
+| The following is very clumsy, will be changed in future
 2 ccall: exit
 3 ccall: SDL_SetVideoMode
 4 ccall: SDL_PollEvent
 5 ccall: SDL_Flip
 6 ccall: SDL_LockSurface
 7 ccall: SDL_UnlockSurface
-8 ccall: malloc |  should be in bss section
-9 ccall: printf
-10 ccall: open
-11 ccall: ioctl
-12 ccall: write
-
-: render-noise
-    	0 SNDCTL_DSP_SYNC audio @ ioctl drop
-	sample/second samples buffer @ audio @ write drop
+| load our symbols from dll
+| Must be in the same order as above
+: libSDL " /usr/lib/libSDL.so" lib ;
+: function >r sym r> rcells add-handle ;
+: load-symbols ( -- )
+    " libc.so" lib " _exit" 1 function
+    libSDL " SDL_SetVideoMode" 4 function
+    libSDL " SDL_PollEvent" 1 function
+    libSDL " SDL_Flip" 1 function
+    libSDL " SDL_LockSurface" 1 function
+    libSDL " SDL_UnlockSurface" 1 function
 ;
-
-: >/dev/dsp ( ctl val -- ) temp ! temp swap audio @ ioctl drop ;
-: init-synth
-    " libc.so" lib " malloc" sym rcell add-handle
-    " libc.so" lib " printf" sym 2 rcells add-handle
-    " libc.so" lib " open" sym 3 rcells add-handle
-    " libc.so" lib " ioctl" sym 3 rcells add-handle
-    " libc.so" lib " write" sym 3 rcells add-handle
-
-    #samples samples malloc buffer !
-    #samples 0
-    do
-	i 8 << i #sample!
-    loop
-    0 O_WRONLY " /dev/dsp" >cstr open audio !
-    
-    SNDCTL_DSP_SETFMT   AFMT_S16_LE >/dev/dsp
-    SNDCTL_DSP_CHANNELS 1           >/dev/dsp
-    SNDCTL_DSP_SPEED    11024       >/dev/dsp
-;
-: init ( -- )
-    " libc.so" lib " _exit" sym rcell add-handle
-    
-    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 4 rcells add-handle
-
-    " /usr/lib/libSDL.so" lib " SDL_PollEvent" sym rcell add-handle
-
-    " /usr/lib/libSDL.so" lib " SDL_Flip" sym rcell add-handle
-
-    " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym rcell add-handle
-
-    " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
-
-    init-synth
-;
-
-
-| this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
-: \ postpone | ; immediate
-
-\ some constants
+| some constants
 800 const width
 600 const height
 32  const bpp
 bpp 8 / const point
-
-\ SDL constants
+| SDL constants
 27  const Esc
 2   const Keydown
-
-\ SDL structure dispatch
+| SDL structure dispatch
 : e>type c@ ;
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
-
-\ out screen surface
+| out screen surface
 variable screen
-\ allot needed stuff for SDL
+| allot needed stuff for SDL
 create event 20 cells allot
-\ and for pallete
+| and for pallete
 create pallete 256 rcells allot
-
-\ get the linear offset
+| get the linear offset
 : points point * ;
-\ put the pixel in right place with pallete colour
+| put the pixel in right place with pallete colour
 : pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap ! ;
-
-\ set the video mode
+| set the video mode
 : video 0 bpp height width SDL_SetVideoMode ;
-
-\ alias for convenience
+| alias for convenience
 : y postpone j ; immediate
 : x postpone i ; immediate
-
-\ sqr function
+| sqr function
 : sqr dup * ;
-
-\ some more constants
+| some more constants
 width  2 / i>f fconst w/2
 height 2 / i>f fconst h/2
-
-\ our sin (or cos I dunno) function
+| our sin (or cos I dunno) function
 : fsin fsincos f> drop ;
-
-\ some pimped sin function which keeps value 0. - 255.
+| some pimped sin function which keeps value 0. - 255.
 : sin fsin 127.0 >f f* 128.0 >f f+ ;
-
 : dupf f> dup >f >f ;
-\ factoring could be done here
+| factoring could be done here
 : nx i>f >f w/2 f- ;
 : ny i>f >f h/2 f- ;
-
-\ some float constants
+| some float constants
 : swapf f> f> swap >f >f ;
 1.0 >f 8.0 >f swapf f/ f> fconst c1/8
 1.0 >f 16.0 >f swapf f/ f> fconst c1/16
 1.0 >f 32.0 >f swapf f/ f> fconst c1/32
-
-\ unused currently
-variable time
-1.0 time !
-
 : isqrf i>>f dupf f* ;
-\ we needed to split the word into second one because of -127 limit for a loop
+| we needed to split the word into second one because of -127 limit for a loop
 : draw2
     x isqrf 
     y isqrf 
     f+ fsqrt
     c1/8 f* sin
 ;
-
 | draw it!
 : draw
-    height 0 do
-	width 0 do
+    height 1- 0 do
+	width 1- 0 do
 	    finit
 	    x i>>f c1/16 f* sin 
 	    y i>>f c1/32 f* sin f+
@@ -199,16 +119,12 @@ variable time
 	    f> f>i 4 / x y pixel
 	loop
     loop
-	    
-|	    0.01 >f time @ >f f+ f> time !
 ;
-
 3.1415 fconst pi
-
 : col> ( i f:fac -- f:c ) i>>f pi f* f* sin ;
 : col! ( c i -- ) rcells pallete + + f> f>i swap c! ;
 : color ( i f ) dup >r col> r> col! ;
-\ init our pallete
+| init our pallete
 : init-pallete
     256 0
     do
@@ -218,32 +134,28 @@ variable time
 	2 i c1/32 color 
     loop
 ;
-
 : draw
     screen @ SDL_LockSurface drop
     draw
-    screen @ SDL_UnlockSurface drop
+    screen @ SDL_UnlockSurface  drop
     screen @ SDL_Flip drop
 ;
-
 : render-loop
     begin
-	render-noise
-	event SDL_PollEvent drop
-	event e>type Keydown = if event e>key Esc = if ;; then then
-repeat
+        draw
+        event SDL_PollEvent drop
+        event e>type Keydown = if event e>key Esc = if ;; then then
+    again
 ;
-
 : main
-    init
-   init-pallete
+    load-symbols
+    init-pallete
     video screen !
-    draw
     render-loop
-|    0 exit
+    0 exit
 ;
 
 | save-image im.4ki
-
+| main
 
 

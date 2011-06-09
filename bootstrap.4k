@@ -87,6 +87,9 @@ variable #section
 : then dup here@ swap - swap  c! ; immediate
 : else >r postpone branch here@ 0 c, r> postpone then ; immediate
 : | begin key 10 = until ; immediate
+| this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
+: \ postpone | ; immediate
+
 | moved from strings.4k
 : 2drop  drop drop ; 
 : over  swap dup >r swap r> ;
@@ -381,13 +384,13 @@ base @ savebase !
 16 const b16
 10 const b10
 
-: base! base @ savebase ! base ! ;
-: hex b16 base! ;
-: dec b10 base! ;
-: [hex] hex ; immediate
-: [dec] dec ; immediate
-: switch-base savebase @ base ! ;
+| : base! base @ savebase ! base ! ;
+| : hex b16 base! ;
+| : dec b10 base! ;
+| : [hex] hex ; immediate
+| : [dec] dec ; immediate
+| : switch-base savebase @ base ! ;
 
-: [switch-base] res-base ; immediate
+| : [switch-base] res-base ; immediate
 
 | : . . space ;

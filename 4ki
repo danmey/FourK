@@ -1,5 +1,5 @@
 #!/bin/bash
 
-dir=~/worx/fourk
+dir=~/prog/worx/Current/FourK
 cd $dir
-bin/4k-debug.exe
+bin/4k-debug

@@ -51,7 +51,7 @@ $(BIN)/4k-party: $(SRC_FILES)
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.s
 	gcc -m32 -c -nostdlib $(BIN)/t.s -o $(BIN)/tiny.o
-	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
+	ld -melf_i386 --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
 

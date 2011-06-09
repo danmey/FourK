@@ -189,13 +189,13 @@ dlsym_:
 ])
 
 ifdef([PARTY],[
-dlopen:
-.byte 0xff,0x25
-.LONG dlopen_
-])
-dlopen_:
-.LONG 0
 
+dlopen:
+        .byte 0xff,0x25
+        .LONG dlopen_
+])
+
+dlopen_: .LONG 0
 
 ################################################################################
 # Main bytecode interpreter loop,

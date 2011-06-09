@@ -50,7 +50,7 @@ $(BIN)/4k-party: $(SRC_FILES)
 	m4 -DPARTY -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.s
-	gcc -c -nostdlib $(BIN)/t.s -o $(BIN)/tiny.o
+	gcc -m32 -c -nostdlib $(BIN)/t.s -o $(BIN)/tiny.o
 	ld --oformat binary -Ttext 08048000 $(BIN)/tiny.o -o $@
 	cp $@ $(PREFIX)
 
@@ -66,7 +66,7 @@ $(BIN)/4k-debug: $(SRC_FILES)
 	m4 -DDEBUG $(CYWGIN) -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -ggdb3 $(BIN)/t.S -o $(BIN)/4k-debug -ldl -lsigsegv -lc
+	gcc -m32 -ggdb3 $(BIN)/t.S -o $(BIN)/4k-debug -ldl -lsigsegv -lc
 	cp $@ $(PREFIX)
 
 

@@ -1,20 +1,25 @@
+########################################################################
 # FourK - Concatenative, stack based, Forth like language optimised for 
 #        non-interactive 4KB size demoscene presentations.
-
-# Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
-
+#
+# Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+########################################################################
+
+
+
 define([STD_DIVERT], [divert(0)])
 define([SECTION], [
  	.equ sec_$1, . - _image_start
@@ -28,30 +33,29 @@ define([SECTION], [
 
 define([ELF_HEADER],[
 
-/* # factor.asm: Copyright (C) 1999-2001 by Brian Raiter, under the GNU */
-/* # General Public License (version 2 or later). No warranty. */
-/* # */
-/* # To build: */
-/* #	nasm -f bin -o factor factor.asm && chmod +x factor */
-/* # */
-/* # Usage: factor [N]... */
-/* # Prints the prime factors of each N. With no arguments, reads N */
-/* # from standard input. The valid range is 0 <= N < 2^64. */
+# factor.asm: Copyright (C) 1999-2001 by Brian Raiter, under the GNU
+# General Public License (version 2 or later). No warranty.
+#
+# To build:
+#	nasm -f bin -o factor factor.asm && chmod +x factor
+#
+# Usage: factor [N]...
+# Prints the prime factors of each N. With no arguments, reads N
+# from standard input. The valid range is 0 <= N < 2^64.
 
 .code32
 
 
-/* # The program's data */
+# The program's data
 
 beg:
 
 
-/* # The ELF header and the program header table. The last eight bytes */
-/* # of the former coexist with the first eight bytes of the former. */
-/* # The program header table contains three entries. The first is the */
-/* # interpreter pathname, the third is the _DYNAMIC section, and the */
-/* # middle one contains everything in the file. */
-
+# The ELF header and the program header table. The last eight bytes
+# of the former coexist with the first eight bytes of the former.
+# The program header table contains three entries. The first is the
+# interpreter pathname, the third is the _DYNAMIC section, and the
+# middle one contains everything in the file.
 
 .byte 0x7F
 .ascii "ELF"
@@ -95,8 +99,9 @@ phdrs:
 		.long 	6			# PF_R | PF_W
 		.long 	4
 
-/* # The hash table. Essentially a formality. The last entry in the hash */
-/* # table, a 1, overlaps with the next structure. */
+
+# The hash table. Essentially a formality. The last entry in the hash
+# table, a 1, overlaps with the next structure.
 
 hash:
 		.long 	1
@@ -104,10 +109,11 @@ hash:
 		.long 	4
 		.long 	0, 2, 3, 0
 
-/* # The _DYNAMIC section. Indicates the presence and location of the */
-/* # dynamic symbol section (and associated string table and hash table) */
-/* # and the relocation section. The final DT_NULL entry in the dynamic */
-/* # section overlaps with the next structure. */
+
+# The _DYNAMIC section. Indicates the presence and location of the
+# dynamic symbol section (and associated string table and hash table)
+# and the relocation section. The final DT_NULL entry in the dynamic
+# section overlaps with the next structure.
 
 dynamic:
 		.long 	1,  libc_name		# DT_NEEDED
@@ -121,9 +127,10 @@ dynamic:
 		.long 	19, 0x08		# DT_RELENT
 .equ dynamicsz, 	. - dynamic + 8
 
-/* # The dynamic symbol table. Entries are included for the _DYNAMIC */
-/* # section and the three functions imported from libc: getchar(), */
-/* # write(), and _exit(). */
+
+# The dynamic symbol table. Entries are included for the _DYNAMIC
+# section and the three functions imported from libc: getchar(),
+# write(), and _exit().
 
 dynsym:
 		.long 	0
@@ -155,8 +162,9 @@ dynsym:
 
 		.byte 	0
 
-/* # The relocation table. The addresses of the three functions imported */
-/* # from libc are stored in the program's data area. */
+
+# The relocation table. The addresses of the three functions imported
+# from libc are stored in the program's data area.
 
 reltext:
 		.long 	dlopen_
@@ -171,8 +179,9 @@ reltext:
 
 .equ reltextsz, 	. - reltext
 
-/* # The interpreter pathname. The final NUL byte appears in the next */
-/* # section. */
+
+# The interpreter pathname. The final NUL byte appears in the next
+# section.
 
 interp:
 
@@ -181,8 +190,8 @@ interp:
 
 .equ interpsz, 	. - interp + 1
 
-/* # The string table for the dynamic symbol table. */
 
+# The string table for the dynamic symbol table.
 dynstr:
 		.byte 	0
 .equ libc_name, 	. - dynstr
@@ -202,8 +211,10 @@ dynstr:
 .asciz "dlsym"
 .equ dynstrsz, 	. - dynstr
 
-/* # End of file image. */
+
+# End of file image.
 _code_start:
+
 
 ])
 define([ELF_SECTION_TAB_OFFSET],
@@ -211,12 +222,15 @@ define([ELF_SECTION_TAB_OFFSET],
 	.long _section_tab
 ])
 
+
 define([ELF_CODE_END],
 [
 _section_tab:
 	undivert(6)
 	.long 0x0
 ])
+
+
 define([ELF_DATA_END],
 [
 	.equ filesz, 	. - beg

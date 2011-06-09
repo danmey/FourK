@@ -44,175 +44,68 @@ token (:) make
 
 token : (:) token (:) ;
 
+: here@ here @ ;
+: begin here@ ; immediate
+: until  postpone branch0 here@ - c, ; immediate
+: | begin key 10 = until ; immediate
+| State manipulation
 : [ 1 state ! ; immediate
 : ] 0 state ! ;
-
-: here@ here @ ;
-
+| Compilaton of literals
 : literal 3 c, c, ;
 : rliteral 4 c, , ;
 : sliteral swap rliteral literal ;
+| Allocation and sizes
 : allot there @ + there ! ;
+| 4 byte cells
 : cell 4 ;
 : cells cell * ;
 : cells+ cells + ;
-
+| Byte cells
+: byte 1 ;
+: bytes byte * ;
+: bytes+ bytes + ;
+| Creation of data words
 : (create) make there @ rliteral postpone ; ;
 : create token (create) ;
+| Variables
 : variable : there @ rliteral postpone ; cell allot ;
 : const : rliteral postpone ; ;
 : bconst : literal postpone ; ;
-
+| Sections
 create table 16 32 * allot
 variable #section
+| Must be 7, as we've defined 7 sections already
 7 #section !
-
-
-: 2dup swap dup rot dup rot swap ;
-
-
-: 1+ 1 + ;
-: 1- 1 - ;
-: 0= 0 = ;
-: cr 10 emit ;
-: space 32 emit ;
-
-
-: begin here@ ; immediate
-
-: again postpone branch here@ - c, immediate ;
-: until  postpone branch0 here@ - c, ; immediate
-
+| Control flow
 : if postpone branch0 here@ 0 c, ; immediate
 : then dup here@ swap - swap  c! ; immediate
 : else >r postpone branch here@ 0 c, r> postpone then ; immediate
-: | begin key 10 = until ; immediate
-| this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
-: \ postpone | ; immediate
-
-| moved from strings.4k
-: 2drop  drop drop ; 
-: over  swap dup >r swap r> ;
-: 2dup  over over ;
-
+: again postpone branch here@ - c, immediate ;
+| Generic loop
 : while postpone branch0 here@ 0 c, ; immediate
 : repeat postpone branch swap here@ - c, dup here@ swap - swap c! ; immediate
+| Compile read character
+: c: key state @ 0 = if literal then ; immediate
+| Line comments
+: ( 1
+    begin
+	c: ) key dup rot = if swap 1- dup 0 = if drop drop ;; then swap then
+	c: (             = if 1+ then
+
+    again ; immediate
+| Case statement
 : ?dup dup if dup then ;
 : case 0 ; immediate
 : of postpone over postpone = postpone if postpone drop ; immediate
 : endof postpone else ; immediate
 : endcase' begin ?dup while postpone then repeat ; immediate
 : endcase postpone drop postpone endcase' ; immediate
-
-
-
-| Taking into account prefix word
-| : ; 0 here @ c! -2 here @ 1+ c! last @ 1+ last !
-|   last @ 253 = if 256 last ! then postpone [ ; immediate
-
-| please note this changes MUST BE HERE! (for some reason i forgot hehehe) 
-| : (create) make there @ rliteral postpone ; ;
-| : create token (create) ;
-| : variable : there @ rliteral postpone ; cell allot ;
-| : const : rliteral postpone ; ;
-
-
-: c: key state @ 0 = if literal then ; immediate
-
-
-: ( 1
-    begin
-	c: ) key dup rot = if swap 1- dup 0= if drop drop ;; then swap then
-	c: (             = if 1+ then
-
-    again ; immediate
-
-
-: (* begin key c: * = if key c: ) = if ;; then then again ; immediate
-
-(*
-a multi
-line
-comment
-*)
-
-
-| comparison words
-: <> = invert ;
-: 0<> 0= invert ;
-: <= > invert ;
-: >= < invert ;
-: +! swap >r dup @ r> + swap ! ;
-: -! swap >r dup @ r> - swap ! ;
-: 1+! 1 swap +! ;
-: 1-! 1 swap -! ;
-: data: here there @ here@ there ! swap ! ;
-: data; data: ;
-
-| output words
-
-
-
-
-| to verbose but will make optimisations later
-| by default we will use byte bytes, as it is meant to be 4kb tool
-: byte 1 ;
-: bytes byte * ;
-| ref bytes
-
-
-
-: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
-: rdrop ( -- r: v -- ) postpone r> postpone drop ; immediate
-
-| strings
-
-create #str
-1000 allot
-
-
-: parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
-  begin key dup [ there @ rliteral ] 
-  c@ = if drop #str here @ #str - 0 c, r> here ! ;; then
-  c, again
-;
-
-create parse-buffer
-1000 allot
-: >with-here postpone here@ postpone >r postpone here postpone ! ; immediate
-: with-here> postpone r> postpone here postpone ! ; immediate
-
-: parse2 ( delimiter -- str c )
-    parse-buffer >with-here
-    >r 0 begin key dup r = 0= while c, 1+ repeat rdrop drop
-    with-here> parse-buffer swap
-;
-
-| : parse ( delimiter -- str c )
-|    >r begin key r = if rdrop ;; then
-
-: \" c: " parse ;
-| "
-
-| inlines a counted list of bytes to there
-: inline ( str c -- str c ) 
-  here @ >r there @ here ! here @ + >r
-  begin r here @ = if drop there @ r> there @ - here @ there ! r> here ! ;; then
-  dup c@ c, 1+ again
-;
-
-
-| do loops
-
+| Counted loops
 : do
-    postpone swap
-    postpone >r
-    postpone >r
-    postpone begin
+    postpone swap postpone >r postpone >r postpone begin
 ; immediate
-
 : leave postpone r> postpone r> postpone drop postpone drop ; immediate
-
 : loop
     postpone r>
     postpone dup
@@ -227,9 +120,8 @@ create parse-buffer
     postpone drop
     postpone drop
 ; immediate
-
 : i postpone r ; immediate
-
+| Very ineficent! Maybe we should move it to core
 : j postpone r>
     postpone r>
     postpone r> 
@@ -240,18 +132,75 @@ create parse-buffer
     postpone swap
     postpone >r
 ; immediate
-
-
-: type ( str c -- ) 1- dup 0 >= if 0 do dup i + c@ emit loop then drop ;
-
+| Increments, decrements, tests
+: 1+ 1 + ;
+: 1- 1 - ;
+: 0= 0 = ;
+| New line space (does not honor windows)
+: cr 10 emit ;
+: space 32 emit ;
+| ANS compability
+: \ postpone | ; immediate
+| Operation on pair of cells
+: 2drop  drop drop ; 
+: over  swap dup >r swap r> ;
+: 2dup  over over ;
+| Increment variable
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;
-
 | exit current word if TOS is zero
 : 0; ( n -- ) postpone = postpone if 
               postpone ;; postpone then 
 ; immediate 
+| Multiline comments
+: (* begin key c: * = if key c: ) = if ;; then then again ; immediate
 
+(*
+a multi
+line
+comment
+*)
+
+| comparison words
+: <> = invert ;
+: 0<> 0= invert ;
+: <= > invert ;
+: >= < invert ;
+: +! swap >r dup @ r> + swap ! ;
+: -! swap >r dup @ r> - swap ! ;
+: 1+! 1 swap +! ;
+: 1-! 1 swap -! ;
+: data: here there @ here@ there ! swap ! ;
+: data; data: ;
+| to verbose but will make optimisations later
+| by default we will use byte bytes, as it is meant to be 4kb tool
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+: rdrop ( -- r: v -- ) postpone r> postpone drop ; immediate
+
+
+| STRINGS
+create #str 1000 allot
+: parse ( delimiter -- str c ) [ there @ rliteral ] c! here @ >r #str here !
+  begin key dup [ there @ rliteral ] 
+  c@ = if drop #str here @ #str - 0 c, r> here ! ;; then
+  c, again
+;
+create parse-buffer 1000 allot
+: >with-here postpone here@ postpone >r postpone here postpone ! ; immediate
+: with-here> postpone r> postpone here postpone ! ; immediate
+: parse2 ( delimiter -- str c )
+    parse-buffer >with-here
+    >r 0 begin key dup r = 0= while c, 1+ repeat rdrop drop
+    with-here> parse-buffer swap
+;
+: \" c: " parse ;
+| inlines a counted list of bytes to there
+: inline ( str c -- str c ) 
+  here @ >r there @ here ! here @ + >r
+  begin r here @ = if drop there @ r> there @ - here @ there ! r> here ! ;; then
+  dup c@ c, 1+ again
+;
+: type ( str c -- ) 1- dup 0 >= if 0 do dup i + c@ emit loop then drop ;
 
 : next-set ( char-adr char-adr -- ) 1+ swap 1+ swap ;
 : ch@ ( char-adr char-adr -- t/f ) c@ swap c@ ;
@@ -269,7 +218,6 @@ variable flag
 | compare two counted strings ( so with size checking ) 
 : str= ( str c str c -- t/f ) >r swap r> = if compare ;; then 2drop 0 ;
 
-
 | pimped ", it now compiles the string to there @compile time
 : " \" state @ 0 = if inline there @ dup 0 swap c! 1+ there !
    sliteral then
@@ -282,52 +230,37 @@ variable flag
     state @ 0 = if postpone type ;; then type 
 ; immediate
 
-
+| Shared libraries and dynamic loading of symbols
+| create word and slot for address of a symbol
 : ccall: : postpone ccall c, postpone ; ;
-
+| Initially filled with dlopen and dlsym
 0 ccall: dlopen
 1 ccall: dlsym
-
+| Convert string to zero terminated string
 : >cstr drop ;
-
+| Load library
 : lib >cstr $2 swap dlopen ;
-
+| Load symbol
 : sym >cstr swap dlsym ;
-
 variable #ithere
-
+| dlopen and dlsym again
+| 2 * 2 cells, 1st cell stack fixup second address (or either way)
 4 #ithere !
-
+| Should be renamed
 : add-handle ( handle stackfix -- )
-|    ." index: " #ithere @ 2 / . cr 
-|    over 0 = if ." ERROR: handle is 0" cr 2drop ;; then 
-| over ." handle: " . ." stackfix: " dup . cr 
-
-|  ." index: " #ithere @ 2 / . cr 
- | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
   ithere @ 1 #ithere @ + cells+ !
   ithere @ #ithere @ cells+ !
   #ithere @ 2 + #ithere !
 ;
-
-
-
-
-
+| Inclusion of files
 : include" \" include ; 
-| Hmmmm this does inteerupt compiling
-| "    
-| : require" \" over over find -1 = if over over make postpone ; include ;; then ." File " type ."  already provided." cr ;
+| Inlude just once
 : require" \" over over find -1 = if over over make postpone ; include ;; then  ;
-
-
-
-
 | count the given zero-terminated string
 : count ( str -- c ) 0 >r 
   begin dup c@ 0 = if drop r> ;; then 1+ r> 1+ >r again 
 ;
-
+| Print all the words
 : words ( -- )
     last @ 1-
     begin
@@ -336,7 +269,6 @@ variable #ithere
 	1-
     again
 ;
-
 
 : inc ( ptr1 ptr2 c -- ptr1 ptr2 ) dup rot + swap rot + swap ;
 
@@ -354,18 +286,11 @@ variable #ithere
     then
     begin r> dup 0 = if drop r> drop drop drop ;; then 1- >r 2dup swap c@ swap c! 1 inc again
 ;
-
-
 : copy ( src c dst -- ) 
   there @ >r there ! inline 2drop r> there ! 
 ;
-
-
-| "
 : there: ( -- )  here there @ here @ there ! swap ! ; 
 : ;there ( -- )  there here @ there @ here ! swap ! ; 
-
-
 : mark ( -- )  here @ there @ 
   " *marker*" make rliteral rliteral postpone ; 
 ; immediate
@@ -374,23 +299,3 @@ variable #ithere
   dup -1 <> if dup last ! execute there ! here ! 
   -1 here @ c! -1 -2 here @ 1+ c! ;; then drop 
 ;
-
-| dump
-
-
-
-variable savebase
-base @ savebase !
-16 const b16
-10 const b10
-
-| : base! base @ savebase ! base ! ;
-| : hex b16 base! ;
-| : dec b10 base! ;
-| : [hex] hex ; immediate
-| : [dec] dec ; immediate
-| : switch-base savebase @ base ! ;
-
-| : [switch-base] res-base ; immediate
-
-| : . . space ;

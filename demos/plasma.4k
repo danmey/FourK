@@ -150,8 +150,8 @@ height 2 / i>f fconst h/2
 : main
     load-symbols
     init-pallete
-|    video screen !
-|    render-loop
+    video screen !
+    render-loop
     0 exit
 ;
 

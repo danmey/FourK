@@ -155,10 +155,10 @@ comment
 
 
 | to verbose but will make optimisations later
-| by default we will use byte cells, as it is meant to be 4kb tool
-: cell 1 ;
-: cells cell * ;
-| ref cells
+| by default we will use byte bytes, as it is meant to be 4kb tool
+: byte 1 ;
+: bytes byte * ;
+| ref bytes
 
 
 

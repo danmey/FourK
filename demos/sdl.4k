@@ -24,7 +24,7 @@
 | SDL constants
 27  const Esc
 2   const Keydown
-create event 20 cells allot
+create event 20 bytes allot
 
 | SDL structure dispatch
 : e>type c@ ;

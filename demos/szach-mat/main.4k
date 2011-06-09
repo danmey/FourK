@@ -127,7 +127,7 @@ bpp 8 / const point
 \ out screen surface
 variable screen
 \ allot needed stuff for SDL
-create event 20 cells allot
+create event 20 bytes allot
 \ and for pallete
 create pallete 256 rcells allot
 

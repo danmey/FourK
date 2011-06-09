@@ -45,7 +45,7 @@ include" demos/robots/imph.4k"
 | this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
 
-: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+: hdl ( lib bytes -- ) >r sym r> rcells add-handle ;
 : imports ( -- )
     libc " _exit" 1 hdl
     libGL " glClear"                 1 hdl
@@ -124,7 +124,7 @@ include" demos/robots/imph.4k"
 \ out screen surface
 variable screen
 \ allot needed stuff for SDL
-create event 20 cells allot
+create event 20 bytes allot
 \ and for pallete
 create pallete 256 rcells allot
 

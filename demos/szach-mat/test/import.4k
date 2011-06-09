@@ -19,7 +19,7 @@
 3 ccall: fflush
 4 ccall: reent
 
-: hdl ( lib cells -- ) >r sym r> rcells add-handle ;
+: hdl ( lib bytes -- ) >r sym r> rcells add-handle ;
 
 : libc " libc.so" lib ;
 

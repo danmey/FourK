@@ -1,0 +1,31 @@
+FourK
+=====
+
+1. Język
+   Standardowy dialekt Fortha. Maszyna stosowa, słowa są odzielane białymi znakami. Każde słowo ma efekt na stosie. Są 3 stosy:
+   - parametrów
+   - powrotu
+   - zmienno przecinkowy - zmapowany na stos FPU bezpośrednio
+
+  Wirtualna maszyna, tokenizer jest całkowicie zakodowany w assemblerze (składnia GAS).
+  Oprócz assemblera w dużej mierze został wykorzystany preprocesor M4.
+
+2. Słowa wbudowane
+   Są zaimplementowa w assemblerze, i M4.
+   Definicje słów i wbudowanych zmiennych globalnych znajdują się w src/prim.s.
+   Potrzebne makra do ich zbudowania są w src/dict.m4.
+   Każde słowo wbudowane
+
+2. Interpreter
+3. Wirtualna maszyna
+   esp - zawiera stos powrotu
+   ebx - stos parametrów
+   ebp - adres powrotu do interpretera
+   esi - adres następnego bajt kodu
+
+4. Kompilator
+5. Zrzucanie image
+6. Optymalizacja
+7. Kompresja
+
+Interpreter i wirtualna maszyna to jedna całość. 

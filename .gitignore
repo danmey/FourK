@@ -34,3 +34,6 @@ bin
 boot.4k
 push.sh
 robots
+/temp
+/a.out
+/intro

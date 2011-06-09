@@ -46,8 +46,10 @@ token : (:) token (:) ;
 
 : here@ here @ ;
 : begin here@ ; immediate
-: until  postpone branch0 here@ - c, ; immediate
+: until postpone branch0 here@ - c, ; immediate
 : | begin key 10 = until ; immediate
+| ANS compability
+: \ postpone | ; immediate
 | State manipulation
 : [ 1 state ! ; immediate
 : ] 0 state ! ;
@@ -87,13 +89,24 @@ variable #section
 : repeat postpone branch swap here@ - c, dup here@ swap - swap c! ; immediate
 | Compile read character
 : c: key state @ 0 = if literal then ; immediate
+| Increments, decrements, tests
+: 1+ 1 + ;
+: 1- 1 - ;
+: 0= 0 = ;
+| New line space (does not honor windows)
+: cr 10 emit ;
+: space 32 emit ;
+| Operation on pair of cells
+: 2drop  drop drop ; 
+: over  swap dup >r swap r> ;
+: 2dup  over over ;
 | Line comments
 : ( 1
     begin
 	c: ) key dup rot = if swap 1- dup 0 = if drop drop ;; then swap then
 	c: (             = if 1+ then
 
-    again ; immediate
+    again ; immediate 
 | Case statement
 : ?dup dup if dup then ;
 : case 0 ; immediate
@@ -101,13 +114,16 @@ variable #section
 : endof postpone else ; immediate
 : endcase' begin ?dup while postpone then repeat ; immediate
 : endcase postpone drop postpone endcase' ; immediate
+| to verbose but will make optimisations later
+| by default we will use byte bytes, as it is meant to be 4kb tool
+: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
+: rdrop ( -- r: v -- ) postpone r> postpone drop ; immediate
 | Counted loops
 : do
     postpone swap postpone >r postpone >r postpone begin
 ; immediate
 : leave postpone r> postpone r> postpone drop postpone drop ; immediate
-: loop
-    postpone r>
+: loop postpone r>
     postpone dup
     postpone 1+
     postpone r
@@ -132,19 +148,6 @@ variable #section
     postpone swap
     postpone >r
 ; immediate
-| Increments, decrements, tests
-: 1+ 1 + ;
-: 1- 1 - ;
-: 0= 0 = ;
-| New line space (does not honor windows)
-: cr 10 emit ;
-: space 32 emit ;
-| ANS compability
-: \ postpone | ; immediate
-| Operation on pair of cells
-: 2drop  drop drop ; 
-: over  swap dup >r swap r> ;
-: 2dup  over over ;
 | Increment variable
 : inc ( adr -- ) dup @ 1+ swap ! ;
 : dec ( adr -- ) dup @ 1- swap ! ;
@@ -172,11 +175,6 @@ comment
 : 1-! 1 swap -! ;
 : data: here there @ here@ there ! swap ! ;
 : data; data: ;
-| to verbose but will make optimisations later
-| by default we will use byte bytes, as it is meant to be 4kb tool
-: r ( -- r ) postpone r> postpone dup postpone >r ; immediate
-: rdrop ( -- r: v -- ) postpone r> postpone drop ; immediate
-
 
 | STRINGS
 create #str 1000 allot

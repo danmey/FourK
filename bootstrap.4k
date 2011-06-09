@@ -53,13 +53,13 @@ token : (:) token (:) ;
 : rliteral 4 c, , ;
 : sliteral swap rliteral literal ;
 : allot there @ + there ! ;
-: rcell 4 ;
-: rcells rcell * ;
-: rcells+ rcells + ;
+: cell 4 ;
+: cells cell * ;
+: cells+ cells + ;
 
 : (create) make there @ rliteral postpone ; ;
 : create token (create) ;
-: variable : there @ rliteral postpone ; rcell allot ;
+: variable : there @ rliteral postpone ; cell allot ;
 : const : rliteral postpone ; ;
 : bconst : literal postpone ; ;
 
@@ -113,7 +113,7 @@ variable #section
 | please note this changes MUST BE HERE! (for some reason i forgot hehehe) 
 | : (create) make there @ rliteral postpone ; ;
 | : create token (create) ;
-| : variable : there @ rliteral postpone ; rcell allot ;
+| : variable : there @ rliteral postpone ; cell allot ;
 | : const : rliteral postpone ; ;
 
 
@@ -305,8 +305,8 @@ variable #ithere
 
 |  ." index: " #ithere @ 2 / . cr 
  | over 0 = if ." ERROR: handle is 0" cr 2drop ;; then over ." handle: " . cr 
-  ithere @ 1 #ithere @ + rcells+ !
-  ithere @ #ithere @ rcells+ !
+  ithere @ 1 #ithere @ + cells+ !
+  ithere @ #ithere @ cells+ !
   #ithere @ 2 + #ithere !
 ;
 

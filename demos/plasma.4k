@@ -38,7 +38,7 @@ mark
 | load our symbols from dll
 | Must be in the same order as above
 : libSDL " /usr/lib/libSDL.so" lib ;
-: function >r sym r> rcells add-handle ;
+: function >r sym r> cells add-handle ;
 : load-symbols ( -- )
     " libc.so" lib " _exit" 1 function
     libSDL " SDL_SetVideoMode" 4 function
@@ -64,11 +64,11 @@ variable screen
 | allot needed stuff for SDL
 create event 20 bytes allot
 | and for pallete
-create pallete 256 rcells allot
+create pallete 256 cells allot
 | get the linear offset
 : points point * ;
 | put the pixel in right place with pallete colour
-: pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap ! ;
+: pixel ( col x y -- ) width * + points screen @ s>pixels + swap cells pallete + @ swap ! ;
 | set the video mode
 : video 0 bpp height width SDL_SetVideoMode ;
 | alias for convenience
@@ -122,7 +122,7 @@ height 2 / i>f fconst h/2
 ;
 3.1415 fconst pi
 : col> ( i f:fac -- f:c ) i>>f pi f* f* sin ;
-: col! ( c i -- ) rcells pallete + + f> f>i swap c! ;
+: col! ( c i -- ) cells pallete + + f> f>i swap c! ;
 : color ( i f ) dup >r col> r> col! ;
 | init our pallete
 : init-pallete

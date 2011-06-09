@@ -29,18 +29,18 @@
  
 
 : wname ( token -- adr c ) 32 * ntab @ + dup count ;
-: lit4. ." lit4: "  1+ dup @  . space rcell + ;
+: lit4. ." lit4: "  1+ dup @  . space cell + ;
 : lit. ." lit: "   1+ dup c@ . space 1+ ;
 : prefix. ." prefix: "    1+ dup c@ MAX_VALID_TOKEN + wname type space 1+ ;
 : branch. ." branch: "  1+ dup c@ . space 1+ ;
 : branch0. ."  branch0: "   1+ dup c@ . space 1+  ;
-: lbranch.  of ." lbranch: "  1+ dup c@ . space rcell + ;
-: lbranch0. of ." lbranch0: " 1+ dup c@ . space rcell +  ;
+: lbranch.  of ." lbranch: "  1+ dup c@ . space cell + ;
+: lbranch0. of ." lbranch0: " 1+ dup c@ . space cell +  ;
 
 
 : show ( token -- )
     c: : emit space dup wname type space
-    rcells vtab @ + @
+    cells vtab @ + @
     1+
     begin
 	dup c@ EOW_TOKEN <>

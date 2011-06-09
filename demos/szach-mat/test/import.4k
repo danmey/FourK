@@ -19,7 +19,7 @@
 3 ccall: fflush
 4 ccall: reent
 
-: hdl ( lib bytes -- ) >r sym r> rcells add-handle ;
+: hdl ( lib bytes -- ) >r sym r> cells add-handle ;
 
 : libc " libc.so" lib ;
 
@@ -34,7 +34,7 @@
     import
     " Hello world!
 " drop printf drop 
-    reent 2 rcells + @ fflush drop
+    reent 2 cells + @ fflush drop
     ;
 
 main

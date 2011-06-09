@@ -33,17 +33,17 @@ create event 20 bytes allot
 
 : sdl-init ( -- )
     " libc.so" lib " _exit" sym
-    rcell add-handle
+    cell add-handle
     
     " libc.so" lib " printf" sym
-    1 rcells add-handle
+    1 cells add-handle
     
     " libdl.so" lib " dlerror" sym 
-    0 rcells add-handle
+    0 cells add-handle
     
     " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 
-    4 rcells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_PollEvent"         sym 1 rcells add-handle
+    4 cells add-handle
+    " /usr/lib/libSDL.so" lib " SDL_PollEvent"         sym 1 cells add-handle
 ;
 
 : render-loop

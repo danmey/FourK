@@ -45,7 +45,7 @@ include" demos/robots/imph.4k"
 | this for making happy my ans-loving Emacs mode ;) ( but I really like the | for a comment )
 : \ postpone | ; immediate
 
-: hdl ( lib bytes -- ) >r sym r> rcells add-handle ;
+: hdl ( lib bytes -- ) >r sym r> cells add-handle ;
 : imports ( -- )
     libc " _exit" 1 hdl
     libGL " glClear"                 1 hdl
@@ -126,7 +126,7 @@ variable screen
 \ allot needed stuff for SDL
 create event 20 bytes allot
 \ and for pallete
-create pallete 256 rcells allot
+create pallete 256 cells allot
 
 \ set the video mode
 : video SDL_OPENGL (* SDL_FULLSCREEN or *) bpp height width SDL_SetVideoMode ;

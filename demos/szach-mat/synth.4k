@@ -131,9 +131,9 @@ frq bpm / const frame
 : sconst : sliteral postpone ; ;
 variable current-song
 
-: song there @ current-song ! 4 rcells allot 0 data: ;
+: song there @ current-song ! 4 cells allot 0 data: ;
 : pattern here @  ;
-: endp over current-song @ + ! rcell +  ;
+: endp over current-song @ + ! cell +  ;
 : end-song data; drop ;
 
 create track data: 1 c, 0 c, 1 c, 1 c, 0 c, 1 c, 1 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, 0 c, 1 c, data;
@@ -146,15 +146,15 @@ end-song
 
 0 variable now
 
-2 rcells const channel
+2 cells const channel
 4 channel * create channels allot
 variable current
 0 current !
 : current-channel current @ channel *   ;
-: current-track  current-song @ current @ rcells  + @ ;
+: current-track  current-song @ current @ cells  + @ ;
 
 : time ( #ch -- F:t ) channels + ;
-: which-frame time rcell + ;
+: which-frame time cell + ;
 
 : reset 3 0 do 0.0 i channel time ! -1 i channel which-frame ! loop ;
 
@@ -226,7 +226,7 @@ variable tmp
 ;
 | create Instruments data:  ' HiHat , ' BassDrum , data;
 
-| : play finit current-channel which-frame @ -1 <> if Instruments current @ rcells + @ execute ;; then 0.0 >f ;
+| : play finit current-channel which-frame @ -1 <> if Instruments current @ cells + @ execute ;; then 0.0 >f ;
 : play1 ( token -- )  current-channel which-frame @ -1 <> if HiHat tick ;; then 0.0 >f tick ;
 : play ( token -- )
 

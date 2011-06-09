@@ -185,9 +185,9 @@ require" demos/robots/camera.4k"
     >r >r >r >r >r >r
     GL_MODELVIEW glMatrixMode drop
     glLoadIdentity drop
-    up-vec 2 rcells + @ f>d
-    up-vec 1 rcells + @ f>d
-    up-vec 0 rcells + @ f>d
+    up-vec 2 cells + @ f>d
+    up-vec 1 cells + @ f>d
+    up-vec 0 cells + @ f>d
     r> f>d r>  f>d r> f>d
     | T fsincos 6 i>>f f* f> f>d 0  f>d 6 i>>f f* f> f>d gluLookAt drop
      r> f>d r> f>d r> f>d gluLookAt drop
@@ -308,9 +308,9 @@ variable board-rot
 : FaderOut 100 -15 Linear f>i dup 0 >= if Fade then ;
 : Up
     3>f
-    up-vec 2 rcells + !
-    up-vec 1 rcells + !
-    up-vec 0 rcells + !
+    up-vec 2 cells + !
+    up-vec 1 cells + !
+    up-vec 0 cells + !
 ;
 
 : UpCamera

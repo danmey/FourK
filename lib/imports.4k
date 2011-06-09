@@ -36,7 +36,7 @@ section functions
 512 allot
 
 section relations
-256 rcell * allot 
+256 cell * allot 
 
 variable #functions
 variable #libraries
@@ -78,7 +78,7 @@ variable symbols
 
 *)
 
-2 rcell + const $relentry | size of a rel entry
+2 cell + const $relentry | size of a rel entry
 
 : add-relation ( stackfix findx lindx -- ) 
   " relations" find-section th table in >r r :pointer @ r :offset @ + 
@@ -196,8 +196,8 @@ variable libhandle
 
 lib: libc.so.6
 
-rcell func: printf
-rcell func: exit
+cell func: printf
+cell func: exit
 
 : moo  
 " hello world!!" drop cr   

@@ -20,7 +20,7 @@
 : fswap f> f> swap >f >f ;
 
 | Declare list of variables
-| : vars: begin token 2dup 1 = if c: ; swap c@ = if drop drop ;; then else drop then (create) postpone ; rcell allot repeat ;
+| : vars: begin token 2dup 1 = if c: ; swap c@ = if drop drop ;; then else drop then (create) postpone ; cell allot repeat ;
 
 variable top
 variable bottom

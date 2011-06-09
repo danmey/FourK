@@ -72,11 +72,11 @@ variable temp
 
 : >/dev/dsp ( ctl val -- ) temp ! temp swap audio @ ioctl drop ;
 : init-synth
-    " libc.so" lib " malloc" sym rcell add-handle
-    " libc.so" lib " printf" sym 2 rcells add-handle
-    " libc.so" lib " open" sym 3 rcells add-handle
-    " libc.so" lib " ioctl" sym 3 rcells add-handle
-    " libc.so" lib " write" sym 3 rcells add-handle
+    " libc.so" lib " malloc" sym cell add-handle
+    " libc.so" lib " printf" sym 2 cells add-handle
+    " libc.so" lib " open" sym 3 cells add-handle
+    " libc.so" lib " ioctl" sym 3 cells add-handle
+    " libc.so" lib " write" sym 3 cells add-handle
 
     #samples samples malloc buffer !
     #samples 0
@@ -90,17 +90,17 @@ variable temp
     SNDCTL_DSP_SPEED    11024       >/dev/dsp
 ;
 : init ( -- )
-    " libc.so" lib " _exit" sym rcell add-handle
+    " libc.so" lib " _exit" sym cell add-handle
     
-    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 4 rcells add-handle
+    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 4 cells add-handle
 
-    " /usr/lib/libSDL.so" lib " SDL_PollEvent" sym rcell add-handle
+    " /usr/lib/libSDL.so" lib " SDL_PollEvent" sym cell add-handle
 
-    " /usr/lib/libSDL.so" lib " SDL_Flip" sym rcell add-handle
+    " /usr/lib/libSDL.so" lib " SDL_Flip" sym cell add-handle
 
-    " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym rcell add-handle
+    " /usr/lib/libSDL.so" lib " SDL_LockSurface" sym cell add-handle
 
-    " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym rcell add-handle
+    " /usr/lib/libSDL.so" lib " SDL_UnlockSurface" sym cell add-handle
 
     init-synth
 ;
@@ -129,12 +129,12 @@ variable screen
 \ allot needed stuff for SDL
 create event 20 bytes allot
 \ and for pallete
-create pallete 256 rcells allot
+create pallete 256 cells allot
 
 \ get the linear offset
 : points point * ;
 \ put the pixel in right place with pallete colour
-: pixel ( col x y -- ) width * + points screen @ s>pixels + swap rcells pallete + @ swap ! ;
+: pixel ( col x y -- ) width * + points screen @ s>pixels + swap cells pallete + @ swap ! ;
 
 \ set the video mode
 : video 0 bpp height width SDL_SetVideoMode ;
@@ -206,7 +206,7 @@ variable time
 3.1415 fconst pi
 
 : col> ( i f:fac -- f:c ) i>>f pi f* f* sin ;
-: col! ( c i -- ) rcells pallete + + f> f>i swap c! ;
+: col! ( c i -- ) cells pallete + + f> f>i swap c! ;
 : color ( i f ) dup >r col> r> col! ;
 \ init our pallete
 : init-pallete

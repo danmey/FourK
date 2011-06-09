@@ -16,7 +16,7 @@
 \ You should have received a copy of the GNU General Public License
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 create s-stack
-32 rcells allot 
+32 cells allot 
 
 variable #ptr
 
@@ -32,8 +32,8 @@ variable bytecode
   times 
 ; immediate 
 
-: push ( e -- ) s-stack #ptr @ rcells + ! #ptr @ 1+ 31 and #ptr ! ; 
-: pop ( -- e ) #ptr @ 1- 31 and #ptr ! s-stack #ptr @ rcells + @ ; 
+: push ( e -- ) s-stack #ptr @ cells + ! #ptr @ 1+ 31 and #ptr ! ; 
+: pop ( -- e ) #ptr @ 1- 31 and #ptr ! s-stack #ptr @ cells + @ ; 
 
 | pushes the given number of elements
 : pushnum ( num -- ) times push ; 

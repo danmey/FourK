@@ -33,8 +33,8 @@ mark
 32 const section
 : table ( -- ptr ) stab @ ;
 : th ( section# -- ofs ) section * ;
-: pointer ( section* -- sec-pointer ) section + rcell - ;
-: offset ( section* -- sec-offset ) pointer rcell - ; 
+: pointer ( section* -- sec-pointer ) section + cell - ;
+: offset ( section* -- sec-offset ) pointer cell - ; 
 : 1+! ( ptr -- ) 1 swap +! ;
 : in ( ofs ptr -- ptr ) + ;
 : >imrel ( ptr -- ofs ) imbase @ - ;

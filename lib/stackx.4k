@@ -20,7 +20,7 @@ variable stack
 1024 allot
 
 0 #stackx !
-: #x #stackx @ rcells ;
+: #x #stackx @ cells ;
 : topx #x stack + ;
 : >x #stackx 1+! topx ! ;
 : x> topx @ #stackx 1-! ;

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ########################################################################
 # FourK - Concatenative, stack based, Forth like language optimised for 
 #        non-interactive 4KB size demoscene presentations.

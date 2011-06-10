@@ -16,7 +16,7 @@
 \ You should have received a copy of the GNU General Public License
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 forget mark
-include" stackx.4k"
+include" lib/stackx.4k"
 | section token-table
 | 512 allot
 
@@ -86,26 +86,27 @@ declarex vec2
 : <- c: = ch>>> ;
 : [] tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 >x ;
 
+| Good prototype but barely possible to redefine grammar in postfix notation
+| we need somethihg more clever
 declarex v1
 declarex v2
 declarex main
 : shader00
     void main func
     beg
-      vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ;;;
+      vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ** gl_TextureMatrix ;;;
       return gl_TexCoord 0 [] <- v1 ;;;
     end
 ;
 
 shader00 flushs
+|
 
-
-(*
-shader: one
-void func: main
-  l: gl_LightSource x y z 0 .[] normalize half_vector vec3 let;
-  l: gl_LightSource 0 .[] normalize half_vector +=;
-o l: gl_Position ftransform =;
-end
-shader;
-*)
+2 ccall: malloc
+: libc " /usr/lib/libc.so" lib ;
+: function >r sym r> cells add-handle ;
+: token-imports ( -- ) libc " malloc" 1 function ;
+    variable temp
+: declare
+    declarex last-ex dup count dup 1+ malloc dup temp ! swap
+    1- 0 do over over swap i + c@ swap i + c! loop swap dup count + 0 swap c! drop ;

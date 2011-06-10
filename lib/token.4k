@@ -17,6 +17,7 @@
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 forget mark
 include" lib/stackx.4k"
+\ include" lib/disas.4k"
 | section token-table
 | 512 allot
 
@@ -106,7 +107,15 @@ shader00 flushs
 : libc " /usr/lib/libc.so" lib ;
 : function >r sym r> cells add-handle ;
 : token-imports ( -- ) libc " malloc" 1 function ;
-    variable temp
-: declare
-    declarex last-ex dup count dup 1+ malloc dup temp ! swap
-    1- 0 do over over swap i + c@ swap i + c! loop swap dup count + 0 swap c! drop ;
+
+variable temp
+
+
+: malloc-token
+    dup count dup 1+ malloc dup temp ! swap
+    1- 0 do over over swap i + c@ swap i + c! loop dup dup count + 0 swap c! drop ;
+
+: declarex here @ >r ptr @ here ! token dup c, 1- 0
+    do dup i + c@ c, loop
+    here @ r> here !
+    ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;

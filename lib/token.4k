@@ -92,9 +92,12 @@ wipe
 \ |
 
 2 ccall: malloc
+3 ccall: puts
 : libc " /usr/lib/libc.so" lib ;
 : function >r sym r> cells add-handle ;
-: token-imports ( -- ) libc " malloc" 1 function ;
+: token-imports ( -- )
+    libc " malloc" 1 function
+    libc " puts" 1 function ;
 token-imports
 variable temp
 
@@ -153,6 +156,20 @@ Ident gl_NormalMatrix
 Ident gl_BackColor
 Ident gl_TexCoord
 Ident gl_Position
+Ident x
+Ident y
+Ident z
+Ident xy
+Ident yx
+Ident xz
+Ident zx
+Ident yz
+Ident zy
+Ident xyz
+Ident xzy
+Ident zxy
+Ident zyx
+
 : op> malloc-c >x ;
 : space 32 op> ;
 : lpar c: ( op> ;
@@ -165,6 +182,7 @@ Ident gl_Position
 : ~* c: * infix> ;
 : ~; c: ; op> swapx x|> ;
 : ,, 32 infix> ;
+: ~. c: . infix> ;
 : Function
     x> >r
     dup 1 = 0=
@@ -174,18 +192,27 @@ Ident gl_Position
             comma>
         loop
     else drop then
-    lpar r> >x space void x|> |> x|> x|> x|> rpar swapx x|> lbra swapx x|>
+    lpar r> >x space void x|> x|> x|> x|> rpar swapx x|> lbra swapx x|>
 ;
-: EndFunction swapx x|> ;
+: Fun
+    x> >r
+    lpar r> >x space void x|> x|> x|> rpar swapx x|> lbra swapx x|>
+;
 : printc dup count type ;
 
 : Beg lbra ;
 : End rbra swapx x|> swapx x|> ;
+: Var ,,  ;
 
 v1 vec3 ,, v2 vec3 ,, main 2 Function
   gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
 End x> printc cr cr
 
-
+main Fun
+  v1 vec3 Var ~;
+  v2 vec3 Var ~;
+  xy v1 ~. zx v1 ~. ~* v2 ~! ~; 
+  gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+End x> printc cr cr
 
 

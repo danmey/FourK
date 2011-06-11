@@ -54,6 +54,7 @@ variable stream@
 : sp>>> 32 ch>>> ;
 : tok>>> x> nth dup c@ 1- 0 do 1+ dup c@ ch>>> loop drop ;
 : flushs stream@ @ 1- stream do i c@ emit loop ;
+: token>>> x> dup count 1- 0 do dup c@ ch>>> 1+ loop drop ;
 
 : wipe 500 0 do 0 stream i + c! loop ;
 
@@ -89,33 +90,52 @@ declarex vec2
 
 | Good prototype but barely possible to redefine grammar in postfix notation
 | we need somethihg more clever
-declarex v1
-declarex v2
-declarex main
-: shader00
-    void main func
-    beg
-      vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ** gl_TextureMatrix ;;;
-      return gl_TexCoord 0 [] <- v1 ;;;
-    end
-;
+\ declarex v1
+\ declarex v2
+\ declarex main
+\ : shader00
+\     void main func
+\     beg
+\       vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ** gl_TextureMatrix ;;;
+\       return gl_TexCoord 0 [] <- v1 ;;;
+\     end
+\ ;
 
-shader00 flushs
-|
+\ shader00 flushs
+\ |
 
 2 ccall: malloc
 : libc " /usr/lib/libc.so" lib ;
 : function >r sym r> cells add-handle ;
 : token-imports ( -- ) libc " malloc" 1 function ;
-
+token-imports
 variable temp
 
-
 : malloc-token
-    dup count dup 1+ malloc dup temp ! swap
-    1- 0 do over over swap i + c@ swap i + c! loop dup dup count + 0 swap c! drop ;
+    dup count dup 1+ malloc swap
+    1- 0 do over over swap i + c@ swap i + c! loop swap drop dup dup count + 0 swap c!  ;
 
-: declarex here @ >r ptr @ here ! token dup c, 1- 0
-    do dup i + c@ c, loop
+: declarex
+    here @ >r ptr @ here ! token dup c, 1- 0
+    do dup i + c@ c, loop 0 c,
     here @ r> here !
     ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+
+: concat-malloc ( str1 str2 -- str3 )
+    dup count >r swap dup count r> 1+ + malloc ( str2 str1 str3 )
+    dup >r here @ >r here ! dup count 1- 0  do dup i + c@ c, loop drop
+    dup count 0  do dup i + c@ c, loop drop
+    r> here ! r> ;
+
+: malloc-c >r 2 malloc dup 1+ 0 swap c! dup r> swap c! ;
+: malloc-c: key malloc-c ;
+: malloc-space 32 malloc-c ;
+: Function x> malloc-space x> concat-malloc concat-malloc ;
+
+declarex main
+declarex void
+: func main x> dup count type  ;
+
+
+
+

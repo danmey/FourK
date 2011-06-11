@@ -1,4 +1,4 @@
-\ FourK - Concatenative, stack based, Forth like language optimised for 
+\ FourK - Concatenative, stack based, Forth like language optimised for
 \        non-interactive 4KB size demoscene presentations.
 
 \ Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
@@ -61,32 +61,19 @@ variable stream@
 stream stream@ !
 wipe
 
-declarex void
-declarex gl_LightSource
-declarex ()
-declarex x
-declarex y
-declarex z
-declarex gl_LightSource
-declarex return
-declarex vec3
-declarex gl_TexCoord
-declarex gl_MultiTexCoord0
-declarex gl_TextureMatrix
-declarex vec2
-: last-ex last @ 1- execute ; 
-: compile-token declare postpone last-ex literal ;
-: beg c: { ch>>> ;
-: end c: } ch>>> ;
-: ->  tok>>> c: . ch>>> -1 >x ;
-: .. begin dupx x> -1 <> while tok>>> repeat dropx ;
-: **  .. c: * ch>>> -1 >x ;
-: ;;; .. c: ; ch>>> ;
-: func swapx tok>>> sp>>> tok>>> () tok>>> ;
-: ret return tok>>> sp>>> -1 >x ;
-: := swapx tok>>> sp>>> tok>>>  c: = ch>>> ;
-: <- c: = ch>>> ;
-: [] tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 >x ;
+\ : last-ex last @ 1- execute ;
+\ : compile-token declare postpone last-ex literal ;
+\ : beg c: { ch>>> ;
+\ : end c: } ch>>> ;
+\ : ->  tok>>> c: . ch>>> -1 >x ;
+\ : .. begin dupx x> -1 <> while tok>>> repeat dropx ;
+\ : **  .. c: * ch>>> -1 >x ;
+\ : ;;; .. c: ; ch>>> ;
+\ \ : func swapx tok>>> sp>>> tok>>> () tok>>> ;
+\ \ : ret return tok>>> sp>>> -1 >x ;
+\ : := swapx tok>>> sp>>> tok>>>  c: = ch>>> ;
+\ : <- c: = ch>>> ;
+\ : [] tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 >x ;
 
 | Good prototype but barely possible to redefine grammar in postfix notation
 | we need somethihg more clever
@@ -115,11 +102,11 @@ variable temp
     dup count dup 1+ malloc swap
     1- 0 do over over swap i + c@ swap i + c! loop swap drop dup dup count + 0 swap c!  ;
 
-: declarex
-    here @ >r ptr @ here ! token dup c, 1- 0
+: declarex ( tag -- )
+    >r here @ >r ptr @ here ! token dup c, 1- 0
     do dup i + c@ c, loop 0 c,
     here @ r> here !
-    ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+    ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x r> literal postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 
 : concat-malloc ( str1 str2 -- str3 )
     dup count >r swap dup count r> 1+ + malloc ( str2 str1 str3 )
@@ -127,15 +114,68 @@ variable temp
     dup count 0  do dup i + c@ c, loop drop
     r> here ! r> ;
 
+0 const no-tag
+1 const ident-tag
+2 const type-tag
+
 : malloc-c >r 2 malloc dup 1+ 0 swap c! dup r> swap c! ;
 : malloc-c: key malloc-c ;
+: malloc-nil 0 malloc-c ;
 : malloc-space 32 malloc-c ;
-: Function x> malloc-space x> concat-malloc concat-malloc ;
+: Type type-tag declarex ;
+: Ident ident-tag declarex ;
 
-declarex main
-declarex void
-: func main x> dup count type  ;
+: without-tag> x> drop x> ;
+: |> concat-malloc ;
+: x|> without-tag> without-tag> concat-malloc >x no-tag >x ;
+
+Type vec3
+Type vec4
+Type mat3
+Type float
+Type void
+Ident v1
+Ident v2
+Ident main
+Ident gl_Vertex
+Ident gl_Normal
+Ident gl_Color
+Ident gl_MultiTexCoordX
+Ident gl_ModelViewMatrix
+Ident gl_ModelViewProjectionMatrix
+Ident gl_NormalMatrix
+Ident gl_BackColor
+Ident gl_TexCoord
+Ident gl_Position
+: infix> malloc-c >x no-tag >x ;
+: type-decl without-tag> malloc-space without-tag> |> |> ;
+: lpar c: ( infix> ;
+: rpar c: ) infix> ;
+: lbra c: { infix> ;
+: rbra c: } infix> ;
+: Function
+    malloc-space
+    begin
+        dupx x> ident-tag <>
+    while
+            type-decl
+            dupx x> ident-tag <> if c: , malloc-c |> then |>
+    repeat
+    without-tag> without-tag> malloc-space rot |> |> swap lpar swap |> rpar |> |> >x no-tag >x
+;
+: printc dup count type ;
+
+: Beg lbra x|> ;
+: End rbra x|> ;
+
+: ~! x|> c: = infix> x|> ;
+: ~* c: * infix> swapx x|> ;
+: ~; c: ; infix> x|> ;
+
+gl_ModelViewMatrix gl_Vertex ~*  x> drop x> printc
 
 
-
-
+void main v1 vec3 v2 vec3 Function
+Beg
+  gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+End x> drop x> printc

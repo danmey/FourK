@@ -29,11 +29,11 @@ variable #tokens 0 #tokens !
 
 
 | Bind some useful functions
-2 ccall: malloc
-3 ccall: puts
+symbol: malloc
+symbol: puts
 : libc " /usr/lib/libc.so" lib ;
 : function >r sym r> cells add-handle ;
-: token-imports ( -- )
+: meta-symbols ( -- )
     libc " malloc" 1 function
     libc " puts" 1 function ;
 |

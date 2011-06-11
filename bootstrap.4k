@@ -228,12 +228,14 @@ variable flag
     state @ 0 = if postpone type ;; then type 
 ; immediate
 
+variable #ccall 0 #ccall !
 | Shared libraries and dynamic loading of symbols
 | create word and slot for address of a symbol
 : ccall: : postpone ccall c, postpone ; ;
+: symbol: #ccall @ #ccall 1+! : postpone ccall c, postpone ; ;
 | Initially filled with dlopen and dlsym
-0 ccall: dlopen
-1 ccall: dlsym
+symbol: dlopen
+symbol: dlsym
 | Convert string to zero terminated string
 : >cstr drop ;
 | Load library

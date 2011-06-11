@@ -156,4 +156,4 @@ height 2 / i>f fconst h/2
 ;
 
 | save-image im.4ki
-main
+| main

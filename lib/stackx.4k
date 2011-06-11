@@ -17,7 +17,7 @@
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 variable #stackx
 variable stack
-1024 allot
+512 allot
 
 0 #stackx !
 : #x #stackx @ cells ;

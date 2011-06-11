@@ -1,96 +1,34 @@
-\ FourK - Concatenative, stack based, Forth like language optimised for
-\        non-interactive 4KB size demoscene presentations.
+| FourK - Concatenative, stack based, Forth like language optimised for
+|        non-interactive 4KB size demoscene presentations.
+|
+| Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+|
+| This program is free software: you can redistribute it and/or modify
+| it under the terms of the GNU General Public License as published by
+| the Free Software Foundation, either version 3 of the License, or
+| (at your option) any later version.
+|
+| This program is distributed in the hope that it will be useful,
+| but WITHOUT ANY WARRANTY; without even the implied warranty of
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+| GNU General Public License for more details.
+|
+| You should have received a copy of the GNU General Public License
+| along with this program.  If not, see <http://www.gnu.org/licenses/>.
+| ______________________________________________________________________
+|
+| This stuff provides basic framework for runtime meta-programming
+|
 
-\ Copyright (C) 2009, 2010 Wojciech Meyer, Josef P. Bernhart
-
-\ This program is free software: you can redistribute it and/or modify
-\ it under the terms of the GNU General Public License as published by
-\ the Free Software Foundation, either version 3 of the License, or
-\ (at your option) any later version.
-
-\ This program is distributed in the hope that it will be useful,
-\ but WITHOUT ANY WARRANTY; without even the implied warranty of
-\ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-\ GNU General Public License for more details.
-
-\ You should have received a copy of the GNU General Public License
-\ along with this program.  If not, see <http://www.gnu.org/licenses/>.
-forget mark
-include" lib/stackx.4k"
-\ include" lib/disas.4k"
-| section token-table
-| 512 allot
+require" lib/stackx.4k"
 
 
-create token-table 512 allot
-variable ptr
-token-table ptr !
-variable #tokens
-0 #tokens !
-: t" ptr @ dup >r 1+ begin key dup c: " <> while over c! 1+ repeat drop dup r - 1- r> c! ptr ! 0 ptr @ c! #tokens 1+! ;
-: tok dup c@ swap 1+ swap ;
-: declare here @ >r ptr @ here ! token dup c, 1- 0
-    do dup i + c@ c, loop
-    here @ r> here !
-    ptr @ tok (:) #tokens @ literal postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+create token-table 512 allot 
+variable ptr token-table ptr !
+variable #tokens 0 #tokens !
 
-: declarex here @ >r ptr @ here ! token dup c, 1- 0
-    do dup i + c@ c, loop
-    here @ r> here !
-    ptr @ tok (:) #tokens @ literal postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
-: print-tokens token-table begin dup c@ 0 <> while dup 1+ swap c@ 1- 0 do dup i + c@ emit loop cr dup 1- c@  + repeat drop ;
-: nth ?dup 0= if token-table else token-table swap 1 do dup c@ + 1+ dup c@ 0= if r> r> drop drop drop -1 ;; then loop then ;
-: ctype dup c@ 1- 0 do 1+ dup c@ emit loop drop ;
-(* Will be -1 terminated !!! *)
-: nt" t" #tokens @ const #tokens 1+! ;
-: print nth ctype ;
-: lst #tokens @ 1-  ;
-create stream 1024 allot
-variable stream@
 
-: >>> here @ >r stream@ @ here ! 1- 0 do dup i + c@ c, loop drop here @ stream@ ! r> here ! ;
-: ch>>> stream@ @ c! stream@ 1+! ;
-: ch:>>> postpone c: postpone ch>>> ; immediate
-: sp>>> 32 ch>>> ;
-: tok>>> x> nth dup c@ 1- 0 do 1+ dup c@ ch>>> loop drop ;
-: flushs stream@ @ 1- stream do i c@ emit loop ;
-: token>>> x> dup count 1- 0 do dup c@ ch>>> 1+ loop drop ;
-
-: wipe 500 0 do 0 stream i + c! loop ;
-
-stream stream@ !
-wipe
-
-\ : last-ex last @ 1- execute ;
-\ : compile-token declare postpone last-ex literal ;
-\ : beg c: { ch>>> ;
-\ : end c: } ch>>> ;
-\ : ->  tok>>> c: . ch>>> -1 >x ;
-\ : .. begin dupx x> -1 <> while tok>>> repeat dropx ;
-\ : **  .. c: * ch>>> -1 >x ;
-\ : ;;; .. c: ; ch>>> ;
-\ \ : func swapx tok>>> sp>>> tok>>> () tok>>> ;
-\ \ : ret return tok>>> sp>>> -1 >x ;
-\ : := swapx tok>>> sp>>> tok>>>  c: = ch>>> ;
-\ : <- c: = ch>>> ;
-\ : [] tok>>> c: [ ch>>> c: 0 + ch>>> c: ] ch>>> -1 >x ;
-
-| Good prototype but barely possible to redefine grammar in postfix notation
-| we need somethihg more clever
-\ declarex v1
-\ declarex v2
-\ declarex main
-\ : shader00
-\     void main func
-\     beg
-\       vec2 v1 := gl_TextureMatrix 0 [] ** gl_MultiTexCoord0 ** gl_TextureMatrix ;;;
-\       return gl_TexCoord 0 [] <- v1 ;;;
-\     end
-\ ;
-
-\ shader00 flushs
-\ |
-
+| Bind some useful functions
 2 ccall: malloc
 3 ccall: puts
 : libc " /usr/lib/libc.so" lib ;
@@ -98,121 +36,35 @@ wipe
 : token-imports ( -- )
     libc " malloc" 1 function
     libc " puts" 1 function ;
-token-imports
-variable temp
-
-: malloc-token
+|
+| Copy string to malloced block
+: malloc-token ( cstr -- cstr )
     dup count dup 1+ malloc swap
     1- 0 do over over swap i + c@ swap i + c! loop swap drop dup dup count + 0 swap c!  ;
-
-: declarex ( tag -- )
-    >r here @ >r ptr @ here ! token dup c, 1- 0
-    do dup i + c@ c, loop 0 c,
-    here @ r> here !
-    ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x r> literal postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
-
-: declarex ( tag -- )
+| Get token as Forth string 
+: tok ( token -- str n ) dup c@ swap 1+ swap ;
+|
+| DeclareX
+: declarex ( -- )
     here @ >r ptr @ here ! token dup c, 1- 0
     do dup i + c@ c, loop 0 c,
     here @ r> here !
     ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
-
+|
+| Concat two malloced blocks, and create the third one
 : concat-malloc ( str1 str2 -- str3 )
     dup count >r swap dup count r> 1+ + malloc ( str2 str1 str3 )
     dup >r here @ >r here ! dup count 1- 0  do dup i + c@ c, loop drop
     dup count 0  do dup i + c@ c, loop drop
     r> here ! r> ;
-
-\ 0 const no-tag
-\ 1 const ident-tag
-\ 2 const type-tag
-
+|
+;
 : malloc-c >r 2 malloc dup 1+ 0 swap c! dup r> swap c! ;
 : malloc-c: key malloc-c ;
 : malloc-nil 0 malloc-c ;
 : malloc-space 32 malloc-c ;
 : Type declarex ;
 : Ident declarex ;
-
-: without-tag> x> ;
-: |> concat-malloc ;
-: x|> without-tag> without-tag> concat-malloc >x  ;
-
-Type vec3
-Type vec4
-Type mat3
-Type float
-Type void
-Ident v1
-Ident v2
-Ident main
-Ident gl_Vertex
-Ident gl_Normal
-Ident gl_Color
-Ident gl_MultiTexCoordX
-Ident gl_ModelViewMatrix
-Ident gl_ModelViewProjectionMatrix
-Ident gl_NormalMatrix
-Ident gl_BackColor
-Ident gl_TexCoord
-Ident gl_Position
-Ident x
-Ident y
-Ident z
-Ident xy
-Ident yx
-Ident xz
-Ident zx
-Ident yz
-Ident zy
-Ident xyz
-Ident xzy
-Ident zxy
-Ident zyx
-
-: op> malloc-c >x ;
-: space 32 op> ;
-: lpar c: ( op> ;
-: rpar c: ) op> ;
-: lbra c: { op> ;
-: rbra c: } op> ;
-: infix> op> swapx x|> x|> ;
-: comma> c: , infix> ;
-: ~! c: = infix> ;
-: ~* c: * infix> ;
-: ~; c: ; op> swapx x|> ;
-: ,, 32 infix> ;
-: ~. c: . infix> ;
-: Function
-    x> >r
-    dup 1 = 0=
-    if
-        2
-        do
-            comma>
-        loop
-    else drop then
-    lpar r> >x space void x|> x|> x|> x|> rpar swapx x|> lbra swapx x|>
-;
-: Fun
-    x> >r
-    lpar r> >x space void x|> x|> x|> rpar swapx x|> lbra swapx x|>
-;
-: printc dup count type ;
-
-: Beg lbra ;
-: End rbra swapx x|> swapx x|> ;
-: Var ,,  ;
-
-v1 vec3 ,, v2 vec3 ,, main 2 Function
-  gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
-End x> printc cr cr
-
-main Fun
-  v1 vec3 Var ~;
-  v2 vec3 Var ~;
-  xy v1 ~. zx v1 ~. ~* v2 ~! ~; 
-  gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
-End x> printc cr cr
-
+| Concat words on the X-stack
+: |> x> x> concat-malloc >x  ;
 

@@ -108,26 +108,32 @@ variable temp
     here @ r> here !
     ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x r> literal postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 
+: declarex ( tag -- )
+    here @ >r ptr @ here ! token dup c, 1- 0
+    do dup i + c@ c, loop 0 c,
+    here @ r> here !
+    ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
+
 : concat-malloc ( str1 str2 -- str3 )
     dup count >r swap dup count r> 1+ + malloc ( str2 str1 str3 )
     dup >r here @ >r here ! dup count 1- 0  do dup i + c@ c, loop drop
     dup count 0  do dup i + c@ c, loop drop
     r> here ! r> ;
 
-0 const no-tag
-1 const ident-tag
-2 const type-tag
+\ 0 const no-tag
+\ 1 const ident-tag
+\ 2 const type-tag
 
 : malloc-c >r 2 malloc dup 1+ 0 swap c! dup r> swap c! ;
 : malloc-c: key malloc-c ;
 : malloc-nil 0 malloc-c ;
 : malloc-space 32 malloc-c ;
-: Type type-tag declarex ;
-: Ident ident-tag declarex ;
+: Type declarex ;
+: Ident declarex ;
 
-: without-tag> x> drop x> ;
+: without-tag> x> ;
 : |> concat-malloc ;
-: x|> without-tag> without-tag> concat-malloc >x no-tag >x ;
+: x|> without-tag> without-tag> concat-malloc >x  ;
 
 Type vec3
 Type vec4
@@ -147,35 +153,39 @@ Ident gl_NormalMatrix
 Ident gl_BackColor
 Ident gl_TexCoord
 Ident gl_Position
-: infix> malloc-c >x no-tag >x ;
-: type-decl without-tag> malloc-space without-tag> |> |> ;
-: lpar c: ( infix> ;
-: rpar c: ) infix> ;
-: lbra c: { infix> ;
-: rbra c: } infix> ;
+: op> malloc-c >x ;
+: space 32 op> ;
+: lpar c: ( op> ;
+: rpar c: ) op> ;
+: lbra c: { op> ;
+: rbra c: } op> ;
+: infix> op> swapx x|> x|> ;
+: comma> c: , infix> ;
+: ~! c: = infix> ;
+: ~* c: * infix> ;
+: ~; c: ; op> swapx x|> ;
+: ,, 32 infix> ;
 : Function
-    malloc-space
-    begin
-        dupx x> ident-tag <>
-    while
-            type-decl
-            dupx x> ident-tag <> if c: , malloc-c |> then |>
-    repeat
-    without-tag> without-tag> malloc-space rot |> |> swap lpar swap |> rpar |> |> >x no-tag >x
+    x> >r
+    dup 1 = 0=
+    if
+        2
+        do
+            comma>
+        loop
+    else drop then
+    lpar r> >x space void x|> |> x|> x|> x|> rpar swapx x|> lbra swapx x|>
 ;
+: EndFunction swapx x|> ;
 : printc dup count type ;
 
-: Beg lbra x|> ;
-: End rbra x|> ;
+: Beg lbra ;
+: End rbra swapx x|> swapx x|> ;
 
-: ~! x|> c: = infix> x|> ;
-: ~* c: * infix> swapx x|> ;
-: ~; c: ; infix> x|> ;
-
-gl_ModelViewMatrix gl_Vertex ~*  x> drop x> printc
-
-
-void main v1 vec3 v2 vec3 Function
-Beg
+v1 vec3 ,, v2 vec3 ,, main 2 Function
   gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
-End x> drop x> printc
+End x> printc cr cr
+
+
+
+

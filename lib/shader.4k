@@ -1,0 +1,86 @@
+| FourK - Concatenative, stack based, Forth like language optimised for
+|        non-interactive 4KB size demoscene presentations.
+|
+| Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+|
+| This program is free software: you can redistribute it and/or modify
+| it under the terms of the GNU General Public License as published by
+| the Free Software Foundation, either version 3 of the License, or
+| (at your option) any later version.
+|
+| This program is distributed in the hope that it will be useful,
+| but WITHOUT ANY WARRANTY; without even the implied warranty of
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+| GNU General Public License for more details.
+|
+| You should have received a copy of the GNU General Public License
+| along with this program.  If not, see <http://www.gnu.org/licenses/>.
+| ______________________________________________________________________
+| This stuff is a live example of generating shader code at runtime
+| using meta.4k framework.
+| ______________________________________________________________________
+
+
+
+require" lib/meta.4k"
+
+Type vec3 Type vec4 Type mat3 Type float Type void
+Ident gl_Vertex Ident gl_Normal Ident gl_Color Ident gl_MultiTexCoordX
+Ident gl_ModelViewMatrix Ident gl_ModelViewProjectionMatrix
+Ident gl_NormalMatrix Ident gl_BackColor Ident gl_TexCoord
+Ident gl_Position
+
+Ident v1 Ident v2 Ident shader
+Ident x Ident y Ident z Ident xy Ident yx Ident xz Ident zx Ident yz
+Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
+
+: op> malloc-c >x ;
+: space 32 op> ;
+: lpar c: ( op> ;
+: rpar c: ) op> ;
+: lbra c: { op> ;
+: rbra c: } op> ;
+: infix> op> swapx |> |> ;
+: comma> c: , infix> ;
+: ~! c: = infix> ;
+: ~* c: * infix> ;
+: ~; c: ; op> swapx |> ;
+: ,, 32 infix> ;
+: ~. c: . infix> ;
+: Function
+    x> >r
+    dup 1 = 0=
+    if
+        2
+        do
+            comma>
+        loop
+    else drop then
+    lpar r> >x space void |> |> |> |> rpar swapx |> lbra swapx |> ;
+: Fun
+    x> >r
+    lpar r> >x space void |> |> |> rpar swapx |> lbra swapx |> ;
+: printc dup count type ;
+
+: Beg lbra ;
+: End rbra swapx |> swapx |> ;
+: Var ,,  ;
+
+: main
+    0 #tokens !
+    token-table ptr !
+    token-imports
+    
+    v1 vec3 ,, v2 vec3 ,, shader 2 Function
+      gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+    End x> printc cr cr
+    
+    shader Fun
+      v1 vec3 Var ~;
+      v2 vec3 Var ~;
+      xy v1 ~. zx v1 ~. ~* v2 ~! ~; 
+      gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+    End x> printc cr cr
+;
+
+main

@@ -19,63 +19,100 @@
 | Opening openGL context through SDL
 | ______________________________________________________________________
 
-symbol: exit
-symbol: printf
-symbol: dlerror
-symbol: SDL_SetVideoMode
-symbol: SDL_PollEvent
-symbol: SDL_GL_SwapBuffers
-symbol: SDL_Init
-symbol: SDL_InitSubSystem
-symbol: glClear
 
 | SDL constants
 27  const Esc
 2   const Keydown
 create event 20 bytes allot
 
+variable display-width
+variable display-height
+
 | SDL structure dispatch
 : e>type c@ ;
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
 
-: libc " libc.so" lib ;
-: libGL " libGL.so" lib ;
 : libSDL " libSDL.so" lib ;
+: libGLU " libGLU.so" lib ;
 
 : function >r sym r> cells add-handle ;
 
+symbol: SDL_SetVideoMode
+symbol: SDL_PollEvent
+symbol: SDL_Init
+symbol: SDL_GL_GetProcAddress
+symbol: SDL_GL_LoadLibrary
+symbol: SDL_GL_SwapBuffers
+symbol: gluPerspective
 : init-display-syms ( -- )
-    libc " _exit" 1 function
-    libc " printf" 1 function
-    libSDL " dlerror" 0 function
     libSDL " SDL_SetVideoMode" 4 function
     libSDL " SDL_PollEvent" 1 function
-    libSDL " SDL_GL_SwapBuffers"     0 function
-    libSDL " SDL_Init" 0 function
-    libSDL " SDL_InitSubSystem" 1 function
-    libGL " glClear" 1 function
+    libSDL " SDL_Init" 1 function
+    libSDL " SDL_GL_GetProcAddress" 1 function
+    libSDL " SDL_GL_LoadLibrary" 1 function
+    libSDL " SDL_GL_SwapBuffers" 0 function
+    libGLU " gluPerspective" 4 function
 ;
 
-$00000100 const GL_DEPTH_BUFFER_BIT			
-$00004000 const GL_COLOR_BUFFER_BIT
+: glsym >cstr SDL_GL_GetProcAddress ;
+: glfunction >r glsym r> cells add-handle ;
+
+symbol: glClear
+symbol: glViewport
+symbol: glMatrixMode
+symbol: glLoadIdentity
+symbol: glFrustum
+: bootstrap-gl-syms ( -- )
+    " glClear" 1 glfunction
+    " glViewport" 3 glfunction
+    " glMatrixMode" 1 glfunction
+    " glLoadIdentity" 0 glfunction
+    " glFrustum" 6 glfunction
+;
+
+$00000100 constant GL_DEPTH_BUFFER_BIT			
+$00004000 constant GL_COLOR_BUFFER_BIT
+$00001700 constant GL_MODELVIEW
+$00001701 constant GL_PROJECTION
+$00000002 constant SDL_OPENGL
+
+: display-ratio ( -- ratio )
+    finit display-height @ >f display-width @ >f f/ f>
+;
 
 : init-display
     init-display-syms
-    $00000002 32 600 800 SDL_SetVideoMode drop
+    SDL_OPENGL 0 display-height @ display-width @ SDL_SetVideoMode drop bootstrap-gl-syms
+    
+    display-height @ display-width @ 0 0 glViewport drop
+    GL_PROJECTION glMatrixMode drop glLoadIdentity drop
+       100.0 f>d 0.1 f>d 1.33 f>d 45.0 f>d gluPerspective drop
+    GL_MODELVIEW glMatrixMode drop
+    glLoadIdentity drop
 ;
+
 : esc-check
     event SDL_PollEvent drop
     event e>type Keydown = if event e>key Esc = ;; then
     0
 ;
 
-: Render: :
-    postpone init-display postpone begin
+: Render: immediate
+    postpone begin
     postpone esc-check postpone if postpone ;; postpone then
 ;
 
-: ;Render postpone again postpone ; ; immediate
+: Display:
+    ( height width -- )
+    display-width !
+    display-height !
+    :
+    postpone init-display
+;
+
+: ;Render postpone again ; immediate
+: ;Display postpone ; ; immediate
 
 
 : clear-display

@@ -239,7 +239,9 @@ PARSED-TYPE specifies what kind of text is parsed. It should be on of 'name',
 	((":noname") definition-starter (font-lock-keyword-face . 1))
 	((";" ";code") definition-ender (font-lock-keyword-face . 1))
 	(("include" "require" "needs" "use") 
-	 non-immediate (font-lock-keyword-face . 1) 
+         non-immediate (font-lock-keyword-face . 1) 
+	(("Render:" "Display:") definition-starter (font-lock-keyword-face . 1))
+	((";Render" ";Display") definition-ender (font-lock-keyword-face . 1))
 	 "[\n\t ]" t string (font-lock-string-face . 1))
 	(("included" "required" "thru" "load")
 	 non-immediate (font-lock-keyword-face . 1))
@@ -418,8 +420,8 @@ INDENT1 and INDENT2 are indentation specifications of the form
 
 (setq fourk-indent-words
       '((("if" "begin" "do" "?do" "+do" "-do" "u+do"
-	  "u-do" "?dup-if" "?dup-0=-if" "case" "of" "try" 
-	  "[if]" "[ifdef]" "[ifundef]" "[begin]" "[for]" "[do]" "[?do]")
+	  "u-do" "?dup-if" "?dup-0=-if" "case" "of" "try"
+	  "[if]" "[ifdef]" "[ifundef]" "[begin]" "[for]" "[do]" "[?do]" "Render:" "Display" )
 	 (0 . 2) (0 . 2))
 	((":" ":noname" "code" "struct" "m:" ":m" "class" "interface")
 	 (0 . 2) (0 . 2) non-immediate)
@@ -427,7 +429,7 @@ INDENT1 and INDENT2 are indentation specifications of the form
 	((";" ";m") (-2 . 0) (0 . -2))
 	(("again" "then" "endif" "endtry" "endcase" "endof" 
 	  "[then]" "[endif]" "[loop]" "[+loop]" "[next]" 
-	  "[until]" "[again]" "loop")
+	  "[until]" "[again]" "loop" ";Render" ";Display" )
 	 (-2 . 0) (0 . -2))
 	(("end-code" "end-class" "end-interface" "end-class-noname" 
 	  "end-interface-noname" "end-struct" "class;")

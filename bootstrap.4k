@@ -72,7 +72,8 @@ token : (:) token (:) ;
 : create token (create) ;
 | Variables
 : variable : there @ rliteral postpone ; cell allot ;
-: const : rliteral postpone ; ;
+: constant : rliteral postpone ; ;
+: const constant ; 
 : bconst : literal postpone ; ;
 | Sections
 create table 16 32 * allot
@@ -299,3 +300,5 @@ variable #ithere
   dup -1 <> if dup last ! execute there ! here ! 
   -1 here @ c! -1 -2 here @ 1+ c! ;; then drop 
 ;
+
+: f>d ( float -- double ) >f d> ;

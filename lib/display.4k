@@ -1,0 +1,74 @@
+| FourK - Concatenative, stack based, Forth like language optimised for
+|        non-interactive 4KB size demoscene presentations.
+|
+| Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+|
+| This program is free software: you can redistribute it and/or modify
+| it under the terms of the GNU General Public License as published by
+| the Free Software Foundation, either version 3 of the License, or
+| (at your option) any later version.
+|
+| This program is distributed in the hope that it will be useful,
+| but WITHOUT ANY WARRANTY; without even the implied warranty of
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+| GNU General Public License for more details.
+|
+| You should have received a copy of the GNU General Public License
+| along with this program.  If not, see <http://www.gnu.org/licenses/>.
+| ______________________________________________________________________
+| Opening openGL context through SDL
+| ______________________________________________________________________
+
+symbol: exit
+symbol: printf
+symbol: glClear
+symbol: dlerror
+symbol: SDL_SetVideoMode
+symbol: SDL_PollEvent
+symbol: SDL_GL_SwapBuffers
+
+| SDL constants
+27  const Esc
+2   const Keydown
+create event 20 bytes allot
+
+| SDL structure dispatch
+: e>type c@ ;
+: e>key 8 + c@ ;
+: s>pixels 20 + @ ;
+
+: libc " /usr/lib/libc.so" lib ;
+: libGL " /usr/lib/libGL.so" lib ;
+: libSDL " /usr/lib/libSDL.so" lib ;
+
+: function >r sym r> cells add-handle ;
+: sdl-init ( -- )
+    libc " _exit" 1 function
+    libc " printf" 1 function
+    libGL " glClear" 1 function
+    libSDL " dlerror" 0 function
+    libSDL " SDL_SetVideoMode" 4 function
+    libSDL " SDL_PollEvent" 1 function
+    libSDL " SDL_GL_SwapBuffers"     0 function
+;
+
+$00000100 const GL_DEPTH_BUFFER_BIT			
+$00004000 const GL_COLOR_BUFFER_BIT
+
+: render-loop
+    begin
+        SDL_GL_SwapBuffers drop
+        event SDL_PollEvent drop
+        event e>type Keydown = if event e>key Esc = if ;; then then
+    again
+;
+
+: yeah ( -- )
+    sdl-init
+    $00000002 or 32 600 800 SDL_SetVideoMode
+    GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT or glClear drop
+    render-loop
+    0 exit
+; 
+
+yeah

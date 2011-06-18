@@ -15,48 +15,14 @@
 
 \ You should have received a copy of the GNU General Public License
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
-2 ccall: exit
-3 ccall: printf
-4 ccall: dlerror
-5 ccall: video
-6 ccall: SDL_PollEvent
 
-| SDL constants
-27  const Esc
-2   const Keydown
-create event 20 bytes allot
+Render: render-loop
 
-| SDL structure dispatch
-: e>type c@ ;
-: e>key 8 + c@ ;
-: s>pixels 20 + @ ;
+;Render
 
-: sdl-init ( -- )
-    " libc.so" lib " _exit" sym
-    cell add-handle
-    
-    " libc.so" lib " printf" sym
-    1 cells add-handle
-    
-    " libdl.so" lib " dlerror" sym 
-    0 cells add-handle
-    
-    " /usr/lib/libSDL.so" lib " SDL_SetVideoMode" sym 
-    4 cells add-handle
-    " /usr/lib/libSDL.so" lib " SDL_PollEvent"         sym 1 cells add-handle
-;
-
-: render-loop
-    begin
-	event SDL_PollEvent drop
-	event e>type Keydown = if event e>key Esc = if ;; then then
-    again
-;
-
-: yeah ( -- )
-    sdl-init
-    2 0 600 800 video
+: main
     render-loop
-    0 exit
-; 
+;
 
+main
+bye

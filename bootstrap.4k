@@ -239,7 +239,7 @@ symbol: dlsym
 | Convert string to zero terminated string
 : >cstr drop ;
 | Load library
-: lib >cstr $2 swap dlopen ;
+: lib >cstr $100 $2 or swap dlopen ;
 | Load symbol
 : sym >cstr swap dlsym ;
 variable #ithere

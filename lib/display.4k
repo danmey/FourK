@@ -21,11 +21,13 @@
 
 symbol: exit
 symbol: printf
-symbol: glClear
 symbol: dlerror
 symbol: SDL_SetVideoMode
 symbol: SDL_PollEvent
 symbol: SDL_GL_SwapBuffers
+symbol: SDL_Init
+symbol: SDL_InitSubSystem
+symbol: glClear
 
 | SDL constants
 27  const Esc
@@ -37,38 +39,47 @@ create event 20 bytes allot
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
 
-: libc " /usr/lib/libc.so" lib ;
-: libGL " /usr/lib/libGL.so" lib ;
-: libSDL " /usr/lib/libSDL.so" lib ;
+: libc " libc.so" lib ;
+: libGL " libGL.so" lib ;
+: libSDL " libSDL.so" lib ;
 
 : function >r sym r> cells add-handle ;
-: sdl-init ( -- )
+
+: init-display-syms ( -- )
     libc " _exit" 1 function
     libc " printf" 1 function
-    libGL " glClear" 1 function
     libSDL " dlerror" 0 function
     libSDL " SDL_SetVideoMode" 4 function
     libSDL " SDL_PollEvent" 1 function
     libSDL " SDL_GL_SwapBuffers"     0 function
+    libSDL " SDL_Init" 0 function
+    libSDL " SDL_InitSubSystem" 1 function
+    libGL " glClear" 1 function
 ;
 
 $00000100 const GL_DEPTH_BUFFER_BIT			
 $00004000 const GL_COLOR_BUFFER_BIT
 
-: render-loop
-    begin
-        SDL_GL_SwapBuffers drop
-        event SDL_PollEvent drop
-        event e>type Keydown = if event e>key Esc = if ;; then then
-    again
+: init-display
+    init-display-syms
+    $00000002 32 600 800 SDL_SetVideoMode drop
+;
+: esc-check
+    event SDL_PollEvent drop
+    event e>type Keydown = if event e>key Esc = ;; then
+    0
 ;
 
-: yeah ( -- )
-    sdl-init
-    $00000002 or 32 600 800 SDL_SetVideoMode
-    GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT or glClear drop
-    render-loop
-    0 exit
-; 
+: Render: :
+    postpone init-display postpone begin
+    postpone esc-check postpone if postpone ;; postpone then
+;
 
-yeah
+: ;Render postpone again postpone ; ; immediate
+
+
+: clear-display
+    GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT or glClear drop
+;
+
+: swap-display SDL_GL_SwapBuffers drop ;

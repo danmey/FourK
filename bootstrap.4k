@@ -59,6 +59,7 @@ token : (:) token (:) ;
 : sliteral swap rliteral literal ;
 | Allocation and sizes
 : allot there @ + there ! ;
+
 | 4 byte cells
 : cell 4 ;
 : cells cell * ;
@@ -302,3 +303,4 @@ variable #ithere
 ;
 
 : f>d ( float -- double ) >f d> ;
+: printc dup count type ;

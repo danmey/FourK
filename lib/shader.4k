@@ -60,7 +60,6 @@ Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
 : Fun
     x> >r
     lpar r> >x space void |> |> |> rpar swapx |> lbra swapx |> ;
-: printc dup count type ;
 
 : Beg lbra ;
 : End rbra swapx |> swapx |> ;

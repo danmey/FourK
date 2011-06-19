@@ -76,9 +76,12 @@ $00000004 const GL_TRIANGLES
 600 800 Display: display
     init-triangle-syms
     Render:
-       render-loop
+        render-loop
     ;Render
     bye
 ;Display
 
-display
+: main display ;
+
+main
+    

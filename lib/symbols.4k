@@ -15,17 +15,65 @@
 |
 | You should have received a copy of the GNU General Public License
 | along with this program.  If not, see <http://www.gnu.org/licenses/>.
-| Increment variable
 
 
-variable #ccall 2 #ccall !
-variable current-library 0 current-library !
+\ variable #ccall 2 #ccall !
+\ variable current-library 0 current-library !
 
-: inc ( adr -- ) dup @ 1+ swap ! ;
+\ : inc ( adr -- ) dup @ 1+ swap ! ;
+\ : last-name last @ 1- 32 * ntab @ + dup count  ;
+
+\ : library lib current-library ! ;
+\ : Library: token postpone library ; immediate
+\ : #ccall@ #ccall @ ;
+\ : symbol  current-library @ last-name sym swap  bytes add-handle #ccall inc ;
+\ : Symbol: postpone #call@ ccall: postpone symbol ; immediate
+
+variable lib-ptr there @ dup lib-ptr ! constant libs 128 allot
+variable sym-ptr there @ dup sym-ptr ! constant syms 512 allot
+variable copy-ptr
+: copy-token:
+    token 0 do dup c@ copy-ptr @ @ c! 1+ copy-ptr @ 1+! loop drop
+;    
+
 : last-name last @ 1- 32 * ntab @ + dup count  ;
 
-: library lib current-library ! ;
-: Library: token postpone library ; immediate
-: #ccall@ #ccall @ ;
-: symbol  current-library @ last-name sym swap  bytes add-handle #ccall inc ;
-: Symbol: postpone #call@ ccall: postpone symbol ; immediate
+: Lib: lib-ptr copy-ptr ! copy-token: ;
+: Symbol:
+    sym-ptr copy-ptr ! copy-token:
+    sym-ptr @ c! sym-ptr 1+! ;
+
+variable current-sym
+variable current-lib
+variable found-symbol
+: function >r sym r> cells add-handle ;
+
+: LoadSymbols
+syms current-sym !
+begin
+    libs current-lib !
+    0 found-symbol !
+    begin
+        0 current-lib @ c@ 0 <>  
+        found-symbol @ 0 = and
+    while
+            current-lib @ dup count lib dup
+            0 <>
+            if
+                current-sym @ dup count sym
+                0 <>
+                if
+                    current-lib @ printc space
+                    current-sym @ printc cr
+                    current-sym @ dup count (:)
+                    #ccall @ #ccall 1+! postpone ccall c, postpone ;
+                    -1 found-symbol !
+                then
+            then
+            current-lib @ count 1+ current-lib +!
+    repeat
+    current-sym @ count 1+ current-sym +!
+    current-sym 1+!
+    current-sym @ c@ 0 = if ;; then
+again
+;

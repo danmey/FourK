@@ -22,19 +22,11 @@ require" lib/display.4k"
 
 1 Symbol: glBegin
 3 Symbol: glVertex3f
-1 Symbol: glColor4ubv
-3 Symbol: glColor3f
 0 Symbol: glEnd
 1 Symbol: glClear
 4 Symbol: glClearColor
 0 Symbol: glLoadIdentity
 3 Symbol: glTranslatef
-1 Symbol: glShadeModel
-1 Symbol: glClearDepth
-1 Symbol: glEnable
-1 Symbol: glDisable
-1 Symbol: glDepthFunc
-1 Symbol: glHint
 LoadSymbols
 
 $00000004 constant GL_TRIANGLES

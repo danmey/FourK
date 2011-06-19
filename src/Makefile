@@ -66,7 +66,7 @@ $(BIN)/4k-debug: $(SRC_FILES)
 	m4 -DDEBUG $(CYWGIN) -s $(SRC) > $(BIN)/t.s 
 	./m4patch.pl > $(BIN)/t.P
 	mv $(BIN)/t.P $(BIN)/t.S
-	gcc -m32 -ggdb3 $(BIN)/t.S -o $(BIN)/4k-debug -ldl -lsigsegv -lGL -lc
+	gcc -m32 -ggdb3 $(BIN)/t.S -o $(BIN)/4k-debug -lGL -ldl -lsigsegv
 	cp $@ $(PREFIX)
 
 

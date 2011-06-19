@@ -68,8 +68,6 @@ Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
 : main
     0 #tokens !
     token-table ptr !
-    meta-symbols
-    
     v1 vec3 ,, v2 vec3 ,, shader 2 Function
       gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
     End x> printc cr cr

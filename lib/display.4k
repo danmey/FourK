@@ -49,6 +49,7 @@ Lib: libGL.so
 1 Symbol: glMatrixMode
 0 Symbol: glLoadIdentity
 12 Symbol: glFrustum
+LoadSymbols
 
 $00000100 constant GL_DEPTH_BUFFER_BIT			
 $00004000 constant GL_COLOR_BUFFER_BIT
@@ -59,7 +60,6 @@ $00000002 constant SDL_OPENGL
 : display-ratio ( -- ratio )
     finit display-height @ >f display-width @ >f f/ f>
 ;
-LoadSymbols
 
 : init-display
     SDL_OPENGL 0 display-height @ display-width @ SDL_SetVideoMode drop

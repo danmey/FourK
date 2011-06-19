@@ -58,9 +58,10 @@ begin
         0 current-lib @ c@ 0 <>  
         found-symbol @ 0 = and
     while
-            current-lib @ dup count lib dup
-            0 <>
-            if
+            current-lib @ dup count lib
+            | dup
+  |          0 <>
+|            if
                 current-sym @ dup count sym dup
                 0 <>
                 if
@@ -71,7 +72,7 @@ begin
                     #ccall @ #ccall 1+! postpone ccall c, postpone ;
                     -1 found-symbol !
                 then
-            then
+ |           then
             current-lib @ count 1+ current-lib +!
     repeat
     current-sym @ count 1+ current-sym +!
@@ -81,3 +82,4 @@ begin
     current-sym @ c@ 0 = if ;; then
 again
 ;
+

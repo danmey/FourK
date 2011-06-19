@@ -21,7 +21,7 @@
 |
 
 require" lib/stackx.4k"
-
+require" lib/symbols.4k"
 
 create token-table 512 allot 
 variable ptr token-table ptr !
@@ -29,25 +29,24 @@ variable #tokens 0 #tokens !
 
 
 | Bind some useful functions
-symbol: malloc
-symbol: puts
-: libc " /usr/lib/libc.so" lib ;
-: function >r sym r> cells add-handle ;
-: meta-symbols ( -- )
-    libc " malloc" 1 function
-    libc " puts" 1 function ;
-|
+Lib: libc.so
+1 Symbol: malloc
+1 Symbol: puts
+LoadSymbols
+
 | Copy string to malloced block
+
+| : token token over over + 0 swap c! ;
 : malloc-token ( cstr -- cstr )
     dup count dup 1+ malloc swap
-    1- 0 do over over swap i + c@ swap i + c! loop swap drop dup dup count + 0 swap c!  ;
+    0 do over over swap i + c@ swap i + c! loop swap drop dup dup count + 0 swap c! ;
 | Get token as Forth string 
 : tok ( token -- str n ) dup c@ swap 1+ swap ;
 |
 | DeclareX
 : declarex ( -- )
-    here @ >r ptr @ here ! token dup c, 1- 0
-    do dup i + c@ c, loop 0 c,
+    here @ >r ptr @ here ! token dup c, 1-
+    0 do dup i + c@ c, loop 0 c,
     here @ r> here !
     ptr @ tok 2dup (:) drop rliteral postpone malloc-token postpone >x postpone ; ptr ! 0 ptr @ c! #tokens 1+! ;
 |
@@ -68,3 +67,6 @@ symbol: puts
 | Concat words on the X-stack
 : |> x> x> concat-malloc >x  ;
 
+Ident ala
+: a ala ;
+a

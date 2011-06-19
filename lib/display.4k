@@ -19,6 +19,7 @@
 | Opening openGL context through SDL
 | ______________________________________________________________________
 
+require" lib/symbols.4k"
 
 | SDL constants
 27  const Esc
@@ -33,43 +34,21 @@ variable display-height
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
 
-: libSDL " libSDL.so" lib ;
-: libGLU " libGLU.so" lib ;
-
-: function >r sym r> cells add-handle ;
-
-symbol: SDL_SetVideoMode
-symbol: SDL_PollEvent
-symbol: SDL_Init
-symbol: SDL_GL_GetProcAddress
-symbol: SDL_GL_LoadLibrary
-symbol: SDL_GL_SwapBuffers
-symbol: gluPerspective
-: init-display-syms ( -- )
-    libSDL " SDL_SetVideoMode" 4 function
-    libSDL " SDL_PollEvent" 1 function
-    libSDL " SDL_Init" 1 function
-    libSDL " SDL_GL_GetProcAddress" 1 function
-    libSDL " SDL_GL_LoadLibrary" 1 function
-    libSDL " SDL_GL_SwapBuffers" 0 function
-    libGLU " gluPerspective" 4 function
-;
-
-: glsym >cstr SDL_GL_GetProcAddress ;
-: glfunction >r glsym r> cells add-handle ;
-
-symbol: glClear
-symbol: glViewport
-symbol: glMatrixMode
-symbol: glLoadIdentity
-symbol: glFrustum
-: bootstrap-gl-syms ( -- )
-    " glClear" 1 glfunction
-    " glViewport" 3 glfunction
-    " glMatrixMode" 1 glfunction
-    " glLoadIdentity" 0 glfunction
-    " glFrustum" 6 glfunction
-;
+Lib: libSDL.so
+Lib: libGLU.so
+Lib: libGL.so
+4 Symbol: SDL_SetVideoMode
+1 Symbol: SDL_PollEvent
+1 Symbol: SDL_Init
+1 Symbol: SDL_GL_GetProcAddress
+1 Symbol: SDL_GL_LoadLibrary
+0 Symbol: SDL_GL_SwapBuffers
+8 Symbol: gluPerspective
+1 Symbol: glClear
+3 Symbol: glViewport
+1 Symbol: glMatrixMode
+0 Symbol: glLoadIdentity
+12 Symbol: glFrustum
 
 $00000100 constant GL_DEPTH_BUFFER_BIT			
 $00004000 constant GL_COLOR_BUFFER_BIT
@@ -80,10 +59,10 @@ $00000002 constant SDL_OPENGL
 : display-ratio ( -- ratio )
     finit display-height @ >f display-width @ >f f/ f>
 ;
+LoadSymbols
 
 : init-display
-    init-display-syms
-    SDL_OPENGL 0 display-height @ display-width @ SDL_SetVideoMode drop bootstrap-gl-syms
+    SDL_OPENGL 0 display-height @ display-width @ SDL_SetVideoMode drop
     
     display-height @ display-width @ 0 0 glViewport drop
     GL_PROJECTION glMatrixMode drop glLoadIdentity drop

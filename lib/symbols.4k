@@ -46,6 +46,7 @@ variable copy-ptr
 variable current-sym
 variable current-lib
 variable found-symbol
+variable symbol
 : function >r sym r> cells add-handle ;
 
 : LoadSymbols
@@ -60,9 +61,10 @@ begin
             current-lib @ dup count lib dup
             0 <>
             if
-                current-sym @ dup count sym
+                current-sym @ dup count sym dup
                 0 <>
                 if
+                    symbol !
                     current-lib @ printc space
                     current-sym @ printc cr
                     current-sym @ dup count (:)
@@ -74,6 +76,8 @@ begin
     repeat
     current-sym @ count 1+ current-sym +!
     current-sym 1+!
+    found-symbol @ if current-sym @ 1- c@ cells symbol @ swap add-handle  then
+
     current-sym @ c@ 0 = if ;; then
 again
 ;

@@ -20,43 +20,24 @@
 | Display routines
 require" lib/display.4k"
 
-symbol: glBegin
-symbol: glVertex3f
-symbol: glColor4ubv
-symbol: glColor3f
-symbol: glEnd
-symbol: glClear
-symbol: glClearColor
-symbol: glLoadIdentity
-symbol: glTranslatef
-symbol: glShadeModel
-symbol: glClearDepth
-symbol: glEnable
-symbol: glDisable
-symbol: glDepthFunc
-symbol: glHint
-: init-triangle-syms ( -- )
-    | Must be in the same order as symbol definitions!
-    | this limitation will be removed after introducing robust
-    | implementation of dynamic linking
-    " glBegin"        1 glfunction
-    " glVertex3f"     3 glfunction
-    " glColor4ubv"    1 glfunction
-    " glColor3f"      3 glfunction
-    " glEnd"          0 glfunction
-    " glClear"        1 glfunction
-    " glClearColor"   4 glfunction
-    " glLoadIdentity" 0 glfunction
-    " glTranslatef"   3 glfunction
-    " glShadeModel"   1 glfunction
-    " glClearDepth"   1 glfunction
-    " glEnable"       1 glfunction
-    " glDisable"      1 glfunction
-    " glDepthFunc"    1 glfunction
-    " glHint"         2 glfunction
-;
+1 Symbol: glBegin
+3 Symbol: glVertex3f
+1 Symbol: glColor4ubv
+3 Symbol: glColor3f
+0 Symbol: glEnd
+1 Symbol: glClear
+4 Symbol: glClearColor
+0 Symbol: glLoadIdentity
+3 Symbol: glTranslatef
+1 Symbol: glShadeModel
+1 Symbol: glClearDepth
+1 Symbol: glEnable
+1 Symbol: glDisable
+1 Symbol: glDepthFunc
+1 Symbol: glHint
+LoadSymbols
 
-$00000004 const GL_TRIANGLES
+$00000004 constant GL_TRIANGLES
 
 : render-loop
     0.0 0.0 0.0 0.0 glClearColor drop
@@ -74,7 +55,6 @@ $00000004 const GL_TRIANGLES
 
 | Setup empty main render loop
 600 800 Display: display
-    init-triangle-syms
     Render:
         render-loop
     ;Render

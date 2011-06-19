@@ -16,13 +16,13 @@
 \ You should have received a copy of the GNU General Public License
 \ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Render: render-loop
+require" lib/display.4k"
 
-;Render
+600 800 Display: display
+    Render:
+    ;Render
+    bye
+;Display
 
-: main
-    render-loop
-;
-
-main
+display
 bye

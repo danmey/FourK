@@ -28,12 +28,17 @@ Type vec3 Type vec4 Type mat3 Type float Type void
 Ident gl_Vertex Ident gl_Normal Ident gl_Color Ident gl_MultiTexCoordX
 Ident gl_ModelViewMatrix Ident gl_ModelViewProjectionMatrix
 Ident gl_NormalMatrix Ident gl_BackColor Ident gl_TexCoord
+Ident gl_FragColor
 Ident gl_Position
 
 Ident v1 Ident v2 Ident shader
 Ident x Ident y Ident z Ident xy Ident yx Ident xz Ident zx Ident yz
 Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
+Ident ftransform
 
+4 Symbol: sprintf
+
+LoadSymbols
 : op> malloc-c >x ;
 : space 32 op> ;
 : lpar c: ( op> ;
@@ -47,6 +52,9 @@ Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
 : ~; c: ; op> swapx |> ;
 : ,, 32 infix> ;
 : ~. c: . infix> ;
+: ~, c: , infix> ;
+: ftransform rpar lpar ftransform |> |> ;
+
 : Function
     x> >r
     dup 1 = 0=
@@ -65,19 +73,21 @@ Ident zy Ident xyz Ident xzy Ident zxy Ident zyx
 : End rbra swapx |> swapx |> ;
 : Var ,,  ;
 
-: main
-    0 #tokens !
-    token-table ptr !
-    v1 vec3 ,, v2 vec3 ,, shader 2 Function
-      gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
-    End x> printc cr cr
-    
-    shader Fun
-      v1 vec3 Var ~;
-      v2 vec3 Var ~;
-      xy v1 ~. zx v1 ~. ~* v2 ~! ~; 
-      gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
-    End x> printc cr cr
-;
+: ~f f>d " %f" >cstr 10 malloc dup >x sprintf drop ;
+: ~v4 rpar ~f ~f ~f ~f ~, ~, ~, |> lpar |> vec4 |>  ; 
 
-main
+\ : main
+\     0 #tokens !
+\     token-table ptr !
+\     v1 vec3 ,, v2 vec3 ,, shader 2 Function
+\       gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+\     End x> printc cr cr
+    
+\     shader Fun
+\       v1 vec3 Var ~;
+\       v2 vec3 Var ~;
+\       xy v1 ~. zx v1 ~. ~* v2 ~! ~; 
+\       gl_ModelViewMatrix gl_Vertex ~* gl_Position ~! ~;
+\     End x> printc cr cr
+\ ;
+

@@ -1,0 +1,103 @@
+| FourK - Concatenative, stack based, Forth like language optimised for 
+|        non-interactive 4KB size demoscene presentations.
+
+| Copyright (C) 2009, 2010, 2011 Wojciech Meyer, Josef P. Bernhart
+
+| This program is free software: you can redistribute it and/or modify
+| it under the terms of the GNU General Public License as published by
+| the Free Software Foundation, either version 3 of the License, or
+| (at your option) any later version.
+
+| This program is distributed in the hope that it will be useful,
+| but WITHOUT ANY WARRANTY; without even the implied warranty of
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+| GNU General Public License for more details.
+
+| You should have received a copy of the GNU General Public License
+| along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+| Display routines
+require" lib/display.4k"
+| Shader meta language
+require" lib/shader.4k"
+| Declare symbols we are importing
+1 Symbol: glBegin
+3 Symbol: glVertex3f
+0 Symbol: glEnd
+1 Symbol: glClear
+4 Symbol: glClearColor
+0 Symbol: glLoadIdentity
+3 Symbol: glTranslatef
+1 Symbol: glCreateShader
+4 Symbol: glShaderSource
+1 Symbol: glCompileShader
+0 Symbol: glCreateProgram
+2 Symbol: glAttachShader
+1 Symbol: glLinkProgram
+1 Symbol: glUseProgram
+3 Symbol: glGetShaderiv
+4 Symbol: glGetShaderInfoLog
+| Load all of them, this function should be called at runtime
+LoadSymbols
+| Some OpenGl constants
+$00000004 constant GL_TRIANGLES
+$00008B30 constant GL_FRAGMENT_SHADER
+$00008B31 constant GL_VERTEX_SHADER                  
+0x0008B84 constant GL_INFO_LOG_LENGTH
+| Let's draw triangle
+: render-loop
+    0.0 0.0 0.0 0.0 glClearColor drop
+    clear-display
+    glLoadIdentity drop
+    -6.0 0.0 -1.5 glTranslatef drop
+    GL_TRIANGLES glBegin drop
+    0.0  1.0  0.0 glVertex3f drop
+    0.0 -1.0 -1.0 glVertex3f drop
+    0.0 -1.0  1.0 glVertex3f drop
+    glEnd drop
+    swap-display
+;
+| Define main function name
+Ident main
+| Define basic vertex shader
+: Vertex-Shader
+    main Fun
+      ftransform gl_Position ~! ~;
+    End x>
+; 
+| Define basic fragment shader
+: Fragment-Shader
+    main Fun
+    0.4 0.4 0.8 1.0 ~v4 gl_FragColor ~! ~;
+    End x>
+;
+| Lot of garbage later we will factor out it!
+variable vertex-shader-text
+variable fragment-shader-text
+variable vertex-shader
+variable fragment-shader
+: setup-shaders
+    Vertex-Shader vertex-shader-text !
+    Fragment-Shader fragment-shader-text !
+    GL_VERTEX_SHADER glCreateShader vertex-shader !
+    GL_FRAGMENT_SHADER glCreateShader fragment-shader !
+    0 vertex-shader-text 1 vertex-shader @ glShaderSource drop
+    0 fragment-shader-text 1 fragment-shader @ glShaderSource drop
+    vertex-shader @ glCompileShader drop
+    fragment-shader @ glCompileShader drop
+    glCreateProgram >r
+    vertex-shader @ r glAttachShader
+    fragment-shader @ r glAttachShader
+    r glLinkProgram
+    r> glUseProgram
+;
+600 800 Display: display
+    setup-shaders
+    Render:
+        render-loop
+    ;Render
+    bye
+;Display
+
+display

@@ -34,9 +34,9 @@ variable display-height
 : e>key 8 + c@ ;
 : s>pixels 20 + @ ;
 
+Lib: /usr/lib/libGL.so
 Lib: libSDL.so
-Lib: libGLU.so
-Lib: libGL.so
+Lib: /usr/lib/libGLU.so
 4 Symbol: SDL_SetVideoMode
 1 Symbol: SDL_PollEvent
 1 Symbol: SDL_Init

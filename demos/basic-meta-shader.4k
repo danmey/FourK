@@ -100,4 +100,4 @@ variable fragment-shader
     bye
 ;Display
 
-display
+|  display

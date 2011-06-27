@@ -46,11 +46,12 @@ $00000004 constant GL_TRIANGLES
 ;
 
 600 800 Display: display
+    LoadSymbols
     Render:
-        render-loop
+  |      render-loop
     ;Render
     bye
 ;Display
 
-display
+| display
     

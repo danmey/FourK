@@ -17,7 +17,7 @@
 | along with this program.  If not, see <http://www.gnu.org/licenses/>.
 | ______________________________________________________________________
 
-
+require" lib/symbols.4k"
 | This is only for interactive sessions, forget all the defined words
 | so far marked
 forget
@@ -27,26 +27,15 @@ mark
 | leaves the constant on the floating point stack
 : fconst : rliteral postpone >f postpone ; ;
 | Put integer value on floating point stack
-: i>>f i>f >f ;
+: 022538 i>>f i>f >f ;
 | The following is very clumsy, will be changed in future
-2 ccall: exit
-3 ccall: SDL_SetVideoMode
-4 ccall: SDL_PollEvent
-5 ccall: SDL_Flip
-6 ccall: SDL_LockSurface
-7 ccall: SDL_UnlockSurface
-| load our symbols from dll
-| Must be in the same order as above
-: libSDL " /usr/lib/libSDL.so" lib ;
-: function >r sym r> cells add-handle ;
-: load-symbols ( -- )
-    " libc.so" lib " _exit" 1 function
-    libSDL " SDL_SetVideoMode" 4 function
-    libSDL " SDL_PollEvent" 1 function
-    libSDL " SDL_Flip" 1 function
-    libSDL " SDL_LockSurface" 1 function
-    libSDL " SDL_UnlockSurface" 1 function
-;
+Lib: libSDL.so
+3 Symbol: SDL_SetVideoMode
+4 Symbol: SDL_PollEvent
+5 Symbol: SDL_Flip
+6 Symbol: SDL_LockSurface
+7 Symbol: SDL_UnlockSurface
+LoadSymbols
 | some constants
 800 const width
 600 const height
@@ -148,12 +137,13 @@ height 2 / i>f fconst h/2
     again
 ;
 : main
-    load-symbols
+    LoadSymbols
     init-pallete
     video screen !
     render-loop
-    0 exit
+    bye
 ;
 
+| main
 | save-image im.4ki
 | main
